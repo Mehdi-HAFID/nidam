@@ -47,11 +47,11 @@ public class UserRegistration {
 //		log.info("Matching 2: " + match2 + " 3: " + match3);
 //	}
 
-	@Value("#{${custom.authorities}}")
-	private List<String> authorities;
-
-	@GetMapping("/authorities")
-	public void validate(){
-		log.info("authorities: " + authorities);
-	}
+//	@Value("#{${custom.authorities}}")
+//	private List<String> authorities;
+//
+//	@GetMapping("/authorities")
+//	public void validate(){
+//		log.info("authorities: " + authorities);
+//	}
 }

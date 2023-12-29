@@ -1,8 +1,10 @@
 package com.derbyware.registration.services;
 
 import com.derbyware.registration.entities.Authority;
+import com.derbyware.registration.entities.Role;
 import com.derbyware.registration.entities.User;
 import com.derbyware.registration.repositories.AuthorityRepository;
+import com.derbyware.registration.repositories.RoleRepository;
 import com.derbyware.registration.repositories.UserRepository;
 import com.derbyware.registration.services.dto.UserRegisteredDto;
 import com.derbyware.registration.services.dto.UserRegistrationDto;
@@ -33,6 +35,9 @@ public class UserService {
 	private AuthorityRepository authorityRepository;
 
 	@Autowired
+	private RoleRepository roleRepository;
+
+	@Autowired
 	private PasswordEncoder passwordEncoder;
 
 	@Autowired
@@ -44,6 +49,12 @@ public class UserService {
 	@Value("#{${custom.authorities}}")
 	private List<String> authorities;
 
+	@Value("${custom.authType}")
+	private String authType;
+
+	@Value("#{${custom.roles}}")
+	private List<String> roles;
+
 	public UserRegisteredDto save(UserRegistrationDto userDto){
 		if(userRepository.findUserByEmail(userDto.getEmail()).isPresent()){
 			throw new AlreadyExistException(format("Email %s already used!", userDto.getEmail()));
@@ -52,7 +63,11 @@ public class UserService {
 
 		setPassword(user);
 
-		setAuthorities(user);
+		if( Integer.parseInt(authType) == 1){
+			setAuthorities(user);
+		} else if(Integer.parseInt(authType) == 2){
+			setRoles(user);
+		}
 
 		user.setEnabled(true);
 
@@ -79,6 +94,7 @@ public class UserService {
 		return true;
 	}
 
+
 	private void setAuthorities(User user) {
 		// Admin User should always have all the authorities
 		List<Authority> allAuthorities = new ArrayList<>();
@@ -88,6 +104,17 @@ public class UserService {
 		}
 
 		user.getAuthorities().addAll(allAuthorities);
+	}
+
+	private void setRoles(User user) {
+		// Admin User should always have all the authorities
+		List<Role> allRoles = new ArrayList<>();
+
+		for(String role : roles){
+			allRoles.add(roleRepository.findRoleByName(role));
+		}
+
+		user.getRoles().addAll(allRoles);
 	}
 
 //	public User get(String email){

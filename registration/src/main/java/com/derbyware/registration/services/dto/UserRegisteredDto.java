@@ -11,6 +11,7 @@ public class UserRegisteredDto {
 	private String email;
 
 	private List<String> authorities = new ArrayList<>();
+	private List<String> roles = new ArrayList<>();
 
 	public BigInteger getId() {
 		return id;
@@ -36,12 +37,21 @@ public class UserRegisteredDto {
 		this.authorities = authorities;
 	}
 
+	public List<String> getRoles() {
+		return roles;
+	}
+
+	public void setRoles(List<String> roles) {
+		this.roles = roles;
+	}
+
 	@Override
 	public String toString() {
 		return "UserRegisteredDto{" +
 				"id=" + id +
 				", email='" + email + '\'' +
 				", authorities=" + authorities +
+				", roles=" + roles +
 				'}';
 	}
 }

@@ -24,10 +24,16 @@ public class User {
 	// cannot apply password constraint on the property password because it contains the hash
 	private String password;
 
+	// uncomment if you want to work with authorities instead of roles
 	@ManyToMany(fetch = FetchType.EAGER)
 	@JoinTable(name = "USER_AUTHORITIES", joinColumns = @JoinColumn(name = "USER_ID"),
 			inverseJoinColumns = @JoinColumn(name = "AUTHORITY_ID"))
 	private List<Authority> authorities = new ArrayList<>();
+
+	// comment if you want to work with authorities instead of roles
+	@ManyToMany(fetch = FetchType.EAGER)
+	@JoinTable(name = "USER_ROLES", joinColumns = @JoinColumn(name = "USER_ID"), inverseJoinColumns = @JoinColumn(name = "ROLE_ID"))
+	private List<Role> roles = new ArrayList<>();
 
 	private boolean enabled;
 
@@ -35,10 +41,18 @@ public class User {
 
 	}
 
-	public User(String email, String password, List<Authority> authorities, boolean enabled) {
+//	authorities
+//	public User(String email, String password, List<Authority> authorities, boolean enabled) {
+//		this.email = email;
+//		this.password = password;
+//		this.authorities = authorities;
+//		this.enabled = enabled;
+//	}
+
+	public User(String email, String password, List<Role> roles, boolean enabled) {
 		this.email = email;
 		this.password = password;
-		this.authorities = authorities;
+		this.roles = roles;
 		this.enabled = enabled;
 	}
 
@@ -76,6 +90,14 @@ public class User {
 
 	public void setEnabled(boolean enabled) {
 		this.enabled = enabled;
+	}
+
+	public List<Role> getRoles() {
+		return roles;
+	}
+
+	public void setRoles(List<Role> roles) {
+		this.roles = roles;
 	}
 
 	@Override

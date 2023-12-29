@@ -1,7 +1,9 @@
 package com.derbyware.registration;
 
 import com.derbyware.registration.entities.Authority;
+import com.derbyware.registration.entities.Role;
 import com.derbyware.registration.repositories.AuthorityRepository;
+import com.derbyware.registration.repositories.RoleRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.SpringApplication;
@@ -23,6 +25,8 @@ public class RegistrationApplication {
 	@Value("#{${custom.authorities}}")
 	private List<String> authorities;
 
+	@Value("#{${custom.roles}}")
+	private List<String> roles;
 
 //	Run the first time
 //	@Bean
@@ -32,6 +36,18 @@ public class RegistrationApplication {
 //			for (String authority : authorities) {
 //				Authority auth = new Authority(authority);
 //				authorityRepository.save(auth);
+//			}
+//
+//		};
+//	}
+
+	//	Run the first time
+//	@Bean
+//	ApplicationRunner configureRepository(RoleRepository roleRepository) {
+//		return args -> {
+//			for (String role : roles) {
+//				Role roleEntity = new Role(role);
+//				roleRepository.save(roleEntity);
 //			}
 //
 //		};
