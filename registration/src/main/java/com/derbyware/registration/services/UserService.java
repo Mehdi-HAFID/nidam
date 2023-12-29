@@ -2,7 +2,6 @@ package com.derbyware.registration.services;
 
 import com.derbyware.registration.entities.Authority;
 import com.derbyware.registration.entities.User;
-import com.derbyware.registration.entities.enums.EncryptionAlgorithm;
 import com.derbyware.registration.repositories.AuthorityRepository;
 import com.derbyware.registration.repositories.UserRepository;
 import com.derbyware.registration.services.dto.UserRegisteredDto;

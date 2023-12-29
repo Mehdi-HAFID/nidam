@@ -1,10 +1,7 @@
 package com.derbyware.registration.entities;
 
-import com.derbyware.registration.entities.enums.EncryptionAlgorithm;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
 
 import java.util.ArrayList;
 import java.util.List;
