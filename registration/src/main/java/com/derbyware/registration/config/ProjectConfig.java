@@ -11,6 +11,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.crypto.password.Pbkdf2PasswordEncoder;
 import org.springframework.security.crypto.scrypt.SCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
 
 import java.util.HashMap;
 import java.util.List;
@@ -25,8 +27,19 @@ public class ProjectConfig {
 	@Bean
 	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 		http.authorizeHttpRequests((authz) -> authz.anyRequest().permitAll())
-				.csrf((csrf) -> csrf.disable())
-		;
+				.csrf((csrf) -> csrf.disable());
+		http.cors(c -> {
+			CorsConfigurationSource source = request -> {
+				CorsConfiguration config = new CorsConfiguration();
+				config.setAllowedOrigins(List.of(
+//						"*",
+						"http://localhost:4001"));
+				config.setAllowedMethods(List.of("*"));
+				config.setAllowedHeaders(List.of("*"));
+				return config;
+			};
+			c.configurationSource(source);
+		});
 		return http.build();
 	}
 
