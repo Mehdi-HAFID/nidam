@@ -1,5 +1,4 @@
-import * as React from 'react';
-import {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -12,15 +11,21 @@ import Box from '@mui/material/Box';
 import AccountBoxIcon from '@mui/icons-material/AccountBox';
 import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOff from '@mui/icons-material/VisibilityOff';
+import {useDispatch, useSelector} from "react-redux";
+import {Alert, FormControl, FormGroup, FormHelperText, IconButton, InputAdornment, InputLabel, OutlinedInput} from "@mui/material";
 
 import {checkValidity} from "../other/utility";
+import * as registerSagas from "../redux/register/saga";
+import {registerResetError} from "../redux/register/registerSlice";
 
 function Copyright(props) {
 	return (
 		<Typography variant="body2" color="text.secondary" align="center" {...props}>
 			{'Copyright © '}
 			<Link color="inherit" href="https://tigmat.io/">
-				Your Website
+				Nidam By Mehdi Hafid
 			</Link>{' '}
 			{new Date().getFullYear()}
 			{'.'}
@@ -39,6 +44,15 @@ const changeText = (inputTextState, value, label) => {
 }
 
 const SignUp = (props) => {
+
+	const registrationLoading = useSelector((state) => state.register.registrationLoading)
+	const registeredUser = useSelector((state) => state.register.registeredUser)
+	const registrationError = useSelector((state) => state.register.registrationError)
+	const dispatch = useDispatch();
+
+	useEffect(() => {
+		document.title = "Sign up - Nidam By Mehdi Hafid"
+	}, []);
 
 	const [email, setEmail] = useState({
 		value: "",
@@ -150,15 +164,25 @@ const SignUp = (props) => {
 
 		setTouchedPassword(true);
 
+		setShowTermsError(!termsAccepted)
+
 		if (!checkAllInputsValidity()) {
 			return;
 		}
-
-		console.log({
+		const user = {
 			email: email.value,
 			password: password.value,
-		});
+		}
+		console.log("user: ", user);
+		dispatch(registerSagas.register(user));
 	};
+
+	const [termsAccepted, setTermsAccepted] = useState(false);
+	const [showTermsError, setShowTermsError] = useState(false);
+
+	const [showPassword, setShowPassword] = useState(false);
+
+	const handleClickShowPassword = () => setShowPassword((show) => !show);
 
 	return (
 		<Container component="main" maxWidth="xs">
@@ -177,6 +201,17 @@ const SignUp = (props) => {
 				<Typography component="h1" variant="h5">
 					Sign up
 				</Typography>
+
+				{
+					(!registrationLoading && registeredUser !== null) ?
+						<Alert severity="success">You're successfully registered.</Alert> : null
+				}
+
+				{
+					( registrationError !== null) ?
+						<Alert severity="error" onClose={() => dispatch(registerResetError())}>{registrationError}</Alert> : null
+				}
+
 				<Box sx={{mt: 1}}>
 					<TextField
 						margin="normal"
@@ -192,52 +227,131 @@ const SignUp = (props) => {
 						helperText={!email.valid ? email.validationMessage : ""}
 						error={!email.valid}
 					/>
-					<TextField
-						margin="normal"
-						required
+					<FormControl
+						// sx={{ m: 1, width: '25ch' }}
+						variant="outlined"
 						fullWidth
-						name="password"
-						label="Password"
-						type="password"
-						id="password"
-						autoComplete="new-password"
-						value={password.value}
-						onChange={passwordChangeHandler}
-						helperText={(touchedPassword && !password.valid) ? password.validationMessage : ""}
+						margin="normal"
 						error={touchedPassword && !password.valid}
-					/>
-					<TextField
-						margin="normal"
-						required
+					>
+						<InputLabel htmlFor="password" >Password</InputLabel>
+						<OutlinedInput
+							// id="outlined-adornment-password"
+							endAdornment={
+								<InputAdornment position="end">
+									<IconButton
+										aria-label="toggle password visibility"
+										onClick={handleClickShowPassword}
+										// onMouseDown={handleMouseDownPassword}
+										edge="end"
+									>
+										{showPassword ? <VisibilityOff /> : <Visibility />}
+									</IconButton>
+								</InputAdornment>
+							}
+							// margin="normal"
+							required
+							name="password"
+							label="Password"
+							type={showPassword ? 'text' : 'password'}
+							id="password"
+							autoComplete="new-password"
+							value={password.value}
+							onChange={passwordChangeHandler}
+						/>
+						<FormHelperText>
+							{(touchedPassword && !password.valid) ? password.validationMessage : ""}
+						</FormHelperText>
+					</FormControl>
+					{/*<TextField*/}
+					{/*	margin="normal"*/}
+					{/*	required*/}
+					{/*	fullWidth*/}
+					{/*	name="password"*/}
+					{/*	label="Password"*/}
+					{/*	type="password"*/}
+					{/*	id="password"*/}
+					{/*	autoComplete="new-password"*/}
+					{/*	value={password.value}*/}
+					{/*	onChange={passwordChangeHandler}*/}
+					{/*	helperText={(touchedPassword && !password.valid) ? password.validationMessage : ""}*/}
+					{/*	error={touchedPassword && !password.valid}*/}
+					{/*/>*/}
+					<FormControl
+						// sx={{ m: 1, width: '25ch' }}
+						variant="outlined"
 						fullWidth
-						name="password-confirmation"
-						label="Confirm Password"
-						type="password"
-						id="password-confirmation"
-						autoComplete="new-password"
-						value={confirmPassword.value}
-						onChange={confirmPasswordChangeHandler}
-						helperText={(touchedPassword && !confirmPassword.valid) ? confirmPassword.validationMessage : ""}
+						margin="normal"
 						error={touchedPassword && !confirmPassword.valid}
-					/>
+					>
+						<InputLabel htmlFor="password-confirmation" >Confirm Password</InputLabel>
+						<OutlinedInput
+							// id="outlined-adornment-password"
+							endAdornment={
+								<InputAdornment position="end">
+									<IconButton
+										aria-label="toggle password visibility"
+										onClick={handleClickShowPassword}
+										// onMouseDown={handleMouseDownPassword}
+										edge="end"
+									>
+										{showPassword ? <VisibilityOff /> : <Visibility />}
+									</IconButton>
+								</InputAdornment>
+							}
+							// margin="normal"
+							required
+							name="password-confirmation"
+							label="Confirm Password"
+							type={showPassword ? 'text' : 'password'}
+							id="password-confirmation"
+							autoComplete="new-password"
+							value={confirmPassword.value}
+							onChange={confirmPasswordChangeHandler}
+						/>
+						<FormHelperText>
+							{(touchedPassword && !confirmPassword.valid) ? confirmPassword.validationMessage : ""}
+						</FormHelperText>
+					</FormControl>
+
+					{/*<TextField*/}
+					{/*	margin="normal"*/}
+					{/*	required*/}
+					{/*	fullWidth*/}
+					{/*	name="password-confirmation"*/}
+					{/*	label="Confirm Password"*/}
+					{/*	type="password"*/}
+					{/*	id="password-confirmation"*/}
+					{/*	autoComplete="new-password"*/}
+					{/*	value={confirmPassword.value}*/}
+					{/*	onChange={confirmPasswordChangeHandler}*/}
+					{/*	helperText={(touchedPassword && !confirmPassword.valid) ? confirmPassword.validationMessage : ""}*/}
+					{/*	error={touchedPassword && !confirmPassword.valid}*/}
+					{/*/>*/}
 					{/*<FormControlLabel*/}
 					{/*	control={<Checkbox value="remember" color="primary"/>}*/}
 					{/*	label="Remember me"*/}
 					{/*/>*/}
-					<FormControlLabel control={<Checkbox value="remember" color="primary"/>}
-					                  label={<>I agree to <a href="https://tigmat.io/legal/terms.html" target="_blank" className="mr-1"
-					                                         rel="noopener noreferrer">the
-						                  Terms &amp; Conditions</a></>}>
+					<FormControl error={true}>
+						<FormGroup >
+							<FormControlLabel control={<Checkbox value="remember" color="primary"
+							                                     onChange={(event) => {
+								                                     setTermsAccepted(event.target.checked);
+							                                     }}
+							/>}
+							                  label={<>I agree to <a href="https://tigmat.io/legal/terms.html" target="_blank">the
+								                  Terms &amp; Conditions</a></>}
+							>
 
-					</FormControlLabel>
-					<Button
-						fullWidth
-						variant="contained"
-						sx={{mt: 3, mb: 2}}
-						onClick={handleSubmit}
-					>
-						Sign In
+							</FormControlLabel>
+						</FormGroup>
+						{showTermsError && <FormHelperText>You must accept terms</FormHelperText>}
+					</FormControl>
+
+					<Button fullWidth variant="contained" sx={{mt: 3, mb: 2}} onClick={handleSubmit} disabled={registrationLoading}>
+						Sign Up
 					</Button>
+
 					<Grid container justifyContent="flex-end">
 						<Grid item>
 							<Link href="#" variant="body2">

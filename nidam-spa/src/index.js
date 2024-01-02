@@ -1,27 +1,31 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import './index.css';
-import App from './App';
+import {BrowserRouter, Navigate, Route, Routes} from "react-router-dom";
+import {Provider} from "react-redux";
+
 import reportWebVitals from './reportWebVitals';
-import {BrowserRouter, createBrowserRouter, Navigate, Route, RouterProvider, Routes} from "react-router-dom";
+import SignUp from "./container/SignUp";
+import {store} from "./redux/store";
+// import './index.css';
 import ErrorPage from "./pages/ErrorPage";
 
 import '@fontsource/roboto/300.css';
 import '@fontsource/roboto/400.css';
 import '@fontsource/roboto/500.css';
 import '@fontsource/roboto/700.css';
-import SignUp from "./container/SignUp";
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
-      <BrowserRouter>
-          <Routes>
-              <Route path="signup" element={<SignUp/>} />
-              <Route path='/' element={<Navigate to='signup' />} />
-              <Route path="*" element={<ErrorPage />} />
-          </Routes>
-      </BrowserRouter>
+      <Provider store={store}>
+          <BrowserRouter>
+              <Routes>
+                  <Route path="signup" element={<SignUp/>} />
+                  <Route path='/' element={<Navigate to='signup' />} />
+                  <Route path="*" element={<ErrorPage />} />
+              </Routes>
+          </BrowserRouter>
+      </Provider>
     {/*<App />*/}
   </React.StrictMode>
 );
