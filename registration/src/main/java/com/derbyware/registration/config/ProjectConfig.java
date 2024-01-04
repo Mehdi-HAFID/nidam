@@ -1,6 +1,7 @@
 package com.derbyware.registration.config;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -20,6 +21,7 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 @Configuration
+@EnableFeignClients(basePackages = "com.derbyware.registration.proxy")
 public class ProjectConfig {
 
 	private Logger log = Logger.getLogger(ProjectConfig.class.getName());
@@ -33,7 +35,7 @@ public class ProjectConfig {
 				CorsConfiguration config = new CorsConfiguration();
 				config.setAllowedOrigins(List.of(
 //						"*",
-						"http://localhost:4001"));
+						"http://localhost:4001", "http://127.0.0.1:4001"));
 				config.setAllowedMethods(List.of("*"));
 				config.setAllowedHeaders(List.of("*"));
 				return config;
