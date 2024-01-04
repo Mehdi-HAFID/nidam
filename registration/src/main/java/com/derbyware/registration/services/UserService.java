@@ -7,10 +7,13 @@ import com.derbyware.registration.repositories.AuthorityRepository;
 import com.derbyware.registration.repositories.RoleRepository;
 import com.derbyware.registration.repositories.UserRepository;
 import com.derbyware.registration.services.dto.UserRegisteredDto;
+import com.derbyware.registration.services.dto.UserRegistrationCaptchaDto;
 import com.derbyware.registration.services.dto.UserRegistrationDto;
 import com.derbyware.registration.services.error.AlreadyExistException;
 import com.derbyware.registration.services.error.PasswordInvalidException;
+import com.derbyware.registration.services.error.ReCaptchaException;
 import com.derbyware.registration.services.mapper.UserRegisteredMapper;
+import com.derbyware.registration.services.mapper.UserRegistrationCaptchaMapper;
 import com.derbyware.registration.services.mapper.UserRegistrationMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -54,6 +57,21 @@ public class UserService {
 
 	@Value("#{${custom.roles}}")
 	private List<String> roles;
+
+	@Autowired
+	private UserRegistrationCaptchaMapper userRegistrationCaptchaMapper;
+
+	@Autowired
+	private RecaptchaService recaptchaService;
+
+	public UserRegisteredDto save(UserRegistrationCaptchaDto userDto){
+		boolean result = recaptchaService.validateCaptcha(userDto.getRecaptchaKey());
+		log.info("result: " + result);
+		if(!result){
+			throw new ReCaptchaException("Captcha Error");
+		}
+		return save(userRegistrationCaptchaMapper.toEntity(userDto));
+	}
 
 	public UserRegisteredDto save(UserRegistrationDto userDto){
 		if(userRepository.findUserByEmail(userDto.getEmail()).isPresent()){
