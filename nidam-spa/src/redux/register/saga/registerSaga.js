@@ -3,16 +3,16 @@ import {put} from "redux-saga/effects"
 import axios from "../../axios";
 import { registerStart, registerSuccess, registerFail } from '../registerSlice';
 
-export function* register(action) {
+export function* registerReCaptcha(action) {
 	yield put(registerStart());
 
 	try {
-		const response = yield axios.post("new", action.user);
+		const response = yield axios.post("registerCaptcha", action.user);
 		// console.log("register response: ", response.data);
 
 		yield put(registerSuccess({user: response.data}));
 
-	// 	yield put(push(`/dashboard`));
+		// 	yield put(push(`/dashboard`));
 
 	} catch (error) {
 		if (error.response) {

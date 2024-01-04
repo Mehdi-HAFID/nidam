@@ -64,46 +64,31 @@ const SignUp = (props) => {
 		};
 	}, []);
 
-	const [captchaErrorMsg, setCaptchaErrorMsg] = useState(null);
-
 	const executeReCaptcha = (e) => {
 		e.preventDefault();
 		window.grecaptcha.ready(function() {
 			window.grecaptcha.execute('6LcyyEMpAAAAAMztnW6xVq1HFD0b-mlyk2t6NZa-', {action: 'submit'})
-				.then(token => verifyReCaptcha(token))
+				// .then(token => verifyReCaptcha(token))
+				.then(token => register(token))
 		});
 	}
 
-	const verifyReCaptcha = async token => {
-		console.log("captcha token: ", token);
-		// Add your logic to submit to your backend server here.
-		const isHuman = await fetch(`${process.env.REACT_APP_BACKEND_REGISTRATION_URL}recaptcha`, {
-			method: "post",
-			headers: {
-				Accept: "application/json",
-				"Content-Type": "application/x-www-form-urlencoded; charset=utf-8"
-			},
-			body: token
-		});
+	const register = token => {
+		setTouchedPassword(true);
 
-		// catch error
-		if(!isHuman.ok){
-			setCaptchaErrorMsg(<Alert severity="error">Captcha Error</Alert>);
+		setShowTermsError(!termsAccepted)
+
+		if (!checkAllInputsValidity()) {
 			return;
 		}
-
-		const ishumanJson = await isHuman.json();
-		// console.log("ishumanJson: ", ishumanJson);
-
-		if (!token || !ishumanJson) {
-			setCaptchaErrorMsg(<Alert severity="error">Captcha Error</Alert>);
-			return;
+		const user = {
+			email: email.value,
+			password: password.value,
+			recaptchaKey: token
 		}
-
-		// The code below will run only after the reCAPTCHA is successfully validated.
-		setCaptchaErrorMsg(null);
-		registerUser();
-	};
+		console.log("user: ", user);
+		dispatch(registerSagas.register(user));
+	}
 
 	const [email, setEmail] = useState({
 		value: "",
@@ -209,24 +194,6 @@ const SignUp = (props) => {
 		return allValid;
 	}
 
-	const registerUser = () => {
-		// event.preventDefault();
-
-		setTouchedPassword(true);
-
-		setShowTermsError(!termsAccepted)
-
-		if (!checkAllInputsValidity()) {
-			return;
-		}
-		const user = {
-			email: email.value,
-			password: password.value,
-		}
-		console.log("user: ", user);
-		dispatch(registerSagas.register(user));
-	};
-
 	const [termsAccepted, setTermsAccepted] = useState(false);
 	const [showTermsError, setShowTermsError] = useState(false);
 
@@ -261,8 +228,6 @@ const SignUp = (props) => {
 					( registrationError !== null) ?
 						<Alert severity="error" onClose={() => dispatch(registerResetError())}>{registrationError}</Alert> : null
 				}
-
-				{captchaErrorMsg}
 
 				<Box sx={{mt: 1}}>
 					<TextField
