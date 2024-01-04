@@ -51,8 +51,59 @@ const SignUp = (props) => {
 	const dispatch = useDispatch();
 
 	useEffect(() => {
-		document.title = "Sign up - Nidam By Mehdi Hafid"
+		document.title = "Sign up - Nidam By Mehdi Hafid";
+		// ReCaptcha
+		const script = document.createElement('script');
+		script.src = 'https://www.google.com/recaptcha/api.js?render=6LcyyEMpAAAAAMztnW6xVq1HFD0b-mlyk2t6NZa-';
+		script.class = "external-script"
+		script.async = true;
+		script.defer = true;
+		document.body.appendChild(script);
+		return () => {
+			document.body.removeChild(script);
+		};
 	}, []);
+
+	const [captchaErrorMsg, setCaptchaErrorMsg] = useState(null);
+
+	const executeReCaptcha = (e) => {
+		e.preventDefault();
+		window.grecaptcha.ready(function() {
+			window.grecaptcha.execute('6LcyyEMpAAAAAMztnW6xVq1HFD0b-mlyk2t6NZa-', {action: 'submit'})
+				.then(token => verifyReCaptcha(token))
+		});
+	}
+
+	const verifyReCaptcha = async token => {
+		console.log("captcha token: ", token);
+		// Add your logic to submit to your backend server here.
+		const isHuman = await fetch(`${process.env.REACT_APP_BACKEND_REGISTRATION_URL}recaptcha`, {
+			method: "post",
+			headers: {
+				Accept: "application/json",
+				"Content-Type": "application/x-www-form-urlencoded; charset=utf-8"
+			},
+			body: token
+		});
+
+		// catch error
+		if(!isHuman.ok){
+			setCaptchaErrorMsg(<Alert severity="error">Captcha Error</Alert>);
+			return;
+		}
+
+		const ishumanJson = await isHuman.json();
+		// console.log("ishumanJson: ", ishumanJson);
+
+		if (!token || !ishumanJson) {
+			setCaptchaErrorMsg(<Alert severity="error">Captcha Error</Alert>);
+			return;
+		}
+
+		// The code below will run only after the reCAPTCHA is successfully validated.
+		setCaptchaErrorMsg(null);
+		registerUser();
+	};
 
 	const [email, setEmail] = useState({
 		value: "",
@@ -148,7 +199,6 @@ const SignUp = (props) => {
 		setEmail(updatedEmail);
 		allValid = allValid && updatedEmail.valid;
 
-		// TODO test
 		const updatedPassword = changeText(password, password.value, "Password");
 		setPassword(updatedPassword);
 		allValid = allValid && password.valid;
@@ -159,8 +209,8 @@ const SignUp = (props) => {
 		return allValid;
 	}
 
-	const handleSubmit = (event) => {
-		event.preventDefault();
+	const registerUser = () => {
+		// event.preventDefault();
 
 		setTouchedPassword(true);
 
@@ -211,6 +261,8 @@ const SignUp = (props) => {
 					( registrationError !== null) ?
 						<Alert severity="error" onClose={() => dispatch(registerResetError())}>{registrationError}</Alert> : null
 				}
+
+				{captchaErrorMsg}
 
 				<Box sx={{mt: 1}}>
 					<TextField
@@ -348,7 +400,7 @@ const SignUp = (props) => {
 						{showTermsError && <FormHelperText>You must accept terms</FormHelperText>}
 					</FormControl>
 
-					<Button fullWidth variant="contained" sx={{mt: 3, mb: 2}} onClick={handleSubmit} disabled={registrationLoading}>
+					<Button fullWidth variant="contained" sx={{mt: 3, mb: 2}} onClick={executeReCaptcha} disabled={registrationLoading}>
 						Sign Up
 					</Button>
 
