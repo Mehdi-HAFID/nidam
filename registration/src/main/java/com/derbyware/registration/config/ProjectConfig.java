@@ -1,16 +1,19 @@
 package com.derbyware.registration.config;
 
+import jakarta.servlet.DispatcherType;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.argon2.Argon2PasswordEncoder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.DelegatingPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.crypto.password.Pbkdf2PasswordEncoder;
 import org.springframework.security.crypto.scrypt.SCryptPasswordEncoder;
+import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -28,8 +31,13 @@ public class ProjectConfig {
 
 	@Bean
 	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-		http.authorizeHttpRequests((authz) -> authz.anyRequest().permitAll())
-				.csrf((csrf) -> csrf.disable());
+		http.authorizeHttpRequests((authorizeHttpRequests) ->
+						authorizeHttpRequests.dispatcherTypeMatchers(DispatcherType.ERROR).permitAll().
+								requestMatchers("/register", "/registerCaptcha").permitAll().
+								anyRequest().denyAll()
+				);
+		http.csrf((csrf) -> csrf.disable());
+		http.httpBasic(httpSecurityHttpBasicConfigurer -> httpSecurityHttpBasicConfigurer.disable());
 		http.cors(c -> {
 			CorsConfigurationSource source = request -> {
 				CorsConfiguration config = new CorsConfiguration();
@@ -44,6 +52,11 @@ public class ProjectConfig {
 		});
 		return http.build();
 	}
+
+//	@Bean
+//	public UserDetailsService userDetailsService() {
+//		return new InMemoryUserDetailsManager();
+//	}
 
 	@Bean
 	public PasswordEncoder passwordEncoder(@Value("#{${custom.password.encoders}}") List<String> encoders,
