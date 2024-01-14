@@ -1,0 +1,38 @@
+package com.derbyware.tokengenerator.service;
+
+import com.derbyware.tokengenerator.config.SecurityConfigStaticKey;
+import com.derbyware.tokengenerator.entities.User;
+import com.derbyware.tokengenerator.model.EntityUserDetails;
+import com.derbyware.tokengenerator.repositories.UserRepository;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.stereotype.Service;
+
+import java.util.Optional;
+import java.util.logging.Logger;
+
+@Service
+public class JpaUserDetailsService implements UserDetailsService {
+
+	private Logger log = Logger.getLogger(JpaUserDetailsService.class.getName());
+
+	private final UserRepository userRepository;
+
+	public JpaUserDetailsService(UserRepository userRepository){
+		this.userRepository = userRepository;
+	}
+
+	@Override
+	public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+		Optional<User> userOptional = userRepository.findUserByEmail(email);
+		if(userOptional.isPresent()){
+			EntityUserDetails entityUserDetails = new EntityUserDetails(userOptional.get());
+			// TODO test to see if authorities is loaded
+			log.info("entityUserDetails: " + entityUserDetails.getUsername() + " , authorities: " + entityUserDetails.getAuthorities());
+			return entityUserDetails;
+		}
+		throw new UsernameNotFoundException("User not found");
+	}
+
+}
