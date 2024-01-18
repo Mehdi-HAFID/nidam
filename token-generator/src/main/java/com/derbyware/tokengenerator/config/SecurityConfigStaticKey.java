@@ -15,6 +15,7 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -28,6 +29,7 @@ import org.springframework.security.crypto.scrypt.SCryptPasswordEncoder;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
+import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.server.authorization.client.InMemoryRegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
@@ -35,6 +37,8 @@ import org.springframework.security.oauth2.server.authorization.config.annotatio
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.settings.TokenSettings;
+import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
+import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.provisioning.JdbcUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
@@ -49,10 +53,7 @@ import java.security.cert.Certificate;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.time.Duration;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.logging.Logger;
 
 @Configuration
@@ -142,7 +143,7 @@ public class SecurityConfigStaticKey {
 				.clientSecret("{bcrypt}$2a$10$.ld6BfZescPDfVVduvu.6O9.7FLMI64l4PfvnBZJQEBhTLFFbeKei") //secret
 				.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
 				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-				.redirectUri("https://www.manning.com/authorized")
+				.redirectUri("http://localhost:4004/login/oauth2/code/token-generator")
 				.scope(OidcScopes.OPENID)
 //				.clientSettings(ClientSettings.builder().requireProofKey(false).build())
 				.tokenSettings(TokenSettings.builder().accessTokenTimeToLive(Duration.ofHours(12)).build())
@@ -194,6 +195,27 @@ public class SecurityConfigStaticKey {
 		log.info("PublicKey publicKey: " + publicKey);
 		return new KeyPair(publicKey, key);
 
+	}
+
+
+	// this adds custom info to the token payload
+//	 "authorities": [
+//			 "manage-users",
+//			 "manage-projects"
+//			 ]
+	@Bean
+	public OAuth2TokenCustomizer<JwtEncodingContext> jwtCustomizer() {
+		return context -> {
+//			log.info("grant: " + context.getAuthorizationGrant().getAuthorities());
+//			log.info("Authorization: " + context.getAuthorization().getAttributes());
+			log.info("Principal: " + context.getPrincipal().getAuthorities());
+			List<String> auths = new ArrayList<>();
+			for (GrantedAuthority auth : context.getPrincipal().getAuthorities()){
+				auths.add(auth.getAuthority());
+			}
+			JwtClaimsSet.Builder claims = context.getClaims();
+			claims.claim("authorities", auths);
+		};
 	}
 
 
