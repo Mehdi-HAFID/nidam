@@ -143,7 +143,8 @@ public class SecurityConfigStaticKey {
 				.clientSecret("{bcrypt}$2a$10$.ld6BfZescPDfVVduvu.6O9.7FLMI64l4PfvnBZJQEBhTLFFbeKei") //secret
 				.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
 				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-				.redirectUri("http://localhost:4004/login/oauth2/code/token-generator")
+				.redirectUri("http://localhost:7080/bff/login/oauth2/code/token-generator")
+				// changed from http://localhost:4004/login/oauth2/code/token-generator
 				.scope(OidcScopes.OPENID)
 //				.clientSettings(ClientSettings.builder().requireProofKey(false).build())
 				.tokenSettings(TokenSettings.builder().accessTokenTimeToLive(Duration.ofHours(12)).build())
@@ -170,7 +171,9 @@ public class SecurityConfigStaticKey {
 
 	@Bean
 	public AuthorizationServerSettings authorizationServerSettings() {
-		return AuthorizationServerSettings.builder().build();
+		return AuthorizationServerSettings.builder()
+//				.issuer("http://localhost:7080")
+				.build();
 	}
 
 	@Value("${password}")
