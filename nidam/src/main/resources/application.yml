@@ -7,7 +7,7 @@ hostname: localhost
 reverse-proxy-port: 7080
 reverse-proxy-uri: ${scheme}://${hostname}:${reverse-proxy-port}
 authorization-server-prefix: /auth
-issuer: ${reverse-proxy-uri}${authorization-server-prefix}     # removed  /realms/baeldung
+issuer: ${reverse-proxy-uri}${authorization-server-prefix}
 
 username-claim-json-path: $.preferred_username      # TODO set properly
 authorities-json-path: $.realm_access.roles
