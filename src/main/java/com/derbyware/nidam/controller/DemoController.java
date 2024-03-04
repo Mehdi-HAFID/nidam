@@ -6,6 +6,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.core.DefaultOAuth2AuthenticatedPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -25,8 +26,8 @@ public class DemoController {
 //		log.info("a.getCredentials(): " + a.getCredentials());
 //		log.info("a.getDetails(): " + a.getDetails());
 
-		CustomAuthentication cusAuth = (CustomAuthentication) a;
-		log.info("cusAuth.getAuthorities2(): " + cusAuth.getAuthorities2());
+		JwtAuthenticationToken cusAuth = (JwtAuthenticationToken) a; // TODO switch back to CustomAuthentication
+		log.info("cusAuth.getAuthorities2(): " + cusAuth.getAuthorities());
 //		log.info("cusAuth.getAuthorities(): " + cusAuth.getAuthorities().stream().map(ab -> ab.getAuthority()).toList());
 		return a;
 	}
