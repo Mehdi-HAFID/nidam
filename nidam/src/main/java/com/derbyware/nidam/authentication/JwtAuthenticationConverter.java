@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
-@Component
+//@Component  TODO move from spring-addons-starter-oidc to this
 public class JwtAuthenticationConverter implements Converter<Jwt, CustomAuthentication> {
 	private Logger log = Logger.getLogger(JwtAuthenticationConverter.class.getName());
 
