@@ -1,0 +1,61 @@
+# Custom properties to ease configuration overrides
+# on command-line or IDE launch configurations
+scheme: http
+hostname: localhost
+reverse-proxy-port: 7080
+
+#angular-port: 4201
+#angular-prefix: /angular-ui
+#angular-uri: http://${hostname}:${angular-port}${angular-prefix}
+
+#vue-port: 4202
+#vue-prefix: /vue-ui
+#vue-uri: http://${hostname}:${vue-port}${vue-prefix}
+
+react-port: 4005
+react-prefix:
+react-uri: http://${hostname}:${react-port}${react-prefix}
+
+authorization-server-port: 4002
+authorization-server-prefix: /auth
+authorization-server-uri: ${scheme}://${hostname}:${authorization-server-port}${authorization-server-prefix}
+
+bff-port: 7081
+bff-prefix: /bff
+bff-uri: ${scheme}://${hostname}:${bff-port}
+
+server:
+  port: ${reverse-proxy-port}
+
+spring:
+  cloud:
+    gateway:
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
+      routes:
+        # SPAs assets
+#        - id: angular-ui
+#          uri: ${angular-uri}
+#          predicates:
+#            - Path=${angular-prefix}/**
+#        - id: vue-ui
+#          uri: ${vue-uri}
+#          predicates:
+#            - Path=${vue-prefix}/**
+        - id: react-ui
+          uri: ${react-uri}
+          predicates:
+            - Path=${react-prefix}/**
+        # Authorization-server
+        - id: authorization-server
+          uri: ${authorization-server-uri}
+          predicates:
+            - Path=${authorization-server-prefix}/**
+        # BFF
+        - id: bff
+          uri: ${bff-uri}
+          predicates:
+            - Path=${bff-prefix}/**
+          filters:
+            - StripPrefix=1
+#trace: true
