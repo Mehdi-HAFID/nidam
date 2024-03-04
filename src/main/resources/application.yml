@@ -1,0 +1,36 @@
+#keySetURI: http://localhost:7080/auth/oauth2/jwks       # changed from http://localhost:4002/oauth2/jwks
+
+# TODO move from spring-addons-starter-oidc to own configuration
+
+scheme: http
+hostname: localhost
+reverse-proxy-port: 7080
+reverse-proxy-uri: ${scheme}://${hostname}:${reverse-proxy-port}
+authorization-server-prefix: /auth
+issuer: ${reverse-proxy-uri}${authorization-server-prefix}     # removed  /realms/baeldung
+
+username-claim-json-path: $.preferred_username      # TODO set properly
+authorities-json-path: $.realm_access.roles
+
+resource-server-port: 4003
+audience:
+
+server:
+  port: ${resource-server-port}
+
+com:
+  c4-soft:
+    springaddons:
+      oidc:
+        ops:
+          - iss: ${issuer}      # I think this gets the public key endpoint
+            username-claim: ${username-claim-json-path}
+            authorities:
+              - path: ${authorities-json-path}
+            aud: ${audience}
+        resourceserver:
+          permit-all:
+            - /me
+            - /actuator/health/readiness
+            - /actuator/health/liveness
+#trace: true
