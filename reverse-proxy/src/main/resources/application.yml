@@ -13,7 +13,7 @@ reverse-proxy-port: 7080
 #vue-uri: http://${hostname}:${vue-port}${vue-prefix}
 
 react-port: 4005
-react-prefix:
+react-prefix: /react-ui
 react-uri: http://${hostname}:${react-port}${react-prefix}
 
 authorization-server-port: 4002
