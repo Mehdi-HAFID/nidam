@@ -1,0 +1,85 @@
+scheme: http
+hostname: localhost
+
+reverse-proxy-port: 7080
+reverse-proxy-uri: ${scheme}://${hostname}:${reverse-proxy-port}
+
+authorization-server-prefix: /auth
+issuer: ${reverse-proxy-uri}${authorization-server-prefix}
+
+client-id: client       # changed
+client-secret: secret      # changed
+
+username-claim-json-path: $.preferred_username      # TODO change
+authorities-json-path: $.realm_access.roles
+
+bff-port: 7081
+bff-prefix: /bff
+
+resource-server-port: 4003
+
+audience:
+
+server:
+  port: ${bff-port}
+
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: bff
+          uri: ${scheme}://${hostname}:${resource-server-port}
+          predicates:
+            - Path=/api/**
+          filters:
+            - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
+            - TokenRelay=
+            - SaveSession
+            - StripPrefix=1
+  security:
+    oauth2:
+      client:
+        provider:
+          token-generator:
+            issuer-uri: ${issuer}
+        registration:
+          token-generator:
+            provider: token-generator
+            authorization-grant-type: authorization_code
+            client-id: ${client-id}
+            client-secret: ${client-secret}
+            scope: openid                         # TODO test adding redirect url
+
+com:
+  c4-soft:
+    springaddons:
+      oidc:
+        # Trusted OpenID Providers configuration (with authorities mapping)
+        ops:
+          - iss: ${issuer}
+            authorities:
+              - path: ${authorities-json-path}
+            aud: ${audience}
+        # SecurityFilterChain with oauth2Login() (sessions and CSRF protection enabled)
+        client:
+          client-uri: ${reverse-proxy-uri}${bff-prefix}
+          security-matchers:
+            - /api/**
+            - /login/**
+            - /oauth2/**
+            - /logout
+          permit-all:
+            - /api/**
+            - /login/**
+            - /oauth2/**
+          csrf: cookie-accessible-from-js
+          oauth2-redirections:
+            rp-initiated-logout: ACCEPTED
+        # SecurityFilterChain with oauth2ResourceServer() (sessions and CSRF protection disabled)
+        resourceserver:
+          permit-all:
+            - /login-options
+            - /error
+            - /actuator/health/readiness
+            - /actuator/health/liveness
+#trace: true
