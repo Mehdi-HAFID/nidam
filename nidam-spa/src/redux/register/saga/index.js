@@ -1,3 +1,3 @@
 export {
-	register
+	register, GetMySecret
 } from "./registerSagaActions"
