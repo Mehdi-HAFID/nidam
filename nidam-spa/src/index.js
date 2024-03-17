@@ -13,17 +13,22 @@ import '@fontsource/roboto/300.css';
 import '@fontsource/roboto/400.css';
 import '@fontsource/roboto/500.css';
 import '@fontsource/roboto/700.css';
+import Private from "./container/Private";
+import AuthenticationStartup from "./authentication/AuthenticationStartup";
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
       <Provider store={store}>
-          <BrowserRouter>
-              <Routes>
-                  <Route path="signup" element={<SignUp/>} />
-                  <Route path='/' element={<Navigate to='signup' />} />
-                  <Route path="*" element={<ErrorPage />} />
-              </Routes>
+          <BrowserRouter basename="/react-ui" >
+              <AuthenticationStartup>
+                  <Routes >
+                      <Route path="signup" element={<SignUp/>} />
+                      <Route path="secret" element={<Private/>} />
+                      <Route path='/' element={<Navigate to='signup' />} />
+                      <Route path="*" element={<ErrorPage />} />
+                  </Routes>
+              </AuthenticationStartup>
           </BrowserRouter>
       </Provider>
     {/*<App />*/}

@@ -1,8 +1,16 @@
 import {takeEvery} from "redux-saga/effects";
 
-import {registerReCaptcha} from "./register/saga/registerSaga";
-import * as actionsTypes from "./register/saga/registerSagaActionTypes";
+import * as registerTypes from "./register/saga/registerSagaActionTypes";
+import {getSecret, registerReCaptcha} from "./register/saga/registerSaga";
+
+import * as authenticationTypes from "./authentication/saga/authenticationActionTypes";
+import {isLoggedIn} from "./authentication/saga/authentication";
 
 export function* watchRegistration() {
-	yield takeEvery(actionsTypes.REGISTER, registerReCaptcha);
+	yield takeEvery(registerTypes.REGISTER, registerReCaptcha);
+	yield takeEvery("SECRET", getSecret);
+}
+
+export function* watchAuthentication() {
+	yield takeEvery(authenticationTypes.IS_LOGGED_IN, isLoggedIn);
 }

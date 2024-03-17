@@ -6,3 +6,9 @@ export const register = (user) => {
 		user: user
 	}
 };
+
+export const GetMySecret = () => {
+	return {
+		type: "SECRET",
+	}
+};

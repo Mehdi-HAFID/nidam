@@ -19,6 +19,11 @@ import {Alert, FormControl, FormGroup, FormHelperText, IconButton, InputAdornmen
 import {checkValidity} from "../other/utility";
 import * as registerSagas from "../redux/register/saga";
 import {registerResetError} from "../redux/register/registerSlice";
+import Login from "./Login";
+import {NavLink} from "react-router-dom";
+import {isLoggedInResetError} from "../redux/authentication/authenticationSlice";
+
+// import Link as LL from 'react'
 
 function Copyright(props) {
 	return (
@@ -44,11 +49,13 @@ const changeText = (inputTextState, value, label) => {
 }
 
 const SignUp = (props) => {
+	const dispatch = useDispatch();
 
 	const registrationLoading = useSelector((state) => state.register.registrationLoading)
 	const registeredUser = useSelector((state) => state.register.registeredUser)
 	const registrationError = useSelector((state) => state.register.registrationError)
-	const dispatch = useDispatch();
+
+	const isLoggedInError = useSelector((state) => state.authentication.isLoggedInError);
 
 	useEffect(() => {
 		document.title = "Sign up - Nidam By Mehdi Hafid";
@@ -229,6 +236,12 @@ const SignUp = (props) => {
 						<Alert severity="error" onClose={() => dispatch(registerResetError())}>{registrationError}</Alert> : null
 				}
 
+				{/* /me error TODO add Try Again Button */}
+				{
+					( isLoggedInError !== null) ?
+						<Alert severity="error" sx={{mt: 2}} onClose={() => dispatch(isLoggedInResetError())}>{isLoggedInError}</Alert> : null
+				}
+
 				<Box sx={{mt: 1}}>
 					<TextField
 						margin="normal"
@@ -371,9 +384,10 @@ const SignUp = (props) => {
 
 					<Grid container justifyContent="flex-end">
 						<Grid item>
-							<Link href="#" variant="body2">
-								Already have an account? Sign in
-							</Link>
+							<Login/>
+						</Grid>
+						<Grid item>
+							<NavLink to="/secret">Secret Page</NavLink>
 						</Grid>
 					</Grid>
 				</Box>
