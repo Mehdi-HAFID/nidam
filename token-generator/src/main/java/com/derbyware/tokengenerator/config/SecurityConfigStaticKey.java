@@ -147,6 +147,7 @@ public class SecurityConfigStaticKey {
 				// changed from http://localhost:4004/login/oauth2/code/token-generator
 				.scope(OidcScopes.OPENID)
 //				.clientSettings(ClientSettings.builder().requireProofKey(false).build())
+				.postLogoutRedirectUri("http://localhost:7080/react-ui")
 				.tokenSettings(TokenSettings.builder().accessTokenTimeToLive(Duration.ofHours(12)).build())
 				.build();
 		return new InMemoryRegisteredClientRepository(registeredClient);
