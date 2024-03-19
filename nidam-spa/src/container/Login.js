@@ -1,7 +1,5 @@
 import Link from "@mui/material/Link";
 import React from "react";
-import Button from "@mui/material/Button";
-
 
 const Login = props => {
 
@@ -9,7 +7,6 @@ const Login = props => {
 		event.preventDefault();
 
 		const currentPath = "/";
-
 		let url = new URL(process.env.REACT_APP_LOGIN_URL);
 
 		url.searchParams.append(
@@ -20,10 +17,12 @@ const Login = props => {
 		window.location.href = url.toString();
 	}
 
-
-	return <Button onClick={e => login(e)} variant="text" >
+	return <Link onClick={e => login(e)}  style={{cursor: "pointer"}}>
 		Already have an account? Sign in
-	</Button>
+	</Link>
+	// <Button onClick={e => login(e)} variant="text" >
+	// 	Already have an account? Sign in
+	// </Button>
 }
 
-export default Login
+export default Login;

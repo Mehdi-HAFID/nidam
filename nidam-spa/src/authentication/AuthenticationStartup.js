@@ -15,6 +15,7 @@ const AuthenticationStartup = props => {
 	const [phase, setPhase] = useState(1);
 	const [showSplashScreen, setShowSplashScreen] = useState(true);
 
+
 	useEffect(() => {
 		// call /me phase 2
 		console.log("I'm here");
@@ -25,10 +26,10 @@ const AuthenticationStartup = props => {
 
 	useEffect(() => {
 		if (phase === 2 && !isLoggedInLoading) {
-			if(isLoggedInError !== null){
+			if(isLoggedInError === null){
 				console.log("userInfo: ", userInfo);
 
-				if(userInfo?.username && userInfo.username === ""){
+				if(userInfo?.username === ""){
 					// if empty then unauthenticated phase 3
 					setPhase(3);
 				} else {

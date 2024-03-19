@@ -382,13 +382,13 @@ const SignUp = (props) => {
 						Sign Up
 					</Button>
 
-					<Grid container justifyContent="flex-end">
+					<Grid container direction="column" justifyContent="center" alignItems="flex-end">
 						<Grid item>
 							<Login/>
 						</Grid>
-						<Grid item>
-							<NavLink to="/secret">Secret Page</NavLink>
-						</Grid>
+						{/*<Grid item>*/}
+						{/*	<NavLink to="/secret">Secret Page</NavLink>*/}
+						{/*</Grid>*/}
 					</Grid>
 				</Box>
 			</Box>

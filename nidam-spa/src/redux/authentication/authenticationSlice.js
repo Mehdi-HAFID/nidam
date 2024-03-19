@@ -14,6 +14,7 @@ export const authenticationSlice = createSlice({
 		isLoggedInStart: (state, action) => {
 			state.isLoggedInLoading = true;
 			state.isLoggedInError = null;
+			state.authenticated = false;
 		},
 		isLoggedInSuccess: (state, action) => {
 			state.isLoggedInLoading = false;
