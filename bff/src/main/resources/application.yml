@@ -10,8 +10,8 @@ issuer: ${reverse-proxy-uri}${authorization-server-prefix}
 client-id: client       # changed
 client-secret: secret      # changed
 
-username-claim-json-path: $.preferred_username      # TODO change
-authorities-json-path: $.realm_access.roles
+username-claim-json-path: $.sub      # TODO change
+authorities-json-path: $.authorities
 
 bff-port: 7081
 bff-prefix: /bff
