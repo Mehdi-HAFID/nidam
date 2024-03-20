@@ -11,7 +11,7 @@ const AppRoutes = () => {
 
 	console.log("authenticated: ", authenticated)
 	return (<Routes>
-
+		<Route path='error/404' element={<ErrorPage />} />
 		{authenticated ? (
 			<>
 				<Route path="secret" element={<Private/>} />
@@ -27,6 +27,8 @@ const AppRoutes = () => {
 			</>
 		)}
 
+
+		<Route path='*' element={<Navigate to='/error/404' />} />
 
 
 		{/*<Route path='/' element={<Navigate to='signup' />} />*/}

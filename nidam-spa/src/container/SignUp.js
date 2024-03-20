@@ -16,11 +16,10 @@ import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import {useDispatch, useSelector} from "react-redux";
 import {Alert, FormControl, FormGroup, FormHelperText, IconButton, InputAdornment, InputLabel, OutlinedInput} from "@mui/material";
 
-import {checkValidity} from "../other/utility";
+import {checkValidity} from "../other/InputValidtor";
 import * as registerSagas from "../redux/register/saga";
 import {registerResetError} from "../redux/register/registerSlice";
 import Login from "./Login";
-import {NavLink} from "react-router-dom";
 import {isLoggedInResetError} from "../redux/authentication/authenticationSlice";
 
 // import Link as LL from 'react'
