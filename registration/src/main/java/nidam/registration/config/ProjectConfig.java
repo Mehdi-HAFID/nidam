@@ -42,7 +42,7 @@ public class ProjectConfig {
 				CorsConfiguration config = new CorsConfiguration();
 				config.setAllowedOrigins(List.of(
 //						"*",
-						"http://localhost:4001", "http://127.0.0.1:4001"));
+						"http://localhost:4001", "http://127.0.0.1:4001")); // TODO add localhost:7080
 				config.setAllowedMethods(List.of("*"));
 				config.setAllowedHeaders(List.of("*"));
 				return config;

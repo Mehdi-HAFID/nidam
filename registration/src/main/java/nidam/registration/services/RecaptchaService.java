@@ -2,6 +2,7 @@ package nidam.registration.services;
 
 import nidam.registration.proxy.ReCaptchaProxy;
 import nidam.registration.services.dto.CaptchaResponse;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -13,6 +14,9 @@ public class RecaptchaService {
 
 	private Logger log = Logger.getLogger(RecaptchaService.class.getName());
 
+	@Value("#{${custom.recaptcha.secret}}")
+	private String recaptchaSecret;
+
 	private ReCaptchaProxy reCaptchaProxy;
 	public RecaptchaService(ReCaptchaProxy reCaptchaProxy){
 		this.reCaptchaProxy = reCaptchaProxy;
@@ -20,7 +24,7 @@ public class RecaptchaService {
 
 	public boolean validateCaptcha(String key){
 		MultiValueMap<String, String> requestMap = new LinkedMultiValueMap<>();
-		requestMap.add("secret", "6LcyyEMpAAAAANm0qZB6kzDQRT5Li4FSGCTe8ESf");
+		requestMap.add("secret", recaptchaSecret);
 		requestMap.add("response", key);
 
 		CaptchaResponse captchaResponse = reCaptchaProxy.validateReCaptcha(requestMap);
