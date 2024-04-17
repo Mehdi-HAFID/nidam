@@ -2,6 +2,7 @@ import {put} from "redux-saga/effects"
 
 import {axios, registerAxios} from "../../axios";
 import {registerStart, registerSuccess, registerFail, saveSecret} from '../registerSlice';
+import {catchError} from "../../SagaGenericUtil";
 
 export function* registerReCaptcha(action) {
 	yield put(registerStart());
@@ -15,16 +16,7 @@ export function* registerReCaptcha(action) {
 		// 	yield put(push(`/dashboard`));
 
 	} catch (error) {
-		if (error.response) {
-			console.log(error.response.data.message);
-			yield put(registerFail({error: error.response.data.message}));
-		} else if (error.request) {
-			console.log(error.request)
-			yield put(registerFail({error: 'Error Registering, Try Again'}));
-		} else {
-			console.log('Error', error.message);
-			yield put(registerFail({error: error.message}));
-		}
+		yield * catchError(error, registerFail, 'Error Registering, Try Again');
 	}
 }
 

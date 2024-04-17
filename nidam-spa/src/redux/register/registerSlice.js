@@ -39,4 +39,4 @@ export const registerSlice = createSlice({
 export const { registerStart, registerSuccess,
 	registerFail, registerResetError, saveSecret } = registerSlice.actions
 
-export default registerSlice.reducer
+export default registerSlice.reducer;

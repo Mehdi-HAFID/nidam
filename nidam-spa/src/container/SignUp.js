@@ -115,7 +115,7 @@ const SignUp = (props) => {
 			maxLength: 255
 		},
 		valid: false,
-		validationMessage: "Invalid Password"
+		validationMessage: null
 	});
 
 	const [confirmPassword, setConfirmPassword] = useState({
@@ -368,7 +368,7 @@ const SignUp = (props) => {
 								                                     setTermsAccepted(event.target.checked);
 							                                     }}
 							/>}
-							                  label={<>I agree to <a href="https://tigmat.io/legal/terms.html" target="_blank">the
+							                  label={<>I agree to <a href="https://tigmat.io/" target="_blank">the
 								                  Terms &amp; Conditions</a></>}
 							>
 
