@@ -1,9 +1,8 @@
-package com.derbyware.tokengenerator.service;
+package nidam.tokengenerator.service;
 
-import com.derbyware.tokengenerator.config.SecurityConfigStaticKey;
-import com.derbyware.tokengenerator.entities.User;
-import com.derbyware.tokengenerator.model.EntityUserDetails;
-import com.derbyware.tokengenerator.repositories.UserRepository;
+import nidam.tokengenerator.entities.User;
+import nidam.tokengenerator.model.EntityUserDetails;
+import nidam.tokengenerator.repositories.UserRepository;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;

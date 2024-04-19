@@ -1,4 +1,4 @@
-package com.derbyware.tokengenerator;
+package nidam.tokengenerator;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

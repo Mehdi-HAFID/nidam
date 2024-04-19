@@ -1,4 +1,4 @@
-package com.derbyware.tokengenerator.entities;
+package nidam.tokengenerator.entities;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;

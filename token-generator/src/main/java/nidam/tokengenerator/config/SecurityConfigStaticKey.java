@@ -1,31 +1,20 @@
-package com.derbyware.tokengenerator.config;
+package nidam.tokengenerator.config;
 
-import com.derbyware.tokengenerator.repositories.UserRepository;
-import com.derbyware.tokengenerator.service.JpaUserDetailsService;
+import nidam.tokengenerator.repositories.UserRepository;
+import nidam.tokengenerator.service.JpaUserDetailsService;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.crypto.argon2.Argon2PasswordEncoder;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.DelegatingPasswordEncoder;
-import org.springframework.security.crypto.password.NoOpPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.crypto.password.Pbkdf2PasswordEncoder;
-import org.springframework.security.crypto.scrypt.SCryptPasswordEncoder;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
@@ -39,17 +28,10 @@ import org.springframework.security.oauth2.server.authorization.settings.Authori
 import org.springframework.security.oauth2.server.authorization.settings.TokenSettings;
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
-import org.springframework.security.provisioning.JdbcUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 
-import javax.sql.DataSource;
 import java.security.KeyPair;
-import java.security.KeyStore;
-import java.security.PrivateKey;
-import java.security.PublicKey;
-import java.security.cert.Certificate;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.time.Duration;
@@ -81,7 +63,6 @@ public class SecurityConfigStaticKey {
 		return http.build();
 	}
 
-
 	// This bean should be added because of a bug in boot:
 	// https://stackoverflow.com/questions/77686158/spring-authorization-server-not-working-after-boot-3-2-upgrade
 	// https://github.com/spring-projects/spring-authorization-server/issues/1475
@@ -98,39 +79,6 @@ public class SecurityConfigStaticKey {
 		// Custom
 		UserDetailsService userDetailsService = new JpaUserDetailsService(userRepository);
 		return userDetailsService;
-	}
-
-	@Bean
-	public PasswordEncoder passwordEncoder(@Value("#{${custom.password.encoders}}") List<String> encoders,
-	                                       @Value("#{${custom.password.idless.encoder}}") String idlessEncoderName) {
-		log.info("encoders: " + encoders);
-
-		Map<String, PasswordEncoder> encodersMapping = new HashMap<>();
-
-		if(encoders.contains("scrypt")){ encodersMapping.put("scrypt", SCryptPasswordEncoder.defaultsForSpringSecurity_v5_8());}
-		if(encoders.contains("bcrypt")){ encodersMapping.put("bcrypt", new BCryptPasswordEncoder());}
-		if(encoders.contains("argon2")){ encodersMapping.put("argon2", Argon2PasswordEncoder.defaultsForSpringSecurity_v5_8());}
-		if(encoders.contains("pbkdf2")){ encodersMapping.put("pbkdf2", Pbkdf2PasswordEncoder.defaultsForSpringSecurity_v5_8());}
-
-		// first in list used to encode
-		DelegatingPasswordEncoder passwordEncoder = new DelegatingPasswordEncoder(encoders.get(0), encodersMapping);
-		// use this encoder if {id} does not exist
-		passwordEncoder.setDefaultPasswordEncoderForMatches(getEncoderForIdlessHash(idlessEncoderName));
-		return passwordEncoder;
-	}
-
-	private PasswordEncoder getEncoderForIdlessHash(String encoderName){
-		log.info("encoderName: " + encoderName);
-		switch (encoderName){
-			case "bcrypt":
-				return new BCryptPasswordEncoder();
-			case "argon2":
-				return Argon2PasswordEncoder.defaultsForSpringSecurity_v5_8();
-			case "pbkdf2":
-				return Pbkdf2PasswordEncoder.defaultsForSpringSecurity_v5_8();
-			default:
-				return SCryptPasswordEncoder.defaultsForSpringSecurity_v5_8();
-		}
 	}
 
 	// now that I use password encoders, the rules apply to the client password too. so it must be hashed with spring CLI
@@ -153,12 +101,10 @@ public class SecurityConfigStaticKey {
 		return new InMemoryRegisteredClientRepository(registeredClient);
 	}
 
-
-	// This should change to reading the private key from the resources folder
 	@Bean
 	public JWKSource<SecurityContext> jwkSource() throws Exception {
 
-		KeyPair keyPair = loadKeyStore();
+		KeyPair keyPair = JKSFileKeyPairLoader.loadKeyStore();
 		RSAPublicKey publicKey = (RSAPublicKey) keyPair.getPublic();
 		RSAPrivateKey privateKey = (RSAPrivateKey) keyPair.getPrivate();
 
@@ -175,30 +121,6 @@ public class SecurityConfigStaticKey {
 		return AuthorizationServerSettings.builder()
 //				.issuer("http://localhost:7080")
 				.build();
-	}
-
-	@Value("${password}")
-	private String password;
-
-	@Value("${privateKey}")
-	private String privateKey;
-
-	@Value("${alias}")
-	private String alias;
-
-	private KeyPair loadKeyStore() throws Exception {
-		final KeyStore keystore = KeyStore.getInstance("JKS");
-
-		keystore.load(new ClassPathResource(privateKey).getInputStream(), password.toCharArray());
-
-		final PrivateKey key = (PrivateKey) keystore.getKey(alias, password.toCharArray());
-		log.info("PrivateKey key: " + key);
-
-		final Certificate cert = keystore.getCertificate(alias);
-		final PublicKey publicKey = cert.getPublicKey();
-		log.info("PublicKey publicKey: " + publicKey);
-		return new KeyPair(publicKey, key);
-
 	}
 
 
