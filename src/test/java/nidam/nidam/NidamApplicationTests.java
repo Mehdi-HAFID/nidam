@@ -1,4 +1,4 @@
-package com.derbyware.nidam;
+package nidam.nidam;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
