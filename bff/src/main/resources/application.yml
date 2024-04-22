@@ -78,7 +78,7 @@ com:
         # SecurityFilterChain with oauth2ResourceServer() (sessions and CSRF protection disabled)
         resourceserver:
           permit-all:
-            - /login-options
+#            - /login-options
             - /error
             - /actuator/health/readiness
             - /actuator/health/liveness
