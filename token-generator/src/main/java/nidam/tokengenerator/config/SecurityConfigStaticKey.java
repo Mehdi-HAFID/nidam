@@ -7,6 +7,7 @@ import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -42,6 +43,15 @@ import java.util.logging.Logger;
 public class SecurityConfigStaticKey {
 
 	private Logger log = Logger.getLogger(SecurityConfigStaticKey.class.getName());
+
+	@Value("${password}")
+	private String password;
+
+	@Value("${privateKey}")
+	private String privateKey;
+
+	@Value("${alias}")
+	private String alias;
 
 	@Bean
 	@Order(1)
@@ -104,7 +114,7 @@ public class SecurityConfigStaticKey {
 	@Bean
 	public JWKSource<SecurityContext> jwkSource() throws Exception {
 
-		KeyPair keyPair = JKSFileKeyPairLoader.loadKeyStore();
+		KeyPair keyPair = JKSFileKeyPairLoader.loadKeyStore(privateKey, password, alias);
 		RSAPublicKey publicKey = (RSAPublicKey) keyPair.getPublic();
 		RSAPrivateKey privateKey = (RSAPrivateKey) keyPair.getPrivate();
 

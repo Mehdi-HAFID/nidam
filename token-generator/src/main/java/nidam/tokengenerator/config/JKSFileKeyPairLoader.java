@@ -1,6 +1,5 @@
 package nidam.tokengenerator.config;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 
 import java.security.KeyPair;
@@ -14,16 +13,7 @@ public class JKSFileKeyPairLoader {
 
 	private static Logger log = Logger.getLogger(JKSFileKeyPairLoader.class.getName());
 
-	@Value("${password}")
-	private static String password;
-
-	@Value("${privateKey}")
-	private static String privateKey;
-
-	@Value("${alias}")
-	private static String alias;
-
-	public static KeyPair loadKeyStore() throws Exception {
+	public static KeyPair loadKeyStore(String privateKey, String password, String alias) throws Exception {
 		final KeyStore keystore = KeyStore.getInstance("JKS");
 
 		keystore.load(new ClassPathResource(privateKey).getInputStream(), password.toCharArray());
