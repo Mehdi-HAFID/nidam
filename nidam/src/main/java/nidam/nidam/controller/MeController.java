@@ -1,4 +1,4 @@
-package com.derbyware.nidam.controller;
+package nidam.nidam.controller;
 
 import java.time.Instant;
 import java.util.Date;
@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.logging.Logger;
 
-import org.apache.juli.logging.Log;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.core.oidc.StandardClaimNames;
