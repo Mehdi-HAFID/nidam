@@ -11,12 +11,12 @@ import Typography from "@mui/material/Typography";
 import Link from "@mui/material/Link";
 
 const Private = props => {
-	// const secret = useSelector((state) => state.register.secret);
+	const secret = useSelector((state) => state.register.secret);
 	const dispatch = useDispatch();
 
-	// useEffect(() => {
-	// 	dispatch(registerSagas.GetMySecret());
-	// }, []);
+	useEffect(() => {
+		dispatch(registerSagas.GetMySecret());
+	}, []);
 
 
 	// console.log("secret", secret);

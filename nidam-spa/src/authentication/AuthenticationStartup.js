@@ -18,7 +18,6 @@ const AuthenticationStartup = props => {
 
 	useEffect(() => {
 		// call /me phase 2
-		console.log("I'm here");
 		dispatch(authenticationSagas.isLoggedIn());
 		setPhase(2);
 		setShowSplashScreen(true); // loading

@@ -18,7 +18,7 @@ const Logout = props => {
 				},
 			}
 		);
-		// console.log("logout response: ", JSON.stringify(response));
+		// console.log("logout response: ", JSON.stringify(response.headers["location"]));
 		window.location.href = response.headers["location"];
 		setDisabled(false);
 	};
