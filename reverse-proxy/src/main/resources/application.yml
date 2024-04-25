@@ -4,17 +4,9 @@ scheme: http
 hostname: localhost
 reverse-proxy-port: 7080
 
-#angular-port: 4201
-#angular-prefix: /angular-ui
-#angular-uri: http://${hostname}:${angular-port}${angular-prefix}
-
-#vue-port: 4202
-#vue-prefix: /vue-ui
-#vue-uri: http://${hostname}:${vue-port}${vue-prefix}
-
 react-port: 4001
 react-prefix: /react-ui
-react-uri: http://${hostname}:${react-port}${react-prefix}
+react-uri: ${scheme}://${hostname}:${react-port}${react-prefix}
 
 authorization-server-port: 4002
 authorization-server-prefix: /auth
@@ -34,14 +26,6 @@ spring:
         - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
       routes:
         # SPAs assets
-#        - id: angular-ui
-#          uri: ${angular-uri}
-#          predicates:
-#            - Path=${angular-prefix}/**
-#        - id: vue-ui
-#          uri: ${vue-uri}
-#          predicates:
-#            - Path=${vue-prefix}/**
         - id: react-ui
           uri: ${react-uri}
           predicates:
