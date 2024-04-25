@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>nidam</groupId>
 	<artifactId>token-generator</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>1.0.0</version>
 	<name>token-generator</name>
 	<description>token-generator</description>
 	<properties>
