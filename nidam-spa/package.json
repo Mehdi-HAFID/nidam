@@ -1,6 +1,6 @@
 {
-  "name": "registration-front",
-  "version": "0.1.0",
+  "name": "nidam-spa",
+  "version": "1.0",
   "private": true,
   "homepage": "/react-ui",
   "dependencies": {
