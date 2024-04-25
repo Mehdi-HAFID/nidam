@@ -5,13 +5,10 @@ import {isLoggedInFail, isLoggedInStart, isLoggedInSuccess} from '../authenticat
 import {catchError} from "../../SagaGenericUtil";
 
 
-// TODO continue from here
 export function* isLoggedIn(action) {
 	yield put(isLoggedInStart());
 
 	try {
-
-		// throw new Error("Error getting user info on startup, Try Again");
 		const response = yield axios.get("me");
 		console.log("isLoggedIn userInfo: ", response.data);
 

@@ -15,6 +15,8 @@ import '@fontsource/roboto/500.css';
 import '@fontsource/roboto/700.css';
 import Private from "./container/Private";
 import AuthenticationStartup from "./authentication/AuthenticationStartup";
+import AppRoutes from "./routing/AppRoutes";
+import {css, Global} from "@emotion/react";
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
@@ -22,12 +24,11 @@ root.render(
       <Provider store={store}>
           <BrowserRouter basename="/react-ui" >
               <AuthenticationStartup>
-                  <Routes >
-                      <Route path="signup" element={<SignUp/>} />
-                      <Route path="secret" element={<Private/>} />
-                      <Route path='/' element={<Navigate to='signup' />} />
-                      <Route path="*" element={<ErrorPage />} />
-                  </Routes>
+                  {/* emotion: this must be added to get rid of the top margin that won't go away when everything is set to margin: 0*/}
+                  <Global
+                      styles={css` body { margin: 0; } `}
+                  />
+                  <AppRoutes/>
               </AuthenticationStartup>
           </BrowserRouter>
       </Provider>

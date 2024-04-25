@@ -16,11 +16,10 @@ import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import {useDispatch, useSelector} from "react-redux";
 import {Alert, FormControl, FormGroup, FormHelperText, IconButton, InputAdornment, InputLabel, OutlinedInput} from "@mui/material";
 
-import {checkValidity} from "../other/utility";
+import {checkValidity} from "../other/InputValidtor";
 import * as registerSagas from "../redux/register/saga";
 import {registerResetError} from "../redux/register/registerSlice";
 import Login from "./Login";
-import {NavLink} from "react-router-dom";
 import {isLoggedInResetError} from "../redux/authentication/authenticationSlice";
 
 // import Link as LL from 'react'
@@ -116,7 +115,7 @@ const SignUp = (props) => {
 			maxLength: 255
 		},
 		valid: false,
-		validationMessage: "Invalid Password"
+		validationMessage: null
 	});
 
 	const [confirmPassword, setConfirmPassword] = useState({
@@ -369,7 +368,7 @@ const SignUp = (props) => {
 								                                     setTermsAccepted(event.target.checked);
 							                                     }}
 							/>}
-							                  label={<>I agree to <a href="https://tigmat.io/legal/terms.html" target="_blank">the
+							                  label={<>I agree to <a href="https://tigmat.io/" target="_blank">the
 								                  Terms &amp; Conditions</a></>}
 							>
 
@@ -382,13 +381,13 @@ const SignUp = (props) => {
 						Sign Up
 					</Button>
 
-					<Grid container justifyContent="flex-end">
+					<Grid container direction="column" justifyContent="center" alignItems="flex-end">
 						<Grid item>
 							<Login/>
 						</Grid>
-						<Grid item>
-							<NavLink to="/secret">Secret Page</NavLink>
-						</Grid>
+						{/*<Grid item>*/}
+						{/*	<NavLink to="/secret">Secret Page</NavLink>*/}
+						{/*</Grid>*/}
 					</Grid>
 				</Box>
 			</Box>
