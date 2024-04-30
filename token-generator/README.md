@@ -40,7 +40,8 @@ Requirements:
   [Spring OAuth2 Client](https://docs.spring.io/spring-security/reference/servlet/oauth2/client/index.html)
 - [Spring Authorization Server](https://docs.spring.io/spring-authorization-server/reference/index.html)
 
-This book covers Spring Security OAuth2: link
+This book covers Spring Security OAuth2:
+[link](https://www.amazon.com/Spring-Security-Action-Second-Laurentiu/dp/1633437973?&linkCode=ll1&tag=nidamoauth-20&linkId=96926a202735f86a298b8fc3ce3584b7)
 
 Nidam will not teach you these. This documentation will only explain how it uses them to achieve its goal.
 
