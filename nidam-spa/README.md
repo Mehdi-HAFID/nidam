@@ -3,6 +3,8 @@ the Security Standard OAuth 2. So You only focus on Business Logic.
 
 visit: https://nidam.derbyware.com
 
+![Nidam Architecture](https://nidam.derbyware.com/img/architecture.svg "Nidam Architecture")
+
 # What is Nidam
 
 You want to start coding a new spring application but first registration and authentication are required before you start writing your backend
