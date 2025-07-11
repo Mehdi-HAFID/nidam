@@ -1,8 +1,15 @@
 package nidam.registration;
 
+import nidam.registration.entities.Authority;
+import nidam.registration.entities.Role;
+import nidam.registration.repositories.AuthorityRepository;
+import nidam.registration.repositories.RoleRepository;
+
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
 
 import java.util.List;
 import java.util.logging.Logger;
@@ -22,6 +29,9 @@ public class RegistrationApplication {
 	@Value("#{${custom.roles}}")
 	private List<String> roles;
 
+	// TODO add logic to only add if each one Authority does not already exists: loop on each: exists ? skip : create
+	//  => no need to comment uncomment code
+
 //	Run the first time
 //	@Bean
 //	ApplicationRunner configureRepository(AuthorityRepository authorityRepository) {
@@ -35,7 +45,7 @@ public class RegistrationApplication {
 //		};
 //	}
 
-	//	Run the first time
+//		Run the first time
 //	@Bean
 //	ApplicationRunner configureRepository(RoleRepository roleRepository) {
 //		return args -> {
