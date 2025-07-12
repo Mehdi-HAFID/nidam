@@ -8,6 +8,7 @@ import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -33,6 +34,7 @@ import org.springframework.security.oauth2.server.authorization.token.JwtEncodin
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
+import org.springframework.web.filter.ForwardedHeaderFilter;
 
 import java.security.KeyPair;
 import java.security.interfaces.RSAPrivateKey;
@@ -180,5 +182,19 @@ public class SecurityConfigStaticKey {
 		};
 	}
 
+//	from gpt: Spring Boot should automatically honor X-Forwarded-* if:
+//	server.forward-headers-strategy=framework
+//	... but in some cases (especially with Spring Security + Gateway), it’s necessary to explicitly register the filter:
+//	the problem this fix is that after setting the reverse proxy with:
+//		filters:
+//  		- PreserveHostHeader
+//          - AddRequestHeader=X-Forwarded-Proto, http
+//	the authorization server redirects to http://localhost/auth/login instead of http://localhost:7080/auth/login
+	@Bean
+	public FilterRegistrationBean<ForwardedHeaderFilter> forwardedHeaderFilter() {
+		FilterRegistrationBean<ForwardedHeaderFilter> filter = new FilterRegistrationBean<>();
+		filter.setFilter(new ForwardedHeaderFilter());
+		return filter;
+	}
 
 }
