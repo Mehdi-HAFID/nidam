@@ -20,6 +20,7 @@ public class MeController {
 
 	@GetMapping("/me")
 	public UserInfoDto getMe(Authentication auth) {
+//		TODO play with Authentication auth
 		log.info("check authorities here Authentication auth : " + auth);
 		if (auth instanceof JwtAuthenticationToken jwtAuth) {
 			final String email = (String) jwtAuth.getTokenAttributes()
@@ -52,6 +53,7 @@ public class MeController {
 	 * @param roles    Spring authorities resolved for the authentication in the security context
 	 * @param exp      seconds from 1970-01-01T00:00:00Z UTC until the specified UTC date/time when the access token expires
 	 */
+//	TODO Important, change roles with authorities, then later add roles again
 	public static record UserInfoDto(String username, String email, List<String> roles, Long exp) {
 		public static final UserInfoDto ANONYMOUS = new UserInfoDto("", "", List.of(), Long.MAX_VALUE);
 	}
