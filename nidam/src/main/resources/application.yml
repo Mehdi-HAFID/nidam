@@ -9,11 +9,11 @@ reverse-proxy-uri: ${scheme}://${hostname}:${reverse-proxy-port}
 authorization-server-prefix: /auth
 issuer: ${reverse-proxy-uri}${authorization-server-prefix}
 
-username-claim-json-path: $.sub      # TODO set properly
+username-claim-json-path: $.sub
 authorities-json-path: $.authorities
 
 resource-server-port: 4003
-audience:                             # TODO continue from: found out why audience does not work
+audience: client
 
 server:
   port: ${resource-server-port}
