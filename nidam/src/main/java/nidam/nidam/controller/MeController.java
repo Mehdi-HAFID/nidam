@@ -21,7 +21,7 @@ public class MeController {
 	@GetMapping("/me")
 	public UserInfoDto getMe(Authentication auth) {
 //		TODO play with Authentication auth
-		log.info("check authorities here Authentication auth : " + auth);
+//		log.info("check authorities here Authentication auth : " + auth);
 		if (auth instanceof JwtAuthenticationToken jwtAuth) {
 			final String email = (String) jwtAuth.getTokenAttributes()
 					.getOrDefault(StandardClaimNames.EMAIL, "");
