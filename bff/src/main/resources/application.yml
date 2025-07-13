@@ -18,24 +18,27 @@ bff-prefix: /bff
 
 resource-server-port: 4003
 
-audience:
+audience: $.aud
 
 server:
   port: ${bff-port}
+  forward-headers-strategy: framework
 
 spring:
   cloud:
     gateway:
-      routes:
-        - id: bff
-          uri: ${scheme}://${hostname}:${resource-server-port}
-          predicates:
-            - Path=/api/**
-          filters:
-            - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
-            - TokenRelay=
-            - SaveSession
-            - StripPrefix=1
+      server:
+        webflux:
+          routes:
+            - id: bff
+              uri: ${scheme}://${hostname}:${resource-server-port}
+              predicates:
+                - Path=/api/**
+              filters:
+                - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
+                - TokenRelay=
+                - SaveSession
+                - StripPrefix=1
   security:
     oauth2:
       client:
