@@ -24,6 +24,12 @@ server:
   port: ${bff-port}
   forward-headers-strategy: framework
 
+#logging:
+#  level:
+#    org.springframework.cloud.gateway: DEBUG
+#    reactor.netty: INFO
+#    org.springframework.web: DEBUG
+
 spring:
   cloud:
     gateway:
@@ -51,38 +57,39 @@ spring:
             authorization-grant-type: authorization_code
             client-id: ${client-id}
             client-secret: ${client-secret}
-            scope: openid                         # TODO test adding redirect url
+            scope: openid
+            redirect-uri: ${reverse-proxy-uri}${bff-prefix}/login/oauth2/code/token-generator
 
-com:
-  c4-soft:
-    springaddons:
-      oidc:
-        # Trusted OpenID Providers configuration (with authorities mapping)
-        ops:
-          - iss: ${issuer}
-            authorities:
-              - path: ${authorities-json-path}
-            aud: ${audience}
-        # SecurityFilterChain with oauth2Login() (sessions and CSRF protection enabled)
-        client:
-          client-uri: ${reverse-proxy-uri}${bff-prefix}
-          security-matchers:
-            - /api/**
-            - /login/**
-            - /oauth2/**
-            - /logout
-          permit-all:
-            - /api/**
-            - /login/**
-            - /oauth2/**
-          csrf: cookie-accessible-from-js
-          oauth2-redirections:
-            rp-initiated-logout: ACCEPTED
-        # SecurityFilterChain with oauth2ResourceServer() (sessions and CSRF protection disabled)
-        resourceserver:
-          permit-all:
-#            - /login-options
-            - /error
-            - /actuator/health/readiness
-            - /actuator/health/liveness
-#trace: true
+#com:
+#  c4-soft:
+#    springaddons:
+#      oidc:
+#        # Trusted OpenID Providers configuration (with authorities mapping)
+#        ops:
+#          - iss: ${issuer}
+#            authorities:
+#              - path: ${authorities-json-path}
+#            aud: ${audience}
+#        # SecurityFilterChain with oauth2Login() (sessions and CSRF protection enabled)
+#        client:
+#          client-uri: ${reverse-proxy-uri}${bff-prefix}
+#          security-matchers:
+#            - /api/**
+#            - /login/**
+#            - /oauth2/**
+#            - /logout
+#          permit-all:
+#            - /api/**
+#            - /login/**
+#            - /oauth2/**
+#          csrf: cookie-accessible-from-js
+#          oauth2-redirections:
+#            rp-initiated-logout: ACCEPTED
+#        # SecurityFilterChain with oauth2ResourceServer() (sessions and CSRF protection disabled)
+#        resourceserver:
+#          permit-all:
+##            - /login-options
+#            - /error
+#            - /actuator/health/readiness
+#            - /actuator/health/liveness
+trace: true
