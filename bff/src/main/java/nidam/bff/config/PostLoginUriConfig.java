@@ -24,8 +24,8 @@ public class PostLoginUriConfig {
 			String redirectUri = exchange.getRequest()
 					.getQueryParams()
 					.getFirst("post_login_success_uri");
-			log.info("redirectUri: " + redirectUri);
-			log.info("exchange.getRequest().getQueryParams(): " + exchange.getRequest().getQueryParams());
+			log.info("post login redirectUri: " + redirectUri);
+//			log.info("exchange.getRequest().getQueryParams(): " + exchange.getRequest().getQueryParams());
 			if (redirectUri != null && redirectUri.startsWith("http")) {
 				return exchange.getSession()
 						.doOnNext(session -> session.getAttributes()
