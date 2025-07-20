@@ -72,6 +72,8 @@ const SignUp = (props) => {
 
 	const executeReCaptcha = (e) => {
 		e.preventDefault();
+		// TODO window.grecaptcha is null when offline: fix by showing an error to do the user
+		//  second add feature to skip recaptcha system wide: spa and backend
 		window.grecaptcha.ready(function() {
 			window.grecaptcha.execute('6LcyyEMpAAAAAMztnW6xVq1HFD0b-mlyk2t6NZa-', {action: 'submit'})
 				// .then(token => verifyReCaptcha(token))
