@@ -1,7 +1,8 @@
 package nidam.bff.config;
 
+import nidam.bff.config.properties.LogoutProperties;
 import nidam.bff.handler.LoginSuccessHandler;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -20,6 +21,7 @@ import org.springframework.security.web.server.csrf.CsrfToken;
 import org.springframework.security.web.server.csrf.ServerCsrfTokenRequestAttributeHandler;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;
+import org.springframework.web.server.WebSession;
 import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Mono;
 
@@ -27,28 +29,79 @@ import java.net.URI;
 import java.time.Duration;
 import java.util.logging.Logger;
 
+/**
+ * {@code SecurityConfig} defines the security configuration for the BFF (Backend-for-Frontend) layer
+ * using Spring Security WebFlux.
+ *
+ * <p>This class sets up:</p>
+ * <ul>
+ *     <li>OAuth2 login and token relay</li>
+ *     <li>Session-based authentication</li>
+ *     <li>Custom logout flow with RP-Initiated logout support</li>
+ *     <li>CSRF protection using a cookie-based token repository</li>
+ * </ul>
+ *
+ * <p>It also exposes a {@link WebFilter} to ensure the CSRF token is propagated to the frontend
+ * as a readable cookie, and handles secure logout redirection to the OIDC Provider.</p>
+ */
 @Configuration
 public class SecurityConfig {
 
-	private Logger log = Logger.getLogger(SecurityConfig.class.getName());
+	private final static Logger log = Logger.getLogger(SecurityConfig.class.getName());
 
-	@Autowired
-	private LoginSuccessHandler loginSuccessHandler;
 
+	private final LoginSuccessHandler loginSuccessHandler;
+
+	@Value("${client-id}")
+	private String clientId;
+
+	private final LogoutProperties logoutProperties;
+
+	public static final String COOKIE_XSRF_TOKEN = "XSRF-TOKEN";
+	public static final String COOKIE_SESSION = "SESSION";
+	public static final String BFF_LOGOUT_ENDPOINT = "/logout";
+
+	private static final String[] UNAUTHENTICATED_PATHS = {"/api/**", "/login/**", "/oauth2/**", "/error", "/actuator/health/**"};
+
+	/**
+	 * Constructs a new {@code SecurityConfig} with required components.
+	 *
+	 * @param loginSuccessHandler the custom OAuth2 login success handler
+	 * @param logoutProperties    properties related to the logout flow
+	 */
+	public SecurityConfig(LoginSuccessHandler loginSuccessHandler, LogoutProperties logoutProperties) {
+		this.loginSuccessHandler = loginSuccessHandler;
+		this.logoutProperties = logoutProperties;
+	}
+
+	/**
+	 * Defines the Spring Security filter chain for the BFF.
+	 *
+	 * <ul>
+	 *     <li>Permits unauthenticated access to login endpoints, actuator, and logout</li>
+	 *     <li>Protects other paths with authentication</li>
+	 *     <li>Enables OAuth2 login and client support</li>
+	 *     <li>Applies CSRF protection using a cookie</li>
+	 * </ul>
+	 *
+	 * @param http    the reactive HTTP security config
+	 * @param clients OAuth2 client repository (used for login)
+	 * @return the configured security filter chain
+	 */
 	@Bean
-	public SecurityWebFilterChain securityFilterChain(ServerHttpSecurity http,
-													  ReactiveClientRegistrationRepository clients) {
+	public SecurityWebFilterChain securityFilterChain(ServerHttpSecurity http, ReactiveClientRegistrationRepository clients) {
 		http
 				.authorizeExchange(exchanges -> exchanges
-						.pathMatchers("/api/**", "/login/**", "/oauth2/**", "/logout", "/error", "/actuator/health/**").permitAll()
-						.pathMatchers(HttpMethod.POST, "/logout").permitAll()
+						.pathMatchers(UNAUTHENTICATED_PATHS).permitAll()
+						.pathMatchers(HttpMethod.POST, BFF_LOGOUT_ENDPOINT).permitAll()
+						.anyExchange().authenticated()
 				)
-				.oauth2Login(oauth2 -> oauth2
-						.authenticationSuccessHandler(loginSuccessHandler))  // Enables login with the authorization server
-				.oauth2Client(Customizer.withDefaults()) // Enables TokenRelay
+				// Enables login with the authorization server
+				.oauth2Login(oauth2 -> oauth2.authenticationSuccessHandler(loginSuccessHandler))
+				.oauth2Client(Customizer.withDefaults()) // enables the OAuth2 client support, Enables TokenRelay
 
 				.logout(logout -> logout
-						.logoutUrl("/logout")  // or whatever logout endpoint you use
+						.logoutUrl(BFF_LOGOUT_ENDPOINT)  // or whatever logout endpoint you use
 						.logoutSuccessHandler(customLogoutSuccessHandler())
 				)
 
@@ -60,7 +113,12 @@ public class SecurityConfig {
 		return http.build();
 	}
 
-
+	/**
+	 * Adds a WebFilter that ensures the CSRF token is available as a cookie readable by JavaScript.
+	 * If the CSRF token is present and differs from the existing cookie, it updates the cookie.
+	 *
+	 * @return a WebFilter that manages CSRF token propagation to the frontend
+	 */
 	@Bean
 	public WebFilter csrfTokenWebFilter() {
 		return (exchange, chain) -> exchange.getAttributeOrDefault(CsrfToken.class.getName(), Mono.empty())
@@ -73,13 +131,13 @@ public class SecurityConfig {
 				.flatMap(token -> {
 
 					// Only set the cookie if it's not already present or changed
-					String currentCookie = exchange.getRequest().getCookies().getFirst("XSRF-TOKEN") != null
-							? exchange.getRequest().getCookies().getFirst("XSRF-TOKEN").getValue()
+					String currentCookie = exchange.getRequest().getCookies().getFirst(COOKIE_XSRF_TOKEN) != null
+							? exchange.getRequest().getCookies().getFirst(COOKIE_XSRF_TOKEN).getValue()
 							: null;
 					log.info("csrfTokenWebFilter() currentCookie: " + currentCookie);
 
 					if (!token.getToken().equals(currentCookie)) {
-						ResponseCookie cookie = ResponseCookie.from("XSRF-TOKEN", token.getToken())
+						ResponseCookie cookie = ResponseCookie.from(COOKIE_XSRF_TOKEN, token.getToken())
 								.path("/") // match the path of your app
 								.sameSite("Lax")
 								.httpOnly(false) // must be accessible to JS
@@ -93,6 +151,18 @@ public class SecurityConfig {
 				.switchIfEmpty(chain.filter(exchange));
 	}
 
+	/**
+	 * Handles logout success by constructing a redirect URI to the authorization server’s end-session endpoint.
+	 *
+	 * <p>If the user is authenticated via OIDC, the handler builds a URI containing:</p>
+	 * <ul>
+	 *     <li>{@code id_token_hint} - the ID token to identify the session</li>
+	 *     <li>{@code post_logout_redirect_uri} - where the OP should redirect back</li>
+	 *     <li>{@code client_id} - to identify the Relying Party</li>
+	 * </ul>
+	 *
+	 * @return a {@link ServerLogoutSuccessHandler} implementation
+	 */
 	@Bean
 	public ServerLogoutSuccessHandler customLogoutSuccessHandler() {
 		return (exchange, authentication) -> {
@@ -103,39 +173,12 @@ public class SecurityConfig {
 				OidcUser oidcUser = (OidcUser) oauth2Auth.getPrincipal();
 				String idToken = oidcUser.getIdToken().getTokenValue();
 
-				// TODO Next: extract the value from the SPA X-POST-LOGOUT-SUCCESS-URI and use it, also this
-				//  http://localhost:7080/auth/connect/logout should extracted from application.yml
-				String redirectUriRaw = webExchange.getRequest()
-						.getQueryParams()
-						.getFirst("X-POST-LOGOUT-SUCCESS-URI");
-
-				String redirectUri = UriComponentsBuilder
-						.fromUriString("http://localhost:7080/auth/connect/logout")
-						.queryParam("id_token_hint", idToken)
-						.queryParam("post_logout_redirect_uri", "http://localhost:7080/react-ui")
-						.queryParam("client_id", "client")
-						.build()
-						.toUriString();
-
+				String redirectUri = buildLogoutRedirectUri(webExchange, idToken);
 
 				response.setStatusCode(HttpStatus.ACCEPTED);
 				response.getHeaders().setLocation(URI.create(redirectUri));
 
-				// Clear XSRF-TOKEN manually (Spring Security doesn't delete it)
-				response.addCookie(ResponseCookie.from("XSRF-TOKEN", "")
-						.path("/")
-						.sameSite("Lax")
-						.maxAge(Duration.ZERO)
-						.httpOnly(false)
-						.build());
-
-				// Optionally clear SESSION cookie (for consistency)
-				response.addCookie(ResponseCookie.from("SESSION", "")
-						.path("/")
-						.sameSite("Lax")
-						.maxAge(Duration.ZERO)
-						.httpOnly(true)
-						.build());
+				clearCookies(response);
 
 				return response.setComplete();
 			}
@@ -146,4 +189,105 @@ public class SecurityConfig {
 		};
 	}
 
+	/**
+	 * Builds the logout redirect URI for RP-initiated logout.
+	 * The URI is sent to the user's browser to redirect to the OP logout endpoint.
+	 * <p>
+	 * http://localhost:7080/auth/connect/logout?id_token_hint=fiPAY....5TDSQ&post_logout_redirect_uri=http://localhost:7080/react-ui&client_id=client
+	 *
+	 * @param webExchange the current request context
+	 * @param idToken     the ID token of the currently authenticated user
+	 * @return a complete logout URI with query parameters
+	 */
+	private String buildLogoutRedirectUri(ServerWebExchange webExchange, String idToken) {
+		String redirectUriRaw = webExchange.getRequest().getHeaders().getFirst(logoutProperties.getSuccessRedirectHeader());
+		log.info("redirectUriRaw: " + redirectUriRaw);
+
+		String logoutRedirectUri = logoutProperties.getSuccessRedirectDefaultUri(); // use default in case spa did not provide one
+		if (redirectUriRaw != null && !redirectUriRaw.isEmpty()) {
+			logoutRedirectUri = redirectUriRaw;
+		}
+		log.info("logoutRedirectUri: " + logoutRedirectUri);
+
+		String redirectUri = UriComponentsBuilder
+				.fromUriString(logoutProperties.getAuthServerUri())
+				.queryParam(logoutProperties.getTokenHintParamName(), idToken)
+				.queryParam(logoutProperties.getPostRedirectParamName(), logoutRedirectUri)
+				.queryParam(logoutProperties.getClientIdParamName(), clientId)
+				.build()
+				.toUriString();
+		return redirectUri;
+	}
+
+	/**
+	 * Clears authentication-related cookies from the response, including:
+	 * <ul>
+	 *     <li>{@code XSRF-TOKEN}</li>
+	 *     <li>{@code SESSION}</li>
+	 * </ul>
+	 *
+	 * @param response the HTTP response where cookies are cleared
+	 */
+	private void clearCookies(ServerHttpResponse response) {
+		// Clear XSRF-TOKEN manually (Spring Security doesn't delete it)
+		response.addCookie(ResponseCookie.from(COOKIE_XSRF_TOKEN, "")
+				.path("/")
+				.sameSite("Lax")
+				.maxAge(Duration.ZERO)
+				.httpOnly(false)
+				.build());
+
+		// Optionally clear SESSION cookie (for consistency)
+		response.addCookie(ResponseCookie.from(COOKIE_SESSION, "")
+				.path("/")
+				.sameSite("Lax")
+				.maxAge(Duration.ZERO)
+				.httpOnly(true)
+				.build());
+	}
+
+
+	/*
+	  This code fixes the issue where session held in memory is evicted after 30 minutes of inactivity:
+	  login, token valid for 12 hours, user does not interact with bff for 30 minutes, the bff remove Token <-> SESSION relation from memory,
+
+	  * User returns, SPA sends SESSION cookie, but it's no longer valid → session is gone
+	  * Spring creates a new session, with no token
+	  * TokenRelay sees no token → skips adding Authorization header
+	  * Resource server sees no bearer token → 401
+
+	  After 30 minutes of inactivity, the session is evicted from memory due to the default maxIdleTime = 30m
+	  WebFilter that sets session max idle time to 12 hours.
+	  submitted an issue https://github.com/spring-projects/spring-framework/issues/35240
+	 */
+
+	/**
+	 * Configures a {@link WebFilter} that ensures each WebFlux session has a maximum idle timeout of 12 hours.
+	 * <p>
+	 * This is necessary to keep the session (and therefore the {@code SESSION} cookie and any stored
+	 * {@link org.springframework.security.oauth2.client.OAuth2AuthorizedClient} including the access token)
+	 * alive for as long as the access token is valid. By default, Spring WebFlux sessions have a
+	 * {@code maxIdleTime} of 30 minutes, which would cause token relay to silently fail after inactivity.
+	 * </p>
+	 *
+	 * <p>
+	 * The filter intercepts each request, retrieves the session, and sets the max idle time to 12 hours.
+	 * This ensures the session remains valid for 12 hours of inactivity, matching typical access token lifetimes.
+	 * </p>
+	 *
+	 * @return a {@link WebFilter} that sets session idle timeout to 12 hours
+	 */
+	@Bean
+	public WebFilter sessionTimeoutWebFilter() {
+		return (exchange, chain) -> {
+			Mono<WebSession> sessionMono = exchange.getSession()
+					.doOnNext(session -> {
+						session.setMaxIdleTime(Duration.ofHours(12));
+//						log.info("Set session idle timeout to 12h for session ID: " + session.getId());
+//						log.info("Max idle time: " + session.getMaxIdleTime());
+//						log.info("Creation time: " + session.getCreationTime());
+					});
+			return sessionMono.then(chain.filter(exchange));
+		};
+	}
 }

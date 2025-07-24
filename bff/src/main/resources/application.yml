@@ -7,28 +7,29 @@ reverse-proxy-uri: ${scheme}://${hostname}:${reverse-proxy-port}
 authorization-server-prefix: /auth
 issuer: ${reverse-proxy-uri}${authorization-server-prefix}
 
-client-id: client       # changed
-client-secret: secret      # changed
 
-username-claim-json-path: $.sub      # TODO change
-authorities-json-path: $.authorities
+client-id: client
+client-secret: secret
 
 bff-port: 7081
 bff-prefix: /bff
 
+react-prefix: /react-ui
+
 resource-server-port: 4003
 
-audience: $.aud
+logout:
+  auth-server-uri: ${reverse-proxy-uri}/auth/connect/logout
+  token-hint-param-name: id_token_hint
+  post-redirect-param-name: post_logout_redirect_uri
+  client-id-param-name: client_id
+  success-redirect-header: X-POST-LOGOUT-SUCCESS-URI
+  success-redirect-default-uri: ${reverse-proxy-uri}${react-prefix}
+
 
 server:
   port: ${bff-port}
   forward-headers-strategy: framework
-
-#logging:
-#  level:
-#    org.springframework.cloud.gateway: DEBUG
-#    reactor.netty: INFO
-#    org.springframework.web: DEBUG
 
 spring:
   cloud:
@@ -60,36 +61,4 @@ spring:
             scope: openid
             redirect-uri: ${reverse-proxy-uri}${bff-prefix}/login/oauth2/code/token-generator
 
-#com:
-#  c4-soft:
-#    springaddons:
-#      oidc:
-#        # Trusted OpenID Providers configuration (with authorities mapping)
-#        ops:
-#          - iss: ${issuer}
-#            authorities:
-#              - path: ${authorities-json-path}
-#            aud: ${audience}
-#        # SecurityFilterChain with oauth2Login() (sessions and CSRF protection enabled)
-#        client:
-#          client-uri: ${reverse-proxy-uri}${bff-prefix}
-#          security-matchers:
-#            - /api/**
-#            - /login/**
-#            - /oauth2/**
-#            - /logout
-#          permit-all:
-#            - /api/**
-#            - /login/**
-#            - /oauth2/**
-#          csrf: cookie-accessible-from-js
-#          oauth2-redirections:
-#            rp-initiated-logout: ACCEPTED
-#        # SecurityFilterChain with oauth2ResourceServer() (sessions and CSRF protection disabled)
-#        resourceserver:
-#          permit-all:
-##            - /login-options
-#            - /error
-#            - /actuator/health/readiness
-#            - /actuator/health/liveness
 trace: true
