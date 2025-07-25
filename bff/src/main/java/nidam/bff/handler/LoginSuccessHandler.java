@@ -1,6 +1,5 @@
 package nidam.bff.handler;
 
-import nidam.bff.config.PostLoginUriConfig;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.security.core.Authentication;

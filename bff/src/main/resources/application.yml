@@ -15,6 +15,7 @@ bff-port: 7081
 bff-prefix: /bff
 
 react-prefix: /react-ui
+react-uri: ${reverse-proxy-uri}${react-prefix}
 
 resource-server-port: 4003
 
@@ -25,6 +26,12 @@ logout:
   client-id-param-name: client_id
   success-redirect-header: X-POST-LOGOUT-SUCCESS-URI
   success-redirect-default-uri: ${reverse-proxy-uri}${react-prefix}
+
+login:
+  success-redirect-param-name: post_login_success_uri
+  session-redirect-uri-attribute: POST_LOGIN_SUCCESS_URI
+  allowed-redirect-uri-prefixes:
+    - ${react-uri}
 
 
 server:
