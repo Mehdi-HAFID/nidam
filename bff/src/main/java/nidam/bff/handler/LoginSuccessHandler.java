@@ -1,5 +1,7 @@
 package nidam.bff.handler;
 
+import nidam.bff.config.properties.LoginProperties;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.security.core.Authentication;
@@ -14,21 +16,34 @@ import java.util.logging.Logger;
 
 @Component
 public class LoginSuccessHandler implements ServerAuthenticationSuccessHandler {
-	private static final String DEFAULT_REDIRECT = "http://localhost:7080/react-ui/";
 
-	private Logger log = Logger.getLogger(LoginSuccessHandler.class.getName());
+	@Value("${react-uri}")
+	private String defaultReactUri;
+
+	private final Logger log = Logger.getLogger(LoginSuccessHandler.class.getName());
+
+	private final LoginProperties loginProperties;
+
+	public LoginSuccessHandler(LoginProperties loginProperties) {
+		this.loginProperties = loginProperties;
+	}
 
 	@Override
-	public Mono<Void> onAuthenticationSuccess(WebFilterExchange webFilterExchange,
-											  Authentication authentication) {
+	public Mono<Void> onAuthenticationSuccess(WebFilterExchange webFilterExchange, Authentication authentication) {
 		ServerWebExchange exchange = webFilterExchange.getExchange();
 		return exchange.getSession()
 				.flatMap(session -> {
 					// pull out what we saved earlier (or fall back)
-					String redirect = session.getAttribute("POST_LOGIN_SUCCESS_URI");
-					log.info("Redirect to: " + redirect);
-					if (redirect == null || !redirect.startsWith("http")) {
-						redirect = DEFAULT_REDIRECT;
+
+					String redirect = session.getAttribute(loginProperties.getSessionRedirectUriAttribute());
+					log.info("onAuthenticationSuccess Redirect to: " + redirect);
+
+					boolean isAllowed = redirect != null && loginProperties.getAllowedRedirectUriPrefixes().stream().anyMatch(redirect::startsWith);
+
+					String finalRedirect = isAllowed ? redirect : defaultReactUri;
+
+					if (!isAllowed) {
+						log.warning("Untrusted or missing redirect URI in session. Falling back to default: " + finalRedirect);
 					}
 
 					ServerHttpResponse response = exchange.getResponse();
