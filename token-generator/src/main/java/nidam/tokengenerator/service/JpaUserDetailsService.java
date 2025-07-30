@@ -27,7 +27,6 @@ public class JpaUserDetailsService implements UserDetailsService {
 		Optional<User> userOptional = userRepository.findUserByEmail(email);
 		if(userOptional.isPresent()){
 			EntityUserDetails entityUserDetails = new EntityUserDetails(userOptional.get());
-			// TODO test to see if authorities is loaded
 			log.info("entityUserDetails: " + entityUserDetails.getUsername() + " , authorities: " + entityUserDetails.getAuthorities());
 			return entityUserDetails;
 		}

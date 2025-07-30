@@ -1,0 +1,61 @@
+scheme: http
+hostname: localhost
+
+reverse-proxy-port: 7080
+reverse-proxy-uri: ${scheme}://${hostname}:${reverse-proxy-port}
+
+authorization-server-prefix: /auth
+issuer: ${reverse-proxy-uri}${authorization-server-prefix}
+
+bff-prefix: /bff
+react-prefix: /react-ui
+
+client:
+  id: client
+  secret-hash: '{bcrypt}$2a$10$.ld6BfZescPDfVVduvu.6O9.7FLMI64l4PfvnBZJQEBhTLFFbeKei'  #value is 'secret', must use hash because of password encoders
+  internal-identifier: nidam-bff-internal-id
+  login-uri: ${reverse-proxy-uri}${bff-prefix}/login/oauth2/code/token-generator
+  logout-uri: ${reverse-proxy-uri}${react-prefix}
+
+
+server:
+  port: 4002
+  servlet:
+    contextPath: /auth
+  forward-headers-strategy: framework
+
+keystore:
+  password: keypass
+  privateKey: keystore.jks
+  alias: alias
+
+# first in the list is the default encoder
+custom:
+  password:
+    encoders:
+      - scrypt
+      - bcrypt
+      - argon2
+      - pbkdf2
+# encoder for hashes without {id}
+    idless:
+      encoder: scrypt
+
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/identity_hub
+    username: root
+    password: CcmN*`6@3T9H%P#yg^V<7v
+
+
+logging:
+  level:
+    root: INFO
+    org.springframework: INFO
+    org.springframework.security: INFO
+    org.springframework.security.oauth2: INFO
+    org.springframework.web: INFO
+    reactor.netty: INFO
+    io.netty: INFO
+    io.projectreactor:
+    org.apache.tomcat.util.net.NioEndpoint: INFO
