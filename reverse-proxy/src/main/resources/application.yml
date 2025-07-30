@@ -27,6 +27,9 @@ spring:
         webflux:
           default-filters:
             - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
+            - AddResponseHeader=X-Frame-Options, DENY
+            - AddResponseHeader=X-Content-Type-Options, nosniff
+            - AddResponseHeader=Referrer-Policy, no-referrer
           routes:
             # SPAs assets
             - id: react-ui
