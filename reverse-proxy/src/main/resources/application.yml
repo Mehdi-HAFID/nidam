@@ -18,28 +18,43 @@ bff-uri: ${scheme}://${hostname}:${bff-port}
 
 server:
   port: ${reverse-proxy-port}
+  forward-headers-strategy: framework
 
 spring:
   cloud:
     gateway:
-      default-filters:
-        - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
-      routes:
-        # SPAs assets
-        - id: react-ui
-          uri: ${react-uri}
-          predicates:
-            - Path=${react-prefix}/**
-        # Authorization-server
-        - id: authorization-server
-          uri: ${authorization-server-uri}
-          predicates:
-            - Path=${authorization-server-prefix}/**
-        # BFF
-        - id: bff
-          uri: ${bff-uri}
-          predicates:
-            - Path=${bff-prefix}/**
-          filters:
-            - StripPrefix=1
+      server:
+        webflux:
+          default-filters:
+            - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
+            - AddResponseHeader=X-Frame-Options, DENY
+            - AddResponseHeader=X-Content-Type-Options, nosniff
+            - AddResponseHeader=Referrer-Policy, no-referrer
+          routes:
+            # SPAs assets
+            - id: react-ui
+              uri: ${react-uri}
+              predicates:
+                - Path=${react-prefix}/**
+              filters:
+                - PreserveHostHeader    #  must explicitly enable forwarded header handling
+                # next: tells the downstream application (like your authorization server or BFF) what the original scheme of the client request was — usually either http or https
+                - AddRequestHeader=X-Forwarded-Proto, http
+            # Authorization-server
+            - id: authorization-server
+              uri: ${authorization-server-uri}
+              predicates:
+                - Path=${authorization-server-prefix}/**
+              filters:
+                - PreserveHostHeader            # Without PreserveHostHeader, the forwarded Host becomes localhost:4002
+                - AddRequestHeader=X-Forwarded-Proto, http
+            # BFF
+            - id: bff
+              uri: ${bff-uri}
+              predicates:
+                - Path=${bff-prefix}/**
+              filters:
+                - StripPrefix=1
+                - PreserveHostHeader
+                - AddRequestHeader=X-Forwarded-Proto, http
 #trace: true
