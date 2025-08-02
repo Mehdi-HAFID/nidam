@@ -25,4 +25,9 @@ spring:
         jwt:
           issuer-uri: ${issuer}
 
-#trace: true
+logging:
+  level:
+    root: INFO
+    org.apache.tomcat: INFO
+    #    org.apache.tomcat.util.net.NioEndpoint: INFO
+
