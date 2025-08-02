@@ -18,6 +18,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
+import org.springframework.security.oauth2.core.oidc.StandardClaimNames;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenType;
@@ -212,6 +213,7 @@ public class SecurityConfigStaticKey {
 				}
 				JwtClaimsSet.Builder claims = context.getClaims();
 				claims.claim(JWT_CLAIM_TOKEN, auths);
+				claims.claim(StandardClaimNames.EMAIL, context.getPrincipal().getName());
 			}
 		};
 	}

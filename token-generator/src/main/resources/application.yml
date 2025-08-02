@@ -58,4 +58,8 @@ logging:
     reactor.netty: INFO
     io.netty: INFO
     io.projectreactor:
-    org.apache.tomcat.util.net.NioEndpoint: INFO
+#    org.apache.tomcat.util.net.NioEndpoint: INFO
+    org.apache.tomcat: INFO
+    org.springframework.boot: INFO
+    org.springframework.beans: INFO
+    org.apache.catalina.session.ManagerBase: INFO
