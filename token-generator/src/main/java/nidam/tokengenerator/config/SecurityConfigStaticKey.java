@@ -129,10 +129,15 @@ public class SecurityConfigStaticKey {
 				.clientSecret(clientProperties.getSecretHash()) //secret
 				.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
 				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+//				.authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)	waiting for spring auth server logout bug to be fixed
 				.redirectUri(clientProperties.getLoginUri())	// changed from http://localhost:4004/login/oauth2/code/token-generator
 				.scope(OidcScopes.OPENID)
 				.postLogoutRedirectUri(clientProperties.getLogoutUri())			//.postLogoutRedirectUri("http://localhost:7080/react-ui")
-				.tokenSettings(TokenSettings.builder().accessTokenTimeToLive(Duration.ofHours(12)).build())
+				.tokenSettings(TokenSettings.builder()
+						.accessTokenTimeToLive(Duration.ofHours(12))
+//						.refreshTokenTimeToLive(Duration.ofHours(24))  waiting for spring auth server logout bug to be fixed
+//						.reuseRefreshTokens(false)
+						.build())
 				.build();
 		return new InMemoryRegisteredClientRepository(registeredClient);
 	}

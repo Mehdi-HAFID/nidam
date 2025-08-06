@@ -47,19 +47,19 @@ spring:
     username: root
     password: CcmN*`6@3T9H%P#yg^V<7v
 
-
-logging:
-  level:
-    root: INFO
-    org.springframework: INFO
-    org.springframework.security: INFO
-    org.springframework.security.oauth2: INFO
-    org.springframework.web: INFO
-    reactor.netty: INFO
-    io.netty: INFO
-    io.projectreactor:
-#    org.apache.tomcat.util.net.NioEndpoint: INFO
-    org.apache.tomcat: INFO
-    org.springframework.boot: INFO
-    org.springframework.beans: INFO
-    org.apache.catalina.session.ManagerBase: INFO
+#logging:
+#  level:
+#    root: INFO
+#    org.springframework: INFO
+#    org.springframework.security: INFO
+#    org.springframework.security.oauth2: INFO
+#    org.springframework.web: INFO
+#    reactor.netty: INFO
+#    io.netty: INFO
+#    io.projectreactor:
+##    org.apache.tomcat.util.net.NioEndpoint: INFO
+#    org.apache.tomcat: INFO
+#    org.springframework.boot: INFO
+#    org.springframework.beans: INFO
+#    org.apache.catalina.session.ManagerBase: INFO
+trace: true
