@@ -8,7 +8,7 @@ import org.springframework.security.web.server.authentication.logout.RedirectSer
 import reactor.core.publisher.Mono;
 
 import java.net.URI;
-
+// TODO refactor public ServerLogoutSuccessHandler customLogoutSuccessHandler() { here: Do not remove this class
 public class CustomLogoutSuccessHandler extends RedirectServerLogoutSuccessHandler {
 	private static final String HEADER_NAME = "X-POST-LOGOUT-SUCCESS-URI";
 	private static final String DEFAULT_REDIRECT = "http://localhost:7080/react-ui";
