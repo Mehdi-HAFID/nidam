@@ -12,8 +12,10 @@ import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.http.MediaType;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
@@ -33,6 +35,7 @@ import org.springframework.security.oauth2.server.authorization.token.JwtEncodin
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
+import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
 import org.springframework.web.filter.ForwardedHeaderFilter;
 
 import java.security.KeyPair;
@@ -107,8 +110,11 @@ public class SecurityConfigStaticKey {
 	@Bean
 	@Order(2)
 	public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
-		http.formLogin(Customizer.withDefaults());
-		http.authorizeHttpRequests(c -> c.anyRequest().authenticated());
+		http.formLogin(formLogin -> formLogin.loginPage("/login").permitAll());
+		http.authorizeHttpRequests(c -> c
+				.requestMatchers("css/**").permitAll()
+				.requestMatchers("/error").permitAll()
+				.anyRequest().authenticated());
 		return http.build();
 	}
 
