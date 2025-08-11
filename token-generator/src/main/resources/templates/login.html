@@ -1,29 +1,175 @@
+<!--
+Product: Nidam is
+Version: v2.0
+Author: Mehdi Hafid
+Contact: mehdi.hafid@outlook.com
+Website: https://nidam.derbyware.com
+-->
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="https://www.thymeleaf.org">
-<head>
-    <title>Please Log In</title>
-    <link rel="stylesheet" th:href="@{/css/style.css}">
-</head>
-<body>
-<div class="login-page">
-    <div class="form">
-        <h1>Spring Boot Tutorial</h1>
-        <h2>Please Log In</h2>
-        <div class="error" th:if="${param.error}">
-            Invalid username and password.</div>
-        <div class="error" th:if="${param.logout}">
-            You have been logged out.</div>
-        <form  class="login-form" th:action="@{/login}" method="post">
-            <div>
-                <input type="text" name="username" placeholder="Username"/>
+<html class="h-full" data-kt-theme="true" data-kt-theme-mode="dark" dir="ltr" lang="en"
+      xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <title>
+            Sign in - Nidam
+        </title>
+        <meta charset="utf-8"/>
+        <meta content="width=device-width, initial-scale=1, shrink-to-fit=no" name="viewport"/>
+        <meta content="Sign in page" name="description"/>
+        <link th:href="@{/media/app/apple-touch-icon.png}" rel="apple-touch-icon" sizes="180x180"/>
+        <link th:href="@{/media/app/favicon-32x32.png}" rel="icon" sizes="32x32" type="image/png"/>
+        <link th:href="@{/media/app/favicon-16x16.png}" rel="icon" sizes="16x16" type="image/png"/>
+        <link th:href="@{/media/app/favicon.ico}" rel="shortcut icon"/>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+        <link th:href="@{/vendors/keenicons/styles.bundle.css}" rel="stylesheet"/>
+        <link th:href="@{/css/styles.css}" rel="stylesheet"/>
+    </head>
+    <body class="antialiased flex h-full text-base text-foreground bg-background">
+    <!-- Theme Mode -->
+        <script>
+            const defaultThemeMode = 'light'; // light|dark|system
+            let themeMode;
+
+            if (document.documentElement) {
+                if (localStorage.getItem('kt-theme')) {
+                    themeMode = localStorage.getItem('kt-theme');
+                } else if (
+                    document.documentElement.hasAttribute('data-kt-theme-mode')
+                ) {
+                    themeMode =
+                        document.documentElement.getAttribute('data-kt-theme-mode');
+                } else {
+                    themeMode = defaultThemeMode;
+                }
+
+                if (themeMode === 'system') {
+                    themeMode = window.matchMedia('(prefers-color-scheme: dark)').matches
+                        ? 'dark'
+                        : 'light';
+                }
+
+                document.documentElement.classList.add(themeMode);
+            }
+        </script>
+
+        <style th:inline="css">
+            .page-bg {
+                background-image: url([[@{/media/images/2600x1200/bg-10.png}]]);
+            }
+
+            .dark .page-bg {
+                background-image: url([[@{/media/images/2600x1200/bg-10-dark.png}]]);
+            }
+        </style>
+
+        <div class="flex items-center justify-center grow bg-center bg-no-repeat page-bg">
+            <div class="kt-card max-w-[370px] w-full">
+                <form th:action="@{/login}" class="kt-card-content flex flex-col gap-5 p-10" id="signin" method="post">
+                    <div class="text-center mb-2.5">
+                        <h3 class="text-lg font-medium text-mono leading-none mb-2.5">
+                            Sign in
+                        </h3>
+                        <div class="flex items-center justify-center font-medium">
+                            <span class="text-sm text-secondary-foreground me-1.5">
+                                Need an account?
+                            </span>
+                            <a class="text-sm link" href="/react-ui/signup">
+                                Sign up
+                            </a>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="border-t border-border w-full"></span>
+                        <span class="text-xs text-muted-foreground font-medium uppercase">
+                            Or
+                        </span>
+                        <span class="border-t border-border w-full"></span>
+                    </div>
+                    <div th:if="${LOGIN_ERROR}" class="kt-alert kt-alert-light kt-alert-destructive" id="alert_4">
+                        <div class="kt-alert-icon">
+                            <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="24"
+                                    height="24"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    class="lucide lucide-info"
+                                    aria-hidden="true"
+                            >
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <path d="M12 16v-4"></path>
+                                <path d="M12 8h.01"></path>
+                            </svg>
+                        </div>
+                        <div class="kt-alert-title" th:text="${LOGIN_ERROR}"></div>
+                        <div class="kt-alert-toolbar">
+                            <div class="kt-alert-actions">
+                                <button class="kt-alert-close" data-kt-dismiss="#alert_4">
+                                <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        width="24"
+                                        height="24"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="2"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        class="lucide lucide-x"
+                                        aria-hidden="true"
+                                >
+                                    <path d="M18 6 6 18"></path>
+                                    <path d="m6 6 12 12"></path>
+                                </svg>
+                            </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex flex-col gap-1">
+                        <label class="kt-form-label font-normal text-mono">
+                            Email
+                        </label>
+                        <input class="kt-input" placeholder="email@email.com" type="text" value="" name="username"/>
+                    </div>
+                    <div class="flex flex-col gap-1">
+                        <div class="flex items-center justify-between gap-1">
+                            <label class="kt-form-label font-normal text-mono">
+                                Password
+                            </label>
+                            <!--                    TODO -->
+                            <!--                    <a class="text-sm kt-link shrink-0"-->
+                            <!--                       href="html/demo1/authentication/classic/reset-password/enter-email.html">-->
+                            <!--                        Forgot Password?-->
+                            <!--                    </a>-->
+                        </div>
+                        <div class="kt-input" data-kt-toggle-password="true">
+                            <input placeholder="Enter Password" type="password" value="" name="password"/>
+                            <button class="kt-btn kt-btn-sm kt-btn-ghost kt-btn-icon bg-transparent! -me-1.5"
+                                    data-kt-toggle-password-trigger="true" type="button">
+                                <span class="kt-toggle-password-active:hidden">
+                                    <i class="ki-filled ki-eye text-muted-foreground"></i>
+                                </span>
+                                <span class="hidden kt-toggle-password-active:block">
+                                    <i class="ki-filled ki-eye-slash text-muted-foreground"></i>
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+                    <!--            <input type="hidden" name="_csrf" value=${_csrf.token} />-->
+
+                    <button class="kt-btn kt-btn-primary flex justify-center grow" type="submit">
+                        Sign In
+                    </button>
+                </form>
             </div>
-            <div>
-                <input type="password" name="password" placeholder="Password"/>
-            </div>
-            <input class="button" type="submit" value="Log in" />
-        </form>
-        <p>Willy De Keyser</p>
-    </div>
-</div>
-</body>
+        </div>
+        <!-- End of Page -->
+        <!-- Scripts -->
+        <!-- needed to toggle password -->
+        <script th:src="@{/vendors/ktui/ktui.min.js}"></script>
+        <!-- End of Scripts -->
+    </body>
 </html>
