@@ -36,9 +36,8 @@ const Private = props => {
 					<Typography variant="h5" sx={{mb: "10px"}}>Page for Authenticated Users</Typography>
 					<Logout/>
 					<Typography variant="h2" sx={{mt: "20px"}}>
-						Checkout The Treasure
+						You're In
 					</Typography>
-					<Link href="https://tigmat.io" underline="none" variant="h1">Tigmat</Link>
 				</div>
 			</Container>
 			{/*<Grid*/}

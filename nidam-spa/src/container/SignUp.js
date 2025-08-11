@@ -28,7 +28,7 @@ function Copyright(props) {
 	return (
 		<Typography variant="body2" color="text.secondary" align="center" {...props}>
 			{'Copyright © '}
-			<Link color="inherit" href="https://tigmat.io/">
+			<Link color="inherit" href="https://nidam.derbyware.com/">
 				Nidam By Mehdi Hafid
 			</Link>{' '}
 			{new Date().getFullYear()}
@@ -370,7 +370,7 @@ const SignUp = (props) => {
 								                                     setTermsAccepted(event.target.checked);
 							                                     }}
 							/>}
-							                  label={<>I agree to <a href="https://tigmat.io/" target="_blank">the
+							                  label={<>I agree to <a href="https://nidam.derbyware.com/" target="_blank">the
 								                  Terms &amp; Conditions</a></>}
 							>
 
