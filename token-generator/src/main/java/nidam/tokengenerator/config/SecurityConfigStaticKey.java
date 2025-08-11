@@ -32,6 +32,7 @@ import org.springframework.security.oauth2.server.authorization.settings.TokenSe
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.web.filter.ForwardedHeaderFilter;
 
@@ -96,19 +97,30 @@ public class SecurityConfigStaticKey {
 	}
 
 	/**
-	 * Creates the default security filter chain for the application.
+	 * Defines the default security filter chain for the application.
 	 * <p>
-	 * Configures form login and requires authentication for all HTTP requests.
+	 * Sets up form login with a custom handler for authentication failures,
+	 * and enforces authentication for all incoming HTTP requests except static resources and the login page.
+	 * <p>
+	 * Assets required for rendering the custom login page are publicly accessible.
+	 * All other requests require authentication.
 	 *
-	 * @param http the {@link HttpSecurity} to modify
+	 * @param http the {@link HttpSecurity} to configure
+	 * @param loginHandler the {@link AuthenticationFailureHandler} used for login failures
 	 * @return the configured {@link SecurityFilterChain}
-	 * @throws Exception if an error occurs configuring the filter chain
+	 * @throws Exception if an error occurs while building the filter chain
 	 */
 	@Bean
 	@Order(2)
-	public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
-		http.formLogin(Customizer.withDefaults());
-		http.authorizeHttpRequests(c -> c.anyRequest().authenticated());
+	public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http, AuthenticationFailureHandler loginHandler) throws Exception {
+		http.formLogin(formLogin -> formLogin
+				.loginPage("/login")
+				.failureHandler(loginHandler)
+				.permitAll());
+		http.authorizeHttpRequests(c -> c
+				.requestMatchers("css/**", "media/**", "vendors/**").permitAll()
+				.requestMatchers("/error").permitAll()
+				.anyRequest().authenticated());
 		return http.build();
 	}
 
