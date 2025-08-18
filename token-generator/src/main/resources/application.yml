@@ -47,6 +47,12 @@ spring:
     username: root
     password: CcmN*`6@3T9H%P#yg^V<7v
 
+rate-limiter:
+  enabled: true
+  lockout-duration: 5    # minutes
+  max-attempts: 5
+  cleanup-interval-ms: 60000      # miliseconds
+
 #logging:
 #  level:
 #    root: INFO
