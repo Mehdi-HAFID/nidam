@@ -17,18 +17,19 @@ const AppRoutes = () => {
 				<Route path="secret" element={<Private/>} />
 				{/*<Route path='/*' element={<PrivateRoutes />} />*/}
 				<Route index element={<Navigate to='/secret' />} />
+                <Route path='*' element={<Navigate to='/error/404' />} />
 			</>
 		) : (
 			<>
 				<Route path="signup" element={<SignUp/>} />
 				{/*<Route path='auth/*' element={<AuthPage />} />*/}
 				<Route index element={<Navigate to='/signup' />} />
-				{/*<Route path='*' element={<Navigate to='/auth' />} />*/}
+				<Route path='*' element={<Navigate to='/signup' />} />
 			</>
 		)}
 
 
-		<Route path='*' element={<Navigate to='/error/404' />} />
+		{/*<Route path='*' element={<Navigate to='/error/404' />} />*/}
 
 
 		{/*<Route path='/' element={<Navigate to='signup' />} />*/}
