@@ -368,7 +368,7 @@ const SignUp = (props) => {
 					{/*/>*/}
 					<FormControl error={true}>
 						<FormGroup >
-							<FormControlLabel control={<Checkbox value="remember" color="primary"
+							<FormControlLabel control={<Checkbox value="remember" color="primary" name="terms"
 							                                     onChange={(event) => {
 								                                     setTermsAccepted(event.target.checked);
 							                                     }}
