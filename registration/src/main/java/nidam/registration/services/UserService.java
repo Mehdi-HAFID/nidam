@@ -1,5 +1,6 @@
 package nidam.registration.services;
 
+import nidam.registration.config.properties.AuthorizationProperties;
 import nidam.registration.entities.Authority;
 import nidam.registration.entities.Role;
 import nidam.registration.entities.User;
@@ -15,8 +16,6 @@ import nidam.registration.services.error.ReCaptchaException;
 import nidam.registration.services.mapper.UserRegisteredMapper;
 import nidam.registration.services.mapper.UserRegistrationCaptchaMapper;
 import nidam.registration.services.mapper.UserRegistrationMapper;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -29,40 +28,32 @@ import static java.lang.String.format;
 @Service
 public class UserService {
 
-	private Logger log = Logger.getLogger(UserService.class.getName());
+	private final Logger log = Logger.getLogger(UserService.class.getName());
 
-	@Autowired
-	private UserRepository userRepository;
+	private final UserRepository userRepository;
+	private final AuthorityRepository authorityRepository;
+	private final RoleRepository roleRepository;
+	private final PasswordEncoder passwordEncoder;
+	private final UserRegistrationMapper registrationMapper;
+	private final UserRegisteredMapper registeredMapper;
+	private final UserRegistrationCaptchaMapper userRegistrationCaptchaMapper;
+	private final RecaptchaService recaptchaService;
+	private final AuthorizationProperties authorizationProperties;
 
-	@Autowired
-	private AuthorityRepository authorityRepository;
-
-	@Autowired
-	private RoleRepository roleRepository;
-
-	@Autowired
-	private PasswordEncoder passwordEncoder;
-
-	@Autowired
-	private UserRegistrationMapper registrationMapper;
-
-	@Autowired
-	private UserRegisteredMapper registeredMapper;
-
-	@Value("#{${custom.authorities}}")
-	private List<String> authorities;
-
-	@Value("${custom.authType}")
-	private String authType;
-
-	@Value("#{${custom.roles}}")
-	private List<String> roles;
-
-	@Autowired
-	private UserRegistrationCaptchaMapper userRegistrationCaptchaMapper;
-
-	@Autowired
-	private RecaptchaService recaptchaService;
+	public UserService(UserRepository userRepository, AuthorityRepository authorityRepository, RoleRepository roleRepository,
+					   PasswordEncoder passwordEncoder, UserRegistrationMapper registrationMapper, UserRegisteredMapper registeredMapper,
+					   UserRegistrationCaptchaMapper userRegistrationCaptchaMapper, RecaptchaService recaptchaService,
+					   AuthorizationProperties authorizationProperties) {
+		this.userRepository = userRepository;
+		this.authorityRepository = authorityRepository;
+		this.roleRepository = roleRepository;
+		this.passwordEncoder = passwordEncoder;
+		this.registrationMapper = registrationMapper;
+		this.registeredMapper = registeredMapper;
+		this.userRegistrationCaptchaMapper = userRegistrationCaptchaMapper;
+		this.recaptchaService = recaptchaService;
+		this.authorizationProperties = authorizationProperties;
+	}
 
 	public UserRegisteredDto save(UserRegistrationCaptchaDto userDto){
 		boolean result = recaptchaService.validateCaptcha(userDto.getRecaptchaKey());
@@ -81,9 +72,9 @@ public class UserService {
 
 		setPassword(user);
 
-		if( Integer.parseInt(authType) == 1){
+		if( authorizationProperties.getAuthType() == 1){
 			setAuthorities(user);
-		} else if(Integer.parseInt(authType) == 2){
+		} else if(authorizationProperties.getAuthType() == 2){
 			setRoles(user);
 		}
 
@@ -112,12 +103,11 @@ public class UserService {
 		return true;
 	}
 
-
 	private void setAuthorities(User user) {
 		// Admin User should always have all the authorities
 		List<Authority> allAuthorities = new ArrayList<>();
 
-		for(String authority : authorities){
+		for(String authority : authorizationProperties.getAuthorities()){
 			allAuthorities.add(authorityRepository.findAuthorityByName(authority));
 		}
 
@@ -128,7 +118,7 @@ public class UserService {
 		// Admin User should always have all the authorities
 		List<Role> allRoles = new ArrayList<>();
 
-		for(String role : roles){
+		for(String role : authorizationProperties.getRoles()){
 			allRoles.add(roleRepository.findRoleByName(role));
 		}
 

@@ -12,5 +12,6 @@ public interface UserRegistrationCaptchaMapper {
 	@Mapping(target = "password", source = "dto.password")
 	public UserRegistrationDto toEntity(UserRegistrationCaptchaDto dto);
 
+	@Mapping(target = "recaptchaKey", ignore = true)
 	public UserRegistrationCaptchaDto toDto(UserRegistrationDto user);
 }
