@@ -199,6 +199,9 @@ const SignUp = (props) => {
 		const updatedConfirmPassword = changeText(confirmPassword, confirmPassword.value, "Password Confirmation");
 		setConfirmPassword(updatedConfirmPassword);
 		allValid = allValid && confirmPassword.valid;
+
+        setShowTermsError(!termsAccepted)
+        allValid = allValid && termsAccepted;
 		return allValid;
 	}
 
