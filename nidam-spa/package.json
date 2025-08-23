@@ -33,14 +33,20 @@
   },
   "browserslist": {
     "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
+      "chrome > 100",
+      "firefox > 100",
+      "and_chr > 100",
+      "ios_saf > 15",
+      "edge > 100",
+      "safari > 15"
     ],
     "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
+      "chrome > 100",
+      "firefox > 100",
+      "and_chr > 100",
+      "ios_saf > 15",
+      "edge > 100",
+      "safari > 15"
     ]
   },
   "devDependencies": {

@@ -1,1 +1,1 @@
-export { isLoggedIn } from "./authenticationActions";
+export { isLoggedIn, logoutBeforeTokenExpires } from "./authenticationActions";

@@ -1,6 +1,6 @@
+import {useState} from "react";
 import Button from "@mui/material/Button";
 import axios from "axios";
-import {useState} from "react";
 
 const Logout = props => {
 
@@ -23,7 +23,7 @@ const Logout = props => {
 		setDisabled(false);
 	};
 
-	return <Button variant="contained" sx={{width: "25%"}} disabled={disabled} onClick={logout}>Logout</Button>
+	return <Button variant="contained" disabled={disabled} onClick={logout}>Logout</Button>
 }
 
 export default Logout;
