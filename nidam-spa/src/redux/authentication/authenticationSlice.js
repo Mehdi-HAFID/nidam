@@ -36,7 +36,7 @@ export const authenticationSlice = createSlice({
 })
 
 // Action creators are generated for each case reducer function
-export const { isLoggedInStart, isLoggedInSuccess,
-	isLoggedInFail, isLoggedInResetError , authenticated} = authenticationSlice.actions
+export const { isLoggedInStart, isLoggedInSuccess, isLoggedInFail,
+    isLoggedInResetError , authenticated} = authenticationSlice.actions
 
 export default authenticationSlice.reducer
