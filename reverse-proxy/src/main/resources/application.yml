@@ -57,4 +57,4 @@ spring:
                 - StripPrefix=1
                 - PreserveHostHeader
                 - AddRequestHeader=X-Forwarded-Proto, http
-trace: true
+#trace: true
