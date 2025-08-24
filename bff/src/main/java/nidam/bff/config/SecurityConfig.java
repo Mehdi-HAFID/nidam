@@ -5,19 +5,24 @@ import nidam.bff.handler.LoginSuccessHandler;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.client.ReactiveOAuth2AuthorizedClientService;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.client.registration.ReactiveClientRegistrationRepository;
+import org.springframework.security.oauth2.client.web.OAuth2AuthorizedClientRepository;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.security.web.server.authentication.logout.ServerLogoutSuccessHandler;
 import org.springframework.security.web.server.csrf.CookieServerCsrfTokenRepository;
 import org.springframework.security.web.server.csrf.CsrfToken;
+import org.springframework.security.web.server.csrf.DefaultCsrfToken;
 import org.springframework.security.web.server.csrf.ServerCsrfTokenRequestAttributeHandler;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;
@@ -27,6 +32,8 @@ import reactor.core.publisher.Mono;
 
 import java.net.URI;
 import java.time.Duration;
+import java.time.Instant;
+import java.util.UUID;
 import java.util.logging.Logger;
 
 /**
@@ -161,7 +168,10 @@ public class SecurityConfig {
 	 *     <li>{@code client_id} - to identify the Relying Party</li>
 	 * </ul>
 	 *
-	 * @return a {@link ServerLogoutSuccessHandler} implementation
+	 * <p>The handler sets HTTP status {@code 202 Accepted} and issues a redirect to the Authorization Server’s (OpenID Provider’s) logout endpoint.
+	 * It also clears cookies and invalidates the {@code WebSession} to ensure the SESSION cookie is removed.</p>
+	 *
+	 * @return a {@link ServerLogoutSuccessHandler} implementation for OIDC RP-initiated logout
 	 */
 	@Bean
 	public ServerLogoutSuccessHandler customLogoutSuccessHandler() {
@@ -180,7 +190,10 @@ public class SecurityConfig {
 
 				clearCookies(response);
 
-				return response.setComplete();
+				// ✅ Invalidate the session server-side, aka remove SESSION cookie
+				return webExchange.getSession()
+						.flatMap(WebSession::invalidate)
+						.then(response.setComplete());
 			}
 
 			// fallback if not authenticated
@@ -230,6 +243,7 @@ public class SecurityConfig {
 	 */
 	private void clearCookies(ServerHttpResponse response) {
 		// Clear XSRF-TOKEN manually (Spring Security doesn't delete it)
+//		log.info("Clearing Cookies");
 		response.addCookie(ResponseCookie.from(COOKIE_XSRF_TOKEN, "")
 				.path("/")
 				.sameSite("Lax")
@@ -262,7 +276,8 @@ public class SecurityConfig {
 	 */
 
 	/**
-	 * Configures a {@link WebFilter} that ensures each WebFlux session has a maximum idle timeout of 12 hours.
+	 * Configures a {@link WebFilter} that sets a maximum idle timeout of 12 hours on each WebFlux session,
+	 * but only once per session lifecycle and only if the session has already started.
 	 * <p>
 	 * This is necessary to keep the session (and therefore the {@code SESSION} cookie and any stored
 	 * {@link org.springframework.security.oauth2.client.OAuth2AuthorizedClient} including the access token)
@@ -271,23 +286,90 @@ public class SecurityConfig {
 	 * </p>
 	 *
 	 * <p>
-	 * The filter intercepts each request, retrieves the session, and sets the max idle time to 12 hours.
-	 * This ensures the session remains valid for 12 hours of inactivity, matching typical access token lifetimes.
+	 * To prevent creating sessions unnecessarily (e.g., for unauthenticated requests like logout),
+	 * this filter only applies to sessions that have already been started using {@code session.isStarted()}.
+	 * Additionally, the timeout is only set once per session by checking a session-scoped attribute flag.
 	 * </p>
 	 *
-	 * @return a {@link WebFilter} that sets session idle timeout to 12 hours
+	 * @return a {@link WebFilter} that sets session idle timeout to 12 hours, only once per session
 	 */
 	@Bean
 	public WebFilter sessionTimeoutWebFilter() {
 		return (exchange, chain) -> {
 			Mono<WebSession> sessionMono = exchange.getSession()
+					.filter(WebSession::isStarted)
 					.doOnNext(session -> {
-						session.setMaxIdleTime(Duration.ofHours(12));
-//						log.info("Set session idle timeout to 12h for session ID: " + session.getId());
-//						log.info("Max idle time: " + session.getMaxIdleTime());
-//						log.info("Creation time: " + session.getCreationTime());
+						if (session.getAttribute("SESSION_TIMEOUT_SET") == null) {
+							session.setMaxIdleTime(Duration.ofHours(12));
+							session.getAttributes().put("SESSION_TIMEOUT_SET", true);
+							log.info("Session timeout set to 12h for session ID:" + session.getId());
+//							log.info("Max idle time: " + session.getMaxIdleTime());
+//							log.info("Creation time: " + session.getCreationTime());
+						}
+
 					});
 			return sessionMono.then(chain.filter(exchange));
 		};
 	}
+
+
+	// waiting for the auth server bug to be fixed to uncomment this
+	// refreshing cookies values when bff automatically use refresh token to get a new token.
+//	/**
+//	 * Configures a {@link WebFilter} that detects when the OAuth2 access token has been refreshed
+//	 * and reacts by regenerating the session ID.
+//	 *
+//	 * <p>This is important to avoid session fixation attacks and to ensure consistency in CSRF and session
+//	 * data. When a new access token is issued (via refresh token), the filter compares the current access token
+//	 * with the one stored in the session under {@code lastAccessToken}.</p>
+//	 *
+//	 * <p>If the token has changed, the new one is saved into the session and {@link WebSession#changeSessionId()}
+//	 * is invoked to force session regeneration. This ensures the server-side session and the client's access token
+//	 * remain synchronized.</p>
+//	 *
+//	 * <p>The filter executes after Spring Security filters (order 200) and uses the provided
+//	 * {@link ReactiveOAuth2AuthorizedClientService} to look up the currently authorized client.</p>
+//	 *
+//	 * @param clientService the authorized client service used to retrieve the access token
+//	 * @return a {@link WebFilter} that refreshes the session on access token refresh
+//	 */
+//	@Bean
+//	@Order(200) // after Spring Security filters
+//	public WebFilter refreshSessionOnAccessTokenRefreshFilter(ReactiveOAuth2AuthorizedClientService clientService) {
+//		return (exchange, chain) -> exchange.getPrincipal()
+//				.cast(OAuth2AuthenticationToken.class)
+//				.flatMap(auth -> clientService.loadAuthorizedClient(auth.getAuthorizedClientRegistrationId(), auth.getName())
+//						.flatMap(client -> {
+//							String currentToken = client.getAccessToken().getTokenValue();
+//							log.info("refreshSessionOnAccessTokenRefreshFilter currentToken: " + currentToken);
+//							return exchange.getSession().flatMap(session -> {
+//								String previousToken = (String) session.getAttributes().get("lastAccessToken");
+//								log.info("refreshSessionOnAccessTokenRefreshFilter previousToken: " + previousToken);
+//								if (previousToken != null && !currentToken.equals(previousToken)) {
+//									log.info("Token was refreshed!");
+//									// Token was refreshed!
+//									session.getAttributes().put("lastAccessToken", currentToken);
+//
+//									// START this code is a workaround the exception thrown by auth server during logout after a refresh token,
+//									// yet even when sending the updated id_token_hint the exception still happens. this section temporarily here
+//									// to remove before deploying v 2. add this to the .docx documentation
+////									// ✅ Also update the ID Token using OidcUser
+////									if (auth.getPrincipal() instanceof OidcUser oidcUser) {
+////										String idToken = oidcUser.getIdToken().getTokenValue();
+////										log.info("saving idTokenHint (in session as originalIdToken) in refreshSessionOnAccessTokenRefreshFilter: " + idToken);
+////										session.getAttributes().put("originalIdToken", idToken);
+////										log.info("Updated ID token in session in refreshSessionOnAccessTokenRefreshFilter: " + idToken);
+////									}
+//									// END
+//
+//									return session.changeSessionId().then(chain.filter(exchange));
+//								}
+//								return chain.filter(exchange);
+//							});
+//						})
+//				).switchIfEmpty(chain.filter(exchange));
+//	}
+
+
+
 }

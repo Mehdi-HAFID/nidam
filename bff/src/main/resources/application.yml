@@ -68,4 +68,4 @@ spring:
             scope: openid
             redirect-uri: ${reverse-proxy-uri}${bff-prefix}/login/oauth2/code/token-generator
 
-trace: true
+#trace: true
