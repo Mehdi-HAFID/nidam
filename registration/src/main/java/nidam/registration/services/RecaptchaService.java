@@ -12,12 +12,12 @@ import java.util.logging.Logger;
 @Service
 public class RecaptchaService {
 
-	private Logger log = Logger.getLogger(RecaptchaService.class.getName());
+	private final Logger log = Logger.getLogger(RecaptchaService.class.getName());
 
-	@Value("#{${custom.recaptcha.secret}}")
+	@Value("${custom.recaptcha.secret}")
 	private String recaptchaSecret;
 
-	private ReCaptchaProxy reCaptchaProxy;
+	private final ReCaptchaProxy reCaptchaProxy;
 	public RecaptchaService(ReCaptchaProxy reCaptchaProxy){
 		this.reCaptchaProxy = reCaptchaProxy;
 	}
