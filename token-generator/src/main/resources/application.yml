@@ -1,8 +1,8 @@
-scheme: http
-hostname: localhost
-
-reverse-proxy-port: 7080
-reverse-proxy-uri: ${scheme}://${hostname}:${reverse-proxy-port}
+#scheme: http
+#hostname: localhost
+#
+#reverse-proxy-port: 7080
+reverse-proxy-uri: http://localhost:7080
 
 authorization-server-prefix: /auth
 issuer: ${reverse-proxy-uri}${authorization-server-prefix}
@@ -14,8 +14,9 @@ client:
   id: client
   secret-hash: '{bcrypt}$2a$10$.ld6BfZescPDfVVduvu.6O9.7FLMI64l4PfvnBZJQEBhTLFFbeKei'  #value is 'secret', must use hash because of password encoders
   internal-identifier: nidam-bff-internal-id
-  login-uri: ${reverse-proxy-uri}${bff-prefix}/login/oauth2/code/token-generator
-  logout-uri: ${reverse-proxy-uri}${react-prefix}
+  login-uri: http://localhost:7080${bff-prefix}/login/oauth2/code/token-generator   # Explanation below
+#  localhost here because this is the same as bff\src\main\resources\application.yml, for docker purposes.
+  logout-uri: http://localhost:7080${react-prefix}
 
 
 server:

@@ -8,5 +8,5 @@ RUN mvn clean package -DskipTests
 # ---------- Stage 2: Run ----------
 FROM eclipse-temurin:21-jre-jammy
 WORKDIR /app
-COPY --from=builder /app/target/*.jar app.jar
-ENTRYPOINT ["java","-jar","app.jar"]
+COPY --from=builder /app/target/*.jar token-generator.jar
+ENTRYPOINT ["java", "-jar", "token-generator.jar"]
