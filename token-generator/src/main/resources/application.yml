@@ -37,9 +37,7 @@ custom:
       - bcrypt
       - argon2
       - pbkdf2
-# encoder for hashes without {id}
-    idless:
-      encoder: scrypt
+    idless: scrypt    # encoder for hashes without {id}
 
 spring:
   datasource:

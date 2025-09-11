@@ -1,6 +1,6 @@
 package nidam.tokengenerator.config;
 
-import org.springframework.beans.factory.annotation.Value;
+import nidam.tokengenerator.config.properties.PasswordProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.argon2.Argon2PasswordEncoder;
@@ -10,10 +10,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.crypto.password.Pbkdf2PasswordEncoder;
 import org.springframework.security.crypto.scrypt.SCryptPasswordEncoder;
 
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 @Configuration
 public class PasswordEncoderConfig {
@@ -21,35 +22,27 @@ public class PasswordEncoderConfig {
 	private Logger log = Logger.getLogger(PasswordEncoderConfig.class.getName());
 
 	@Bean
-	public PasswordEncoder passwordEncoder(@Value("#{${custom.password.encoders}}") List<String> encoders,
-	                                       @Value("#{${custom.password.idless.encoder}}") String idlessEncoderName) {
-		log.info("encoders: " + encoders);
+	public PasswordEncoder passwordEncoder(PasswordProperties passwordProperties) {
+		log.info("encoders: " + passwordProperties.getEncoders());
 
-		Map<String, PasswordEncoder> encodersMapping = new HashMap<>();
+		Map<String, Supplier<PasswordEncoder>> encoderSuppliers = Map.of(
+				"bcrypt", () -> new BCryptPasswordEncoder(),
+				"argon2", () -> Argon2PasswordEncoder.defaultsForSpringSecurity_v5_8(),
+				"pbkdf2", () -> Pbkdf2PasswordEncoder.defaultsForSpringSecurity_v5_8(),
+				"scrypt", () -> SCryptPasswordEncoder.defaultsForSpringSecurity_v5_8()
+		);
 
-		if(encoders.contains("scrypt")){ encodersMapping.put("scrypt", SCryptPasswordEncoder.defaultsForSpringSecurity_v5_8());}
-		if(encoders.contains("bcrypt")){ encodersMapping.put("bcrypt", new BCryptPasswordEncoder());}
-		if(encoders.contains("argon2")){ encodersMapping.put("argon2", Argon2PasswordEncoder.defaultsForSpringSecurity_v5_8());}
-		if(encoders.contains("pbkdf2")){ encodersMapping.put("pbkdf2", Pbkdf2PasswordEncoder.defaultsForSpringSecurity_v5_8());}
+		Map<String, PasswordEncoder> encodersMapping = passwordProperties.getEncoders().stream()
+				.filter(key1 -> encoderSuppliers.containsKey(key1))
+				.collect(Collectors.toMap(Function.identity(), key -> encoderSuppliers.get(key).get()));
+
 
 		// first in list used to encode
-		DelegatingPasswordEncoder passwordEncoder = new DelegatingPasswordEncoder(encoders.get(0), encodersMapping);
+		DelegatingPasswordEncoder passwordEncoder = new DelegatingPasswordEncoder(passwordProperties.getEncoders().getFirst(), encodersMapping);
 		// use this encoder if {id} does not exist
-		passwordEncoder.setDefaultPasswordEncoderForMatches(getEncoderForIdlessHash(idlessEncoderName));
+		passwordEncoder.setDefaultPasswordEncoderForMatches(
+				encoderSuppliers.getOrDefault(passwordProperties.getIdless(), () -> SCryptPasswordEncoder.defaultsForSpringSecurity_v5_8()).get()
+		);
 		return passwordEncoder;
-	}
-
-	private PasswordEncoder getEncoderForIdlessHash(String encoderName){
-		log.info("encoderName: " + encoderName);
-		switch (encoderName){
-			case "bcrypt":
-				return new BCryptPasswordEncoder();
-			case "argon2":
-				return Argon2PasswordEncoder.defaultsForSpringSecurity_v5_8();
-			case "pbkdf2":
-				return Pbkdf2PasswordEncoder.defaultsForSpringSecurity_v5_8();
-			default:
-				return SCryptPasswordEncoder.defaultsForSpringSecurity_v5_8();
-		}
 	}
 }
