@@ -29,7 +29,7 @@ public class LoginController {
 	@GetMapping("/login")
 	public String login(HttpServletRequest  request, Model model) {
 		String error = (String) request.getSession().getAttribute("LOGIN_ERROR");
-		log.info("LoginController.error: " + error);
+//		log.info("LoginController.error: " + error);
 		if (error != null) {
 			model.addAttribute("LOGIN_ERROR", error);
 			request.getSession().removeAttribute("LOGIN_ERROR");

@@ -41,9 +41,15 @@ custom:
 
 spring:
   datasource:
-    url: jdbc:mysql://localhost:3306/identity_hub
+    url: jdbc:mysql://localhost:3306/nidam_benchmark
     username: root
     password: CcmN*`6@3T9H%P#yg^V<7v
+  sql:
+    init:
+      mode: always
+  jpa:
+    generate-ddl: true
+    open-in-view: false
 
 rate-limiter:
   enabled: true
