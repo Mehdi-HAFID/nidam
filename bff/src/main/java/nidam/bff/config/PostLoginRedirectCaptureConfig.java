@@ -37,7 +37,7 @@ public class PostLoginRedirectCaptureConfig {
 	@Value("${react-uri}")
 	private String defaultReactUri;
 
-	public static final String BFF_LOGOUT_ENDPOINT = "/oauth2/authorization/token-generator";
+	public static final String BFF_LOGIN_INIT_ENDPOINT = "/oauth2/authorization/token-generator";
 
 	/*
 	  1️⃣ This runs *before* Spring Security’s oauth2Login() kicks in
@@ -61,7 +61,7 @@ public class PostLoginRedirectCaptureConfig {
 		return (exchange, chain) -> {
 			String path = exchange.getRequest().getURI().getPath();
 
-			if (!path.startsWith(BFF_LOGOUT_ENDPOINT)) {
+			if (!path.startsWith(BFF_LOGIN_INIT_ENDPOINT)) {
 				log.info("skipped a 'post login redirectUri'");
 				// Skip this filter if the path is not under /login
 				return chain.filter(exchange);
