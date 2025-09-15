@@ -1,4 +1,4 @@
-package nidam.bff.config;
+package nidam.bff.redirection;
 
 import nidam.bff.config.properties.LogoutProperties;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,6 +14,37 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.logging.Logger;
 
+/**
+ * Configuration for handling post-logout redirects from the Authorization Server (OpenID Provider).
+ *
+ * <p>When a user logs out via RP-initiated logout, the OP (Authorization Server) will
+ * redirect the browser back to the BFF’s {@code /post-logout} endpoint. This configuration
+ * provides a {@link WebFilter} that processes that callback and issues a final redirect
+ * to the SPA (React app).</p>
+ *
+ * <p>Core behavior:</p>
+ * <ul>
+ *   <li>Intercepts requests with a path starting with {@code /post-logout}.</li>
+ *   <li>Extracts the {@code state} query parameter, which encodes the original
+ *       post-logout redirect URI.</li>
+ *   <li>Validates the decoded {@code state} URI against an allowlist from
+ *       {@link LogoutProperties} to prevent open redirects.</li>
+ *   <li>If valid, redirects the browser to the decoded URI. Otherwise, falls back to
+ *       the configured default React URI ({@code react-uri}).</li>
+ *   <li>Issues a {@code 302 Found} redirect to complete the logout flow.</li>
+ * </ul>
+ *
+ * <p>Example flow:</p>
+ * <ol>
+ *   <li>User logs out from SPA → BFF → Authorization Server.</li>
+ *   <li>Authorization Server redirects back to
+ *       {@code http://localhost:7080/bff/post-logout?state=<encodedUri>}.</li>
+ *   <li>The filter validates the {@code state} and redirects to
+ *       {@code http://localhost:7080/react-ui} or another trusted URI.</li>
+ * </ol>
+ *
+ * @see LogoutProperties for configuration of allowed redirect URI prefixes
+ */
 @Configuration
 public class PostLogoutRedirectConfig {
 
@@ -22,7 +53,6 @@ public class PostLogoutRedirectConfig {
 	@Value("${react-uri}")
 	private String defaultReactUri;
 
-	// This could be `LogoutProperties` if you prefer
 	private final LogoutProperties logoutProperties;
 
 	private static final String POST_LOGOUT_ENDPOINT = "/post-logout";
@@ -32,9 +62,18 @@ public class PostLogoutRedirectConfig {
 		this.logoutProperties = logoutProperties;
 	}
 
+	/**
+	 * Defines a {@link WebFilter} that handles the post-logout callback from the OP.
+	 *
+	 * <p>Runs early in the chain ({@code @Order(-1)}) to catch {@code /post-logout}
+	 * requests before other filters process them.</p>
+	 *
+	 * @return a filter that validates the {@code state} parameter and issues a redirect
+	 *         to a trusted post-logout URI
+	 */
 	@Bean
-	@Order(-200) // run early, before default filters
-	public WebFilter postLogoutRedirectFilter() {
+	@Order(-1) // run early, before default filters
+	public WebFilter onLogoutSuccessFilter() {
 		return (exchange, chain) -> {
 			String path = exchange.getRequest().getURI().getPath();
 
