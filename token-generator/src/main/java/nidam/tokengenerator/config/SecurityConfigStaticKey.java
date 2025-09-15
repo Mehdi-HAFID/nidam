@@ -149,7 +149,7 @@ public class SecurityConfigStaticKey {
 //				.authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)	waiting for spring auth server logout bug to be fixed
 				.redirectUri(clientProperties.getLoginUri())	// changed from http://localhost:4004/login/oauth2/code/token-generator
 				.scope(OidcScopes.OPENID)
-				.postLogoutRedirectUri(clientProperties.getLogoutUri())			//.postLogoutRedirectUri("http://localhost:7080/react-ui")
+				.postLogoutRedirectUri(clientProperties.getBffPostLogoutUri())			//.postLogoutRedirectUri("http://localhost:7080/bff/post-logout")
 				.tokenSettings(TokenSettings.builder()
 						.accessTokenTimeToLive(Duration.ofHours(12))
 //						.refreshTokenTimeToLive(Duration.ofHours(24))  waiting for spring auth server logout bug to be fixed
