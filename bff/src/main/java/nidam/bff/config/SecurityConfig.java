@@ -5,24 +5,19 @@ import nidam.bff.handler.LoginSuccessHandler;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.oauth2.client.ReactiveOAuth2AuthorizedClientService;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.client.registration.ReactiveClientRegistrationRepository;
-import org.springframework.security.oauth2.client.web.OAuth2AuthorizedClientRepository;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.security.web.server.authentication.logout.ServerLogoutSuccessHandler;
 import org.springframework.security.web.server.csrf.CookieServerCsrfTokenRepository;
 import org.springframework.security.web.server.csrf.CsrfToken;
-import org.springframework.security.web.server.csrf.DefaultCsrfToken;
 import org.springframework.security.web.server.csrf.ServerCsrfTokenRequestAttributeHandler;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;
@@ -31,9 +26,9 @@ import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Mono;
 
 import java.net.URI;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.time.Instant;
-import java.util.UUID;
 import java.util.logging.Logger;
 
 /**
@@ -55,6 +50,7 @@ import java.util.logging.Logger;
 public class SecurityConfig {
 
 	private final static Logger log = Logger.getLogger(SecurityConfig.class.getName());
+	private static final String STATE_QUERY_PARAMETER = "state";
 
 
 	private final LoginSuccessHandler loginSuccessHandler;
@@ -68,7 +64,8 @@ public class SecurityConfig {
 	public static final String COOKIE_SESSION = "SESSION";
 	public static final String BFF_LOGOUT_ENDPOINT = "/logout";
 
-	private static final String[] UNAUTHENTICATED_PATHS = {"/api/**", "/login/**", "/oauth2/**", "/error", "/actuator/health/**"};
+	private static final String[] UNAUTHENTICATED_PATHS =
+			{"/api/**", "/login/**", "/oauth2/**", "/error", "/actuator/health/**", "/post-logout"};
 
 	/**
 	 * Constructs a new {@code SecurityConfig} with required components.
@@ -184,6 +181,7 @@ public class SecurityConfig {
 				String idToken = oidcUser.getIdToken().getTokenValue();
 
 				String redirectUri = buildLogoutRedirectUri(webExchange, idToken);
+				log.info("logout uri: " + redirectUri);
 
 				response.setStatusCode(HttpStatus.ACCEPTED);
 				response.getHeaders().setLocation(URI.create(redirectUri));
@@ -214,19 +212,32 @@ public class SecurityConfig {
 	 */
 	private String buildLogoutRedirectUri(ServerWebExchange webExchange, String idToken) {
 		String redirectUriRaw = webExchange.getRequest().getHeaders().getFirst(logoutProperties.getSuccessRedirectHeader());
-		log.info("redirectUriRaw: " + redirectUriRaw);
+		log.info("buildLogoutRedirectUri redirectUriRaw: " + redirectUriRaw);
 
 		String logoutRedirectUri = logoutProperties.getSuccessRedirectDefaultUri(); // use default in case spa did not provide one
-		if (redirectUriRaw != null && !redirectUriRaw.isEmpty()) {
-			logoutRedirectUri = redirectUriRaw;
+
+		if (redirectUriRaw != null && redirectUriRaw.startsWith("http")) {
+			boolean isAllowed = logoutProperties.getAllowedRedirectUriPrefixes() != null
+					&& logoutProperties.getAllowedRedirectUriPrefixes().stream().anyMatch(redirectUriRaw::startsWith);
+			log.info("logout uri isAllowed: " + isAllowed);
+
+			if (isAllowed) {
+				logoutRedirectUri = redirectUriRaw;
+			} else {
+				log.warning("Rejected untrusted post_logout_success_uri: " + redirectUriRaw +
+						". Allowed prefixes: " + logoutProperties.getAllowedRedirectUriPrefixes());
+			}
 		}
 		log.info("logoutRedirectUri: " + logoutRedirectUri);
+
+		String encodedState = URLEncoder.encode(logoutRedirectUri, StandardCharsets.UTF_8);
 
 		String redirectUri = UriComponentsBuilder
 				.fromUriString(logoutProperties.getAuthServerUri())
 				.queryParam(logoutProperties.getTokenHintParamName(), idToken)
-				.queryParam(logoutProperties.getPostRedirectParamName(), logoutRedirectUri)
+				.queryParam(logoutProperties.getPostRedirectParamName(), logoutProperties.getBffPostLogoutUri())
 				.queryParam(logoutProperties.getClientIdParamName(), clientId)
+				.queryParam(STATE_QUERY_PARAMETER, encodedState)
 				.build()
 				.toUriString();
 		return redirectUri;
