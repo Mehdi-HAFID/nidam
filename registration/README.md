@@ -16,6 +16,9 @@ Read the documentation: https://nidam.derbyware.com
 
 ## Run locally (example)
 ```bash
+mvn spring-boot:run 
+#OR
+
 # Build
 mvn clean package
 
