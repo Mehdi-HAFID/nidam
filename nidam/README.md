@@ -24,7 +24,7 @@ mvn spring-boot:run
 mvn clean package
 
 # Run
-java -jar target/registration-*.jar
+java -jar target/nidam-*.jar
 ```
 
 [//]: # (TODO change to the new one)
