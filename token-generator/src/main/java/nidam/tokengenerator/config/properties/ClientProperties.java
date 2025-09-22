@@ -12,6 +12,7 @@ public class ClientProperties {
 	private String internalIdentifier;
 	private String loginUri;
 	private String logoutUri;
+	private String bffPostLogoutUri;
 
 	public String getId() {
 		return id;
@@ -51,5 +52,13 @@ public class ClientProperties {
 
 	public void setLogoutUri(String logoutUri) {
 		this.logoutUri = logoutUri;
+	}
+
+	public String getBffPostLogoutUri() {
+		return bffPostLogoutUri;
+	}
+
+	public void setBffPostLogoutUri(String bffPostLogoutUri) {
+		this.bffPostLogoutUri = bffPostLogoutUri;
 	}
 }

@@ -67,6 +67,8 @@ public class SecurityConfigStaticKey {
 	private final KeystoreProperties keystoreProperties;
 	private final ClientProperties clientProperties;
 
+	private static final String[] ALLOWED_PATHS = {"/css/**", "/media/**", "/vendors/**", "/error"};
+
 	public SecurityConfigStaticKey(KeystoreProperties keystoreProperties, ClientProperties clientProperties) {
 		this.keystoreProperties = keystoreProperties;
 		this.clientProperties = clientProperties;
@@ -117,13 +119,12 @@ public class SecurityConfigStaticKey {
 	public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http, OAuth2AwareSuccessHandler successHandler,
 														  OAuth2AwareFailureHandler failureHandler) throws Exception {
 		http.formLogin(formLogin -> formLogin
-				.loginPage("/login")
+				.loginPage(LOGIN_ENDPOINT)
 				.successHandler(successHandler)
 				.failureHandler(failureHandler)
 				.permitAll());
 		http.authorizeHttpRequests(c -> c
-				.requestMatchers("/css/**", "/media/**", "/vendors/**").permitAll()
-				.requestMatchers("/error").permitAll()
+				.requestMatchers(ALLOWED_PATHS).permitAll()
 				.anyRequest().authenticated());
 		return http.build();
 	}
@@ -148,7 +149,7 @@ public class SecurityConfigStaticKey {
 //				.authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)	waiting for spring auth server logout bug to be fixed
 				.redirectUri(clientProperties.getLoginUri())	// changed from http://localhost:4004/login/oauth2/code/token-generator
 				.scope(OidcScopes.OPENID)
-				.postLogoutRedirectUri(clientProperties.getLogoutUri())			//.postLogoutRedirectUri("http://localhost:7080/react-ui")
+				.postLogoutRedirectUri(clientProperties.getBffPostLogoutUri())			//.postLogoutRedirectUri("http://localhost:7080/bff/post-logout")
 				.tokenSettings(TokenSettings.builder()
 						.accessTokenTimeToLive(Duration.ofHours(12))
 //						.refreshTokenTimeToLive(Duration.ofHours(24))  waiting for spring auth server logout bug to be fixed

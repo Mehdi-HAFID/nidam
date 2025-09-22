@@ -159,12 +159,14 @@ public class RealLoginFailureAuditor implements LoginFailureAuditor {
 	@Override
 	public void cleanupExpiredLockouts() {
 		int initial = attempts.size();
-		Instant now = Instant.now();
-		attempts.entrySet().removeIf(entry -> {
-			FailureRecord fr = entry.getValue();
-			return fr.isExpired(now, MAX_ATTEMPTS, LOCKOUT_DURATION);
-		});
-		int finalSize = attempts.size();
-		log.info("cleanup expired lockouts: " + initial + " -> " + finalSize);
+		if( initial > 0) {
+			Instant now = Instant.now();
+			attempts.entrySet().removeIf(entry -> {
+				FailureRecord fr = entry.getValue();
+				return fr.isExpired(now, MAX_ATTEMPTS, LOCKOUT_DURATION);
+			});
+			int finalSize = attempts.size();
+			log.info("cleanup expired lockouts: " + initial + " -> " + finalSize);
+		}
 	}
 }

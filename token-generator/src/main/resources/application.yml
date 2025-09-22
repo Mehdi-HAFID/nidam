@@ -9,6 +9,7 @@ issuer: ${reverse-proxy-uri}${authorization-server-prefix}
 
 bff-prefix: /bff
 react-prefix: /react-ui
+bff-post-logout-endpoint: /post-logout
 
 client:
   id: client
@@ -17,6 +18,7 @@ client:
   login-uri: http://localhost:7080${bff-prefix}/login/oauth2/code/token-generator   # Explanation below
 #  localhost here because this is the same as bff\src\main\resources\application.yml, for docker purposes.
   logout-uri: http://localhost:7080${react-prefix}
+  bff-post-logout-uri: http://localhost:7080${bff-prefix}${bff-post-logout-endpoint}     # TODO this change will break docker-compose.yml: update file
 
 
 server:
