@@ -1,4 +1,4 @@
-package nidam.bff.config;
+package nidam.bff.redirection;
 
 import nidam.bff.config.properties.LoginProperties;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,25 +23,25 @@ import java.util.logging.Logger;
  * (also configured), and saves it in the {@link org.springframework.web.server.WebSession}
  * under a configurable attribute key (e.g. {@code POST_LOGIN_SUCCESS_URI}).</p>
  *
- * <p>The stored value is later used by {@link nidam.bff.handler.LoginSuccessHandler}
+ * <p>The stored value is later used by {@link PostLoginRedirectConfig}
  * to redirect the user to the intended frontend destination after a successful login.</p>
  *
  * <p>This setup allows frontend applications to initiate logins with a custom redirect
  * target while preserving strict control over acceptable destinations.</p>
  */
 @Configuration
-public class PostLoginRedirectCaptureConfig {
+public class LoginRedirectConfig {
 
-	private static final Logger log = Logger.getLogger(PostLoginRedirectCaptureConfig.class.getName());
+	private static final Logger log = Logger.getLogger(LoginRedirectConfig.class.getName());
 
 	@Value("${react-uri}")
 	private String defaultReactUri;
 
-	public static final String BFF_LOGOUT_ENDPOINT = "/oauth2/authorization/token-generator";
+	public static final String BFF_LOGIN_INIT_ENDPOINT = "/oauth2/authorization/token-generator";
 
 	/*
 	  1️⃣ This runs *before* Spring Security’s oauth2Login() kicks in
-	  and saves your SPA’s post_login_success_uri into the WebSession. for the {@link nidam.bff.handler.LoginSuccessHandler}
+	  and saves your SPA’s post_login_success_uri into the WebSession. for the {@link nidam.bff.redirection.LoginSuccessHandler}
 	  to use upon successful redirection
 	 */
 
@@ -56,12 +56,12 @@ public class PostLoginRedirectCaptureConfig {
 	 * @return a filter that stores the validated post-login redirect URI in session
 	 */
 	@Bean
-	@Order(-200)
-	public WebFilter postLoginSuccessUriFilter(LoginProperties loginProperties) {
+	@Order(-2)
+	public WebFilter recordLoginRedirectFilter(LoginProperties loginProperties) {
 		return (exchange, chain) -> {
 			String path = exchange.getRequest().getURI().getPath();
 
-			if (!path.startsWith(BFF_LOGOUT_ENDPOINT)) {
+			if (!path.startsWith(BFF_LOGIN_INIT_ENDPOINT)) {
 				log.info("skipped a 'post login redirectUri'");
 				// Skip this filter if the path is not under /login
 				return chain.filter(exchange);

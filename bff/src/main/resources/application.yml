@@ -13,6 +13,7 @@ client-secret: secret
 
 bff-port: 7081
 bff-prefix: /bff
+bff-post-logout-endpoint: /post-logout
 
 react-prefix: /react-ui
 react-uri: http://localhost:7080${react-prefix}   # also changed because of docker
@@ -27,6 +28,9 @@ logout:
   client-id-param-name: client_id
   success-redirect-header: X-POST-LOGOUT-SUCCESS-URI
   success-redirect-default-uri: ${reverse-proxy-uri}${react-prefix}
+  bff-post-logout-uri: ${reverse-proxy-uri}${bff-prefix}${bff-post-logout-endpoint}
+  allowed-redirect-uri-prefixes:
+    - ${react-uri}
 
 login:
   success-redirect-param-name: post_login_success_uri

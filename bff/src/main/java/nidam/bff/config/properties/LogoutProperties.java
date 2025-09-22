@@ -3,6 +3,8 @@ package nidam.bff.config.properties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Component
 @ConfigurationProperties(prefix = "logout")
 public class LogoutProperties {
@@ -13,6 +15,8 @@ public class LogoutProperties {
 	private String clientIdParamName;
 	private String successRedirectHeader;
 	private String successRedirectDefaultUri;
+	private String bffPostLogoutUri;
+	private List<String> allowedRedirectUriPrefixes;
 
 	public String getAuthServerUri() {
 		return authServerUri;
@@ -60,5 +64,21 @@ public class LogoutProperties {
 
 	public void setSuccessRedirectDefaultUri(String successRedirectDefaultUri) {
 		this.successRedirectDefaultUri = successRedirectDefaultUri;
+	}
+
+	public List<String> getAllowedRedirectUriPrefixes() {
+		return allowedRedirectUriPrefixes;
+	}
+
+	public void setAllowedRedirectUriPrefixes(List<String> allowedRedirectUriPrefixes) {
+		this.allowedRedirectUriPrefixes = allowedRedirectUriPrefixes;
+	}
+
+	public String getBffPostLogoutUri() {
+		return bffPostLogoutUri;
+	}
+
+	public void setBffPostLogoutUri(String bffPostLogoutUri) {
+		this.bffPostLogoutUri = bffPostLogoutUri;
 	}
 }
