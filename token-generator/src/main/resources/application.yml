@@ -9,6 +9,7 @@ issuer: ${reverse-proxy-uri}${authorization-server-prefix}
 
 bff-prefix: /bff
 react-prefix: /react-ui
+bff-post-logout-endpoint: /post-logout
 
 client:
   id: client
@@ -16,6 +17,7 @@ client:
   internal-identifier: nidam-bff-internal-id
   login-uri: ${reverse-proxy-uri}${bff-prefix}/login/oauth2/code/token-generator
   logout-uri: ${reverse-proxy-uri}${react-prefix}
+  bff-post-logout-uri: ${reverse-proxy-uri}${bff-prefix}${bff-post-logout-endpoint}     # TODO this change will break docker-compose.yml: update file
 
 
 server:
