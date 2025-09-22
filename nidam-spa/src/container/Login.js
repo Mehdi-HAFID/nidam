@@ -1,12 +1,16 @@
-import Link from "@mui/material/Link";
 import React from "react";
+import Link from "@mui/material/Link";
+import {useLocation} from "react-router-dom";
 
 const Login = props => {
+	const location = useLocation();
 
 	const login = (event) => {
 		event.preventDefault();
 
-		const currentPath = "/";
+		// const currentPath = "/";
+		const currentPath = location.pathname + location.search + location.hash;
+		console.log("currentPath: ", currentPath);
 		let url = new URL(process.env.REACT_APP_LOGIN_URL);
 
 		url.searchParams.append(
