@@ -36,3 +36,8 @@ custom:
     idless: scrypt
   recaptcha:
     secret: "6LcyyEMpAAAAANm0qZB6kzDQRT5Li4FSGCTe8ESf"
+  allowed-cors-uri:
+    - http://localhost:4001
+    - http://127.0.0.1:4001
+    - http://localhost:7080
+    - http://127.0.0.1:7080
