@@ -5,12 +5,12 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>3.5.4</version>
+		<version>3.5.6</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>nidam</groupId>
 	<artifactId>registration</artifactId>
-	<version>1.0.0</version>
+	<version>2.0.0</version>
 	<name>registration</name>
 	<description>registration</description>
 	<properties>
@@ -82,7 +82,7 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
-                <version>3.5.4</version>
+                <version>3.5.6</version>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
