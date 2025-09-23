@@ -36,7 +36,7 @@ export const registerSlice = createSlice({
 })
 
 // Action creators are generated for each case reducer function
-export const { registerStart, registerSuccess,
-	registerFail, registerResetError, saveSecret } = registerSlice.actions
+export const { registerStart, registerSuccess, registerFail,
+    registerResetError} = registerSlice.actions
 
 export default registerSlice.reducer;

@@ -28,7 +28,7 @@ function Copyright(props) {
 	return (
 		<Typography variant="body2" color="text.secondary" align="center" {...props}>
 			{'Copyright © '}
-			<Link color="inherit" href="https://tigmat.io/">
+			<Link color="inherit" href="https://nidam.derbyware.com/">
 				Nidam By Mehdi Hafid
 			</Link>{' '}
 			{new Date().getFullYear()}
@@ -72,6 +72,8 @@ const SignUp = (props) => {
 
 	const executeReCaptcha = (e) => {
 		e.preventDefault();
+		// TODO window.grecaptcha is null when offline: fix by showing an error to do the user
+		//  second add feature to skip recaptcha system wide: spa and backend
 		window.grecaptcha.ready(function() {
 			window.grecaptcha.execute('6LcyyEMpAAAAAMztnW6xVq1HFD0b-mlyk2t6NZa-', {action: 'submit'})
 				// .then(token => verifyReCaptcha(token))
@@ -197,6 +199,9 @@ const SignUp = (props) => {
 		const updatedConfirmPassword = changeText(confirmPassword, confirmPassword.value, "Password Confirmation");
 		setConfirmPassword(updatedConfirmPassword);
 		allValid = allValid && confirmPassword.valid;
+
+        setShowTermsError(!termsAccepted)
+        allValid = allValid && termsAccepted;
 		return allValid;
 	}
 
@@ -363,12 +368,12 @@ const SignUp = (props) => {
 					{/*/>*/}
 					<FormControl error={true}>
 						<FormGroup >
-							<FormControlLabel control={<Checkbox value="remember" color="primary"
+							<FormControlLabel control={<Checkbox value="remember" color="primary" name="terms"
 							                                     onChange={(event) => {
 								                                     setTermsAccepted(event.target.checked);
 							                                     }}
 							/>}
-							                  label={<>I agree to <a href="https://tigmat.io/" target="_blank">the
+							                  label={<>I agree to <a href="https://nidam.derbyware.com/" target="_blank">the
 								                  Terms &amp; Conditions</a></>}
 							>
 

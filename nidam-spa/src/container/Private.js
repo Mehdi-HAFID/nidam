@@ -1,25 +1,33 @@
 import React, {useEffect} from "react";
 import {useDispatch, useSelector} from "react-redux";
-import CssBaseline from "@mui/material/CssBaseline";
-import Container from "@mui/material/Container";
+import {Stack, Box, Button, Typography, Container, CssBaseline} from "@mui/material";
 
-import * as registerSagas from "../redux/register/saga";
+import * as nidamActions from "../redux/nidam";
 import Logout from "./Logout";
-import {Global, css } from "@emotion/react";
-import Grid from "@mui/material/Grid";
-import Typography from "@mui/material/Typography";
-import Link from "@mui/material/Link";
+
 
 const Private = props => {
-	const secret = useSelector((state) => state.register.secret);
+	const secret = useSelector((state) => state.nidam.secret);
+	const userInfo = useSelector((state) => state.authentication.userInfo);
 	const dispatch = useDispatch();
 
 	useEffect(() => {
-		dispatch(registerSagas.GetMySecret());
+		dispatch(nidamActions.GetSecret());
 	}, []);
 
+    const getSecret = () => {
+        dispatch(nidamActions.GetSecret());
+    }
 
-	// console.log("secret", secret);
+    // const expired = () => {
+    //     console.log("userInfo exp: ", (userInfo.exp * 1000));
+    //     console.log("userInfo ---: ", new Date().getTime());
+    //     const expireAt = ((userInfo.exp * 1000) - (new Date().getTime())) - 30_000;
+    //     console.log("difference: ", ((userInfo.exp * 1000) - (new Date().getTime())) - 30_000); // 30 seconds before token expires
+    //
+    //     dispatch(authenticationActions.logoutBeforeTokenExpires(expireAt));
+    // }
+
 	return (
 		<div style={{
 			// backgroundColor: "#08AEEA",
@@ -27,33 +35,28 @@ const Private = props => {
 			backgroundImage: "linear-gradient( 109.6deg,  rgba(254,253,205,1) 11.2%, rgba(163,230,255,1) 91.1% )",
 			height: "100vh", textAlign: "center", paddingTop: "40px"
 		}}>
-			{/*<Global*/}
-			{/*	styles={css` body { margin: 0; } `}*/}
-			{/*/>*/}
 			<CssBaseline />
 			<Container component="main" maxWidth="xl" >
-				<div >
-					<Typography variant="h5" sx={{mb: "10px"}}>Page for Authenticated Users</Typography>
+                <Stack spacing={2} alignItems="center">
+					<Typography variant="h5" >Page for Authenticated Users</Typography>
 					<Logout/>
-					<Typography variant="h2" sx={{mt: "20px"}}>
-						Checkout The Treasure
-					</Typography>
-					<Link href="https://tigmat.io" underline="none" variant="h1">Tigmat</Link>
-				</div>
+					<Typography variant="h2" >You're In</Typography>
+                    <Button variant="contained" size="large" onClick={getSecret}>Call Resource Server</Button>
+                    {/*<Button variant="contained" sx={{mr: "20px"}} size="large" onClick={expired}>Expired Token</Button>*/}
+                    <Box
+                        sx={{
+                            maxHeight: 200,          // Limit height
+                            overflowY: 'auto',       // Vertical scroll
+                            p: 2,                    // Padding
+                            border: '1px solid #ccc',
+                            borderRadius: 2,
+                            width: '100%',
+                        }}
+                    >
+                            {JSON.stringify(secret)}
+                    </Box>
+                </Stack>
 			</Container>
-			{/*<Grid*/}
-			{/*	container*/}
-			{/*	spacing={0}*/}
-			{/*	direction="column"*/}
-			{/*	alignItems="center"*/}
-			{/*	justifyContent="center"*/}
-			{/*	sx={{ minHeight: '100vh' }}*/}
-			{/*>*/}
-			{/*	<Grid item xs={3}>*/}
-			{/*		<h4 className="">Page for Authenticated Users</h4>*/}
-			{/*		<Logout/>*/}
-			{/*	</Grid>*/}
-			{/*</Grid>*/}
 		</div>
 	);
 }

@@ -2,8 +2,8 @@ import {useEffect, useState} from "react";
 import {useDispatch, useSelector} from "react-redux";
 import {LayoutSplashScreen} from "../pages/SplashScreen";
 
-import * as authenticationSagas from "../redux/authentication/saga";
 import {authenticated} from "../redux/authentication/authenticationSlice";
+import * as authenticationActions from "../redux/authentication/saga";
 
 const AuthenticationStartup = props => {
 	const dispatch = useDispatch();
@@ -18,7 +18,7 @@ const AuthenticationStartup = props => {
 
 	useEffect(() => {
 		// call /me phase 2
-		dispatch(authenticationSagas.isLoggedIn());
+		dispatch(authenticationActions.isLoggedIn());
 		setPhase(2);
 		setShowSplashScreen(true); // loading
 	}, []);
@@ -35,11 +35,12 @@ const AuthenticationStartup = props => {
 					// if not then authenticated     phase 4
 					setPhase(4);
 					// userinfo is already loaded in store, add an authenticated flag and set to true
-					// and setlocalstorage
 					dispatch(authenticated());
+
+                    // this is the best place to fire logoutBeforeTokenExpires
+                    logoutBeforeTokenExpires();
 				}
 			}
-
 			setPhase(3);
 			setShowSplashScreen(false);
 			disableSplashScreen();
@@ -47,6 +48,11 @@ const AuthenticationStartup = props => {
 
 		// always set show splash to false, because registration must be visible
 	}, [isLoggedInError, phase, isLoggedInLoading, userInfo]);
+
+    const logoutBeforeTokenExpires = () => {
+        const expireAt = ((userInfo.exp * 1000) - (new Date().getTime())) - 30_000;
+        dispatch(authenticationActions.logoutBeforeTokenExpires(expireAt));
+    }
 
 	return showSplashScreen ? <LayoutSplashScreen/> : props.children;
 

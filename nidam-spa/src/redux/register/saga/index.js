@@ -1,3 +1,1 @@
-export {
-	register, GetMySecret
-} from "./registerSagaActions"
+export { register } from "./registerSagaActions"
