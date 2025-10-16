@@ -131,7 +131,7 @@ public class RealLoginFailureAuditor implements LoginFailureAuditor {
 	 */
 	@Override
 	public void resetFailures(String key) {
-//		log.info("reset login failures: " + key);
+		log.info("reset login failures: " + key);
 		attempts.remove(key);
 	}
 
@@ -159,7 +159,7 @@ public class RealLoginFailureAuditor implements LoginFailureAuditor {
 	@Override
 	public void cleanupExpiredLockouts() {
 		int initial = attempts.size();
-		if( initial > 0){
+		if( initial > 0) {
 			Instant now = Instant.now();
 			attempts.entrySet().removeIf(entry -> {
 				FailureRecord fr = entry.getValue();
