@@ -44,15 +44,25 @@ custom:
 
 spring:
   datasource:
-    url: jdbc:mysql://localhost:3306/nidam_benchmark
-    username: root
-    password: CcmN*`6@3T9H%P#yg^V<7v
+    url: jdbc:h2:mem:nidam-bench;INIT=RUNSCRIPT FROM 'classpath:nidam-bench.sql'
+    username: sa
+    password:
+#    url: jdbc:mysql://localhost:3306/nidam_benchmark
+#    username: root
+#    password: CcmN*`6@3T9H%P#yg^V<7v
   sql:
     init:
       mode: always
   jpa:
-    generate-ddl: true
-    open-in-view: false
+    hibernate:
+      jdbc:
+        batch_size: 100
+      ddl-auto: update
+      order_inserts: true
+      order_updates: true
+#  jpa:
+#    generate-ddl: true
+#    open-in-view: false
 
 rate-limiter:
   enabled: true

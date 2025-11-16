@@ -1,0 +1,14 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:nidam-bench;INIT=RUNSCRIPT FROM 'classpath:nidam-bench.sql'
+#    url: jdbc:h2:tcp://localhost:9092/nidam_benchmark
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      jdbc:
+        batch_size: 100
+      ddl-auto: update
+      order_inserts: true
+      order_updates: true
