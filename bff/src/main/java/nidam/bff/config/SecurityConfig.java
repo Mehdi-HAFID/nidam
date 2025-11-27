@@ -15,6 +15,9 @@ import org.springframework.security.web.server.csrf.CsrfToken;
 import org.springframework.security.web.server.csrf.ServerCsrfTokenRequestAttributeHandler;
 import org.springframework.web.server.WebFilter;
 import org.springframework.web.server.WebSession;
+import org.springframework.web.server.session.DefaultWebSessionManager;
+import org.springframework.web.server.session.InMemoryWebSessionStore;
+import org.springframework.web.server.session.WebSessionManager;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
@@ -205,7 +208,7 @@ public class SecurityConfig {
 					.filter(WebSession::isStarted)
 					.doOnNext(session -> {
 						if (session.getAttribute("SESSION_TIMEOUT_SET") == null) {
-							session.setMaxIdleTime(Duration.ofHours(12));
+							session.setMaxIdleTime(Duration.ofMinutes(10));			// for benchmark purposes: 10 minutes
 							session.getAttributes().put("SESSION_TIMEOUT_SET", true);
 							log.info("Session timeout set to 12h for session ID:" + session.getId());
 //							log.info("Max idle time: " + session.getMaxIdleTime());
@@ -276,5 +279,19 @@ public class SecurityConfig {
 //	}
 
 
+	// in main branch, set to MAX int
+	@Bean
+	public InMemoryWebSessionStore inMemoryWebSessionStore() {
+		InMemoryWebSessionStore store = new InMemoryWebSessionStore();
+		store.setMaxSessions(1_000_000_000); // <-- your test limit
+		return store;
+	}
+
+	@Bean
+	public WebSessionManager webSessionManager(InMemoryWebSessionStore store) {
+		DefaultWebSessionManager manager = new DefaultWebSessionManager();
+		manager.setSessionStore(store);
+		return manager;
+	}
 
 }
