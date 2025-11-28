@@ -247,7 +247,7 @@ public class SecurityConfigStaticKey {
 			// for main set it to 24 hours, same as access token
 			if (OidcParameterNames.ID_TOKEN.equals(context.getTokenType().getValue())) {
 				Instant issuedAt = Instant.now();
-				Instant expiresAt = issuedAt.plus(15, ChronoUnit.MINUTES);
+				Instant expiresAt = issuedAt.plus(10, ChronoUnit.MINUTES);
 				context.getClaims().issuedAt(issuedAt).expiresAt(expiresAt);
 			}
 		};

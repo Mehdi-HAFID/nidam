@@ -25,6 +25,8 @@ server:
   port: 4002
   servlet:
     contextPath: /auth
+    session:
+      timeout: 10m      # for session TTL, make same as access token 24h
   forward-headers-strategy: framework
 
 keystore:
