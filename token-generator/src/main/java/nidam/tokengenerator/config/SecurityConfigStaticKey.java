@@ -21,6 +21,7 @@ import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
 import org.springframework.security.oauth2.core.oidc.StandardClaimNames;
+import org.springframework.security.oauth2.core.oidc.endpoint.OidcParameterNames;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenType;
@@ -41,6 +42,8 @@ import java.security.KeyPair;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -151,7 +154,7 @@ public class SecurityConfigStaticKey {
 				.scope(OidcScopes.OPENID)
 				.postLogoutRedirectUri(clientProperties.getBffPostLogoutUri())			//.postLogoutRedirectUri("http://localhost:7080/bff/post-logout")
 				.tokenSettings(TokenSettings.builder()
-						.accessTokenTimeToLive(Duration.ofHours(12))
+						.accessTokenTimeToLive(Duration.ofMinutes(10)) // for main set it to 24 hours
 //						.refreshTokenTimeToLive(Duration.ofHours(24))  waiting for spring auth server logout bug to be fixed
 //						.reuseRefreshTokens(false)
 						.build())
@@ -236,6 +239,16 @@ public class SecurityConfigStaticKey {
 				JwtClaimsSet.Builder claims = context.getClaims();
 				claims.claim(JWT_CLAIM_TOKEN, auths);
 				claims.claim(StandardClaimNames.EMAIL, context.getPrincipal().getName());
+			}
+			// tried to fix the logout fail after refresh token, result: failed
+			// This id token Time to Live is used by the bff to set the session to expired when the time is reached, by default it is 30 mintues
+			// so all sessions in the bff will expire by this time
+			// for the benchmark it's set to 15 minutes
+			// for main set it to 24 hours, same as access token
+			if (OidcParameterNames.ID_TOKEN.equals(context.getTokenType().getValue())) {
+				Instant issuedAt = Instant.now();
+				Instant expiresAt = issuedAt.plus(15, ChronoUnit.MINUTES);
+				context.getClaims().issuedAt(issuedAt).expiresAt(expiresAt);
 			}
 		};
 	}
