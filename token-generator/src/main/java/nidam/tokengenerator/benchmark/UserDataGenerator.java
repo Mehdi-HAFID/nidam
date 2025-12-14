@@ -30,14 +30,14 @@ public class UserDataGenerator {
 
 	private final Logger log = Logger.getLogger(UserDataGenerator.class.getName());
 
-//	@Bean
+//	@Bean				// uncomment to generate users
 	public CommandLineRunner initUsers(UserInitService userInitService, AuthorityRepository authRepo) {
 		return args -> {
-			final int totalUsers = 1000;
-			final int batchSize = 125;
+			final int totalUsers = 1_000_000;
+			final int batchSize = 120_500;
 			final int threads = 8;
 			final int taskCount = (int) Math.ceil(totalUsers / (double) batchSize);
-
+			log.info("Persisting " + totalUsers + " users ...");
 			if (authRepo.count() == 0) {
 				authRepo.save(new Authority("manage_users"));
 				authRepo.save(new Authority("manage-projects"));

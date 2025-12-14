@@ -1,7 +1,9 @@
 spring:
   datasource:
-    url: jdbc:h2:mem:nidam-bench;INIT=RUNSCRIPT FROM 'classpath:nidam-bench.sql'
+    url: jdbc:h2:mem:nidam-bench;INIT=RUNSCRIPT FROM 'classpath:nidam-bench.sql'     # uncomment
 #    url: jdbc:h2:tcp://localhost:9092/nidam_benchmark
+    # trying to generate 1m, 100k, 10k scrypt users script
+#    url: jdbc:h2:tcp://localhost:9092/nidam_benchmark_1m        # generated 1 millions users
     username: sa
     password:
     driver-class-name: org.h2.Driver
