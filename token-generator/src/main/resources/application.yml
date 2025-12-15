@@ -46,7 +46,7 @@ custom:
 
 spring:
   datasource:
-    url: jdbc:h2:mem:nidam-bench;INIT=RUNSCRIPT FROM 'classpath:nidam-bench.sql'
+    url: jdbc:h2:mem:nidam-bench;INIT=RUNSCRIPT FROM 'classpath:nidam-bench-1m.sql'
     username: sa
     password:
 #    url: jdbc:mysql://localhost:3306/nidam_benchmark
