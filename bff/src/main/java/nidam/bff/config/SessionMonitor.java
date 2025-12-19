@@ -19,9 +19,9 @@ public class SessionMonitor {
 	@Scheduled(fixedRate = 60_000) // every minute
 	public void logSessionStats() {
 		int activeSessions = getActiveSessionCount();
-		System.out.println("[SESSION-MONITOR] Active sessions: " + activeSessions);
 
 		if (activeSessions > 0) {
+			System.out.println("[SESSION-MONITOR] Active sessions: " + activeSessions);
 			System.out.println("First Session in List. getAttributes : " + getFirstSession().getAttributes()
 					+ ", getMaxIdleTime : " + getFirstSession().getMaxIdleTime() + ", isExpired - " + getFirstSession().isExpired());
 		}
