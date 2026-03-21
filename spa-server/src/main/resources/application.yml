@@ -1,0 +1,6 @@
+spring:
+  application:
+    name: spa-server
+
+server:
+  port: 4001
