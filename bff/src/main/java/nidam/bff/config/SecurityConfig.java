@@ -15,6 +15,9 @@ import org.springframework.security.web.server.csrf.CsrfToken;
 import org.springframework.security.web.server.csrf.ServerCsrfTokenRequestAttributeHandler;
 import org.springframework.web.server.WebFilter;
 import org.springframework.web.server.WebSession;
+import org.springframework.web.server.session.DefaultWebSessionManager;
+import org.springframework.web.server.session.InMemoryWebSessionStore;
+import org.springframework.web.server.session.WebSessionManager;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
@@ -275,6 +278,19 @@ public class SecurityConfig {
 //				).switchIfEmpty(chain.filter(exchange));
 //	}
 
+	@Bean
+	public InMemoryWebSessionStore inMemoryWebSessionStore() {
+		InMemoryWebSessionStore store = new InMemoryWebSessionStore();
+		store.setMaxSessions(Integer.MAX_VALUE);
+		return store;
+}
+
+	@Bean
+	public WebSessionManager webSessionManager(InMemoryWebSessionStore store) {
+		DefaultWebSessionManager manager = new DefaultWebSessionManager();
+		manager.setSessionStore(store);
+		return manager;
+	}
 
 
 }
