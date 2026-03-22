@@ -1,13 +1,13 @@
 server:
-  port: 4000
+  port: ${registration.server.port:4000}
   error:
     include-message: always
 
 spring:
   datasource:
-    url: jdbc:mysql://localhost:3306/identity_hub
-    username: root
-    password: "CcmN*`6@3T9H%P#yg^V<7v"
+    url: ${registration.spring.datasource.url:jdbc:mysql://localhost:3306/identity_hub}
+    username: ${registration.spring.datasource.username:root}
+    password: ${registration.spring.datasource.password:"CcmN*`6@3T9H%P#yg^V<7v"}
   sql:
     init:
       mode: always
@@ -16,28 +16,21 @@ spring:
     open-in-view: false
   autoconfigure:
     exclude: org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration
+  config:
+    import: optional:file:./configuration.yml
 
 custom:
   authorization:
-    authorities:
-      - manage-users
-      - manage-projects
+    authorities: ${registration.custom.authorization.authorities:manage-users,manage-projects}
     roles:
       - ADMIN
       - MANAGER
       - USER
     authType: 1
   password:
-    encoders:
-      - scrypt
-      - bcrypt
-      - argon2
-      - pbkdf2
-    idless: scrypt
+    encoders: ${registration.custom.password.encoders:scrypt,bcrypt,argon2,pbkdf2}
+    idless: ${registration.custom.password.idless:scrypt}
   recaptcha:
-    secret: "6LcyyEMpAAAAANm0qZB6kzDQRT5Li4FSGCTe8ESf"
-  allowed-cors-uri:
-    - http://localhost:4001
-    - http://127.0.0.1:4001
-    - http://localhost:7080
-    - http://127.0.0.1:7080
+    secret: ${registration.custom.recaptcha.secret:"6LcyyEMpAAAAANm0qZB6kzDQRT5Li4FSGCTe8ESf"}
+  allowed-cors-uri: ${registration.custom.allowed-cors-uri:http://localhost:4001,http://127.0.0.1:4001,http://localhost:7080,http://127.0.0.1:7080}
+
