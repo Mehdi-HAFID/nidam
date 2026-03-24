@@ -237,6 +237,12 @@ public class SecurityConfigStaticKey {
 				claims.claim(JWT_CLAIM_TOKEN, auths);
 				claims.claim(StandardClaimNames.EMAIL, context.getPrincipal().getName());
 			}
+
+			// TODO enable refresh token and test to see if logout after refresh is now working
+			// change default 30 minutes to use the same value of accessTokenTimeToLive(Duration.ofHours(12))
+			if ("id_token".equals(context.getTokenType().getValue())) {
+				context.getClaims().expiresAt(context.getClaims().build().getIssuedAt().plus(Duration.ofHours(12)));
+			}
 		};
 	}
 
