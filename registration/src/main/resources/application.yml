@@ -1,13 +1,26 @@
+registration-port: 4000
+
+users-db-url: jdbc:mysql://localhost:3306/identity_hub
+users-db-user: root
+users-db-password: "CcmN*`6@3T9H%P#yg^V<7v"
+
+authorities: manage-users,manage-projects
+password-encoders: scrypt,bcrypt,argon2,pbkdf2
+password-idless: scrypt
+
+recaptcha-secret: "6LcyyEMpAAAAANm0qZB6kzDQRT5Li4FSGCTe8ESf"
+allowed-cors-uri: http://localhost:4001,http://127.0.0.1:4001,http://localhost:7080,http://127.0.0.1:7080
+
 server:
-  port: ${registration.server.port:4000}
+  port: ${registration-port}
   error:
     include-message: always
 
 spring:
   datasource:
-    url: ${registration.spring.datasource.url:jdbc:mysql://localhost:3306/identity_hub}
-    username: ${registration.spring.datasource.username:root}
-    password: ${registration.spring.datasource.password:"CcmN*`6@3T9H%P#yg^V<7v"}
+    url: ${registration.users-db-url:${users-db-url}}
+    username: ${registration.users-db-user:${users-db-user}}
+    password: ${registration.users-db-password:${users-db-password}}
   sql:
     init:
       mode: always
@@ -21,16 +34,16 @@ spring:
 
 custom:
   authorization:
-    authorities: ${registration.custom.authorization.authorities:manage-users,manage-projects}
+    authorities: ${registration.authorities:${authorities}}
     roles:
       - ADMIN
       - MANAGER
       - USER
     authType: 1
   password:
-    encoders: ${registration.custom.password.encoders:scrypt,bcrypt,argon2,pbkdf2}
-    idless: ${registration.custom.password.idless:scrypt}
+    encoders: ${registration.password-encoders:${password-encoders}}
+    idless: ${registration.password-idless:${password-idless}}
   recaptcha:
-    secret: ${registration.custom.recaptcha.secret:"6LcyyEMpAAAAANm0qZB6kzDQRT5Li4FSGCTe8ESf"}
-  allowed-cors-uri: ${registration.custom.allowed-cors-uri:http://localhost:4001,http://127.0.0.1:4001,http://localhost:7080,http://127.0.0.1:7080}
+    secret: ${registration.recaptcha-secret:${recaptcha-secret}}
+  allowed-cors-uri: ${registration.allowed-cors-uri:${allowed-cors-uri}}
 
