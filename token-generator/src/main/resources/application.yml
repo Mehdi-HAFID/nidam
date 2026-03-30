@@ -5,9 +5,17 @@ browser-facing-domain: http://localhost
 # for docker purposes, this must stay whatever the domain name is. in development it is localhost, wheareas the internal is the container name TODO test
 # for now always use internal.
 
+users-db-url: jdbc:mysql://localhost:3306/identity_hub
+users-db-user: root
+users-db-password: "CcmN*`6@3T9H%P#yg^V<7v"
+
+password-encoders: scrypt,bcrypt,argon2,pbkdf2
+password-idless: scrypt
+
 reverse-proxy-port: 7080
 reverse-proxy-uri: ${host}:${reverse-proxy-port}
 
+authorization-server-port: 4002
 authorization-server-prefix: /auth
 issuer: ${reverse-proxy-uri}${authorization-server-prefix}
 
@@ -16,9 +24,9 @@ react-prefix: /react-ui
 bff-post-logout-endpoint: /post-logout
 
 client:
-  id: ${token-generator.client.id:client}
-  secret-hash: ${token-generator.client.secret-hash:'{bcrypt}$2a$10$.ld6BfZescPDfVVduvu.6O9.7FLMI64l4PfvnBZJQEBhTLFFbeKei'}  #value is 'secret', must use hash because of password encoders
-  internal-identifier: ${token-generator.client.internal-identifier:nidam-bff-internal-id}
+  id: client
+  secret-hash: '{bcrypt}$2a$10$.ld6BfZescPDfVVduvu.6O9.7FLMI64l4PfvnBZJQEBhTLFFbeKei'  #value is 'secret', must use hash because of password encoders
+  internal-identifier: nidam-bff-internal-id
   login-uri: ${reverse-proxy-uri}${bff-prefix}/login/oauth2/code/${authorization-server-name}   # Explanation below
 #  localhost here because this is the same as bff\src\main\resources\application.yml, for docker purposes.
   logout-uri: ${reverse-proxy-uri}${react-prefix}
@@ -26,7 +34,7 @@ client:
 
 
 server:
-  port: ${token-generator.server.port:4002}
+  port: ${authorization-server-port}
   servlet:
     contextPath: ${authorization-server-prefix}
   forward-headers-strategy: framework
@@ -40,22 +48,22 @@ keystore:
 # first in the list is the default encoder
 custom:
   password:
-    encoders: ${token-generator.custom.password.encoders:scrypt,bcrypt,argon2,pbkdf2}
-    idless: ${token-generator.custom.password.idless:scrypt}    # encoder for hashes without {id}
+    encoders: ${token-generator.password-encoders:${password-encoders}}
+    idless: ${token-generator.password-idless:${password-idless}}    # encoder for hashes without {id}
 
 spring:
   datasource:
-    url: ${token-generator.spring.datasource.url:jdbc:mysql://localhost:3306/identity_hub}
-    username: ${token-generator.spring.datasource.username:root}
-    password: ${token-generator.spring.datasource.password:CcmN*`6@3T9H%P#yg^V<7v}
+    url: ${token-generator.users-db-url:${users-db-url}}
+    username: ${token-generator.users-db-user:${users-db-user}}
+    password: ${token-generator.users-db-password:${users-db-password}}
   config:
     import: optional:file:./configuration.yml
 
 rate-limiter:
-  enabled: ${token-generator.rate-limiter.enabled:true}
-  lockout-duration: ${token-generator.rate-limiter.lockout-duration:5}    # minutes
-  max-attempts: ${token-generator.rate-limiter.max-attempts:5}
-  cleanup-interval-ms: ${token-generator.rate-limiter.cleanup-interval-ms:60000}      # miliseconds
+  enabled: true
+  lockout-duration: 5    # minutes
+  max-attempts: 5
+  cleanup-interval-ms: 60000      # miliseconds
 
 #logging:
 #  level:
