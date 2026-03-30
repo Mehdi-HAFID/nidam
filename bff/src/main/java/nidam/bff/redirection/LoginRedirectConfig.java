@@ -34,7 +34,7 @@ public class LoginRedirectConfig {
 
 	private static final Logger log = Logger.getLogger(LoginRedirectConfig.class.getName());
 
-	@Value("${react-uri}")
+	@Value("${react-proxy-uri}")
 	private String defaultReactUri;
 
 	public static final String BFF_LOGIN_INIT_ENDPOINT = "/oauth2/authorization/token-generator";

@@ -39,7 +39,7 @@ import java.util.logging.Logger;
 @Component
 public class PostLoginRedirectConfig implements ServerAuthenticationSuccessHandler {
 
-	@Value("${react-uri}")
+	@Value("${react-proxy-uri}")
 	private String defaultReactUri;
 
 	private final Logger log = Logger.getLogger(PostLoginRedirectConfig.class.getName());
