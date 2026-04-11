@@ -1,6 +1,29 @@
 spring:
   application:
     name: spa-server
+  config:
+    import: optional:file:./configuration.yml
 
 server:
-  port: 4001
+  port: ${react-port}
+
+
+# for spa config
+registration-port: 4000
+host: http://localhost
+registration-uri: ${host}:${registration-port}
+
+react-port: 4001
+react-prefix: /react-ui
+reverse-proxy-port: 7080
+reverse-proxy-uri: ${host}:${reverse-proxy-port}
+react-proxy-uri: ${reverse-proxy-uri}${react-prefix}
+
+bff-prefix: /bff
+bff-redirect-call-to-resource-server-prefix: /api
+bff-proxy-uri: ${reverse-proxy-uri}${bff-prefix}
+resource-server-through-bff-proxy-uri: ${bff-proxy-uri}${bff-redirect-call-to-resource-server-prefix}
+
+authorization-server-name: token-generator
+react-login-url: ${bff-proxy-uri}/oauth2/authorization/${authorization-server-name}
+react-logout-url: ${bff-proxy-uri}/logout
