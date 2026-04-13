@@ -1,26 +1,27 @@
 ## Custom properties to ease configuration overrides
 ## on command-line or IDE launch configurations
-#scheme: http
-#hostname: localhost
+host: http://localhost
 reverse-proxy-port: 7080
 
 react-port: 4001
 react-prefix: /react-ui
-react-uri: http://localhost:${react-port}${react-prefix}
+react-uri: ${host}:${react-port}${react-prefix}
 
 authorization-server-port: 4002
 authorization-server-prefix: /auth
-authorization-server-uri: http://localhost:${authorization-server-port}${authorization-server-prefix}
+authorization-server-uri: ${host}:${authorization-server-port}${authorization-server-prefix}
 
 bff-port: 7081
 bff-prefix: /bff
-bff-uri: http://localhost:${bff-port}
+bff-uri: ${host}:${bff-port}
 
 server:
   port: ${reverse-proxy-port}
   forward-headers-strategy: framework
 
 spring:
+  config:
+    import: optional:file:./configuration.yml
   cloud:
     gateway:
       server:
