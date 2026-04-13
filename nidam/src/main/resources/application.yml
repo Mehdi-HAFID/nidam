@@ -1,7 +1,9 @@
 #scheme: http
 #hostname: localhost
-#reverse-proxy-port: 7080
-reverse-proxy-uri: http://localhost:7080
+host: http://localhost
+reverse-proxy-port: 7080
+reverse-proxy-uri: ${host}:${reverse-proxy-port}
+
 authorization-server-prefix: /auth
 issuer: ${reverse-proxy-uri}${authorization-server-prefix}
 
@@ -25,9 +27,9 @@ spring:
         jwt:
           issuer-uri: ${issuer}
 
-logging:
-  level:
-    root: INFO
-    org.apache.tomcat: INFO
+#logging:
+#  level:
+#    root: INFO
+#    org.apache.tomcat: INFO
     #    org.apache.tomcat.util.net.NioEndpoint: INFO
 
