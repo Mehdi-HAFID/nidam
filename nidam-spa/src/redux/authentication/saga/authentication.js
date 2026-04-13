@@ -5,6 +5,8 @@ import {axios} from "../../axios";
 import * as actions from '../authenticationSlice';
 import {catchError} from "../../SagaGenericUtil";
 
+import { CONFIG } from "../../../config";
+
 
 export function* isLoggedIn(action) {
 	yield put(actions.isLoggedInStart());
@@ -28,11 +30,11 @@ export function* logoutBeforeTokenExpires(action) {
 
     // call bff logout, this has the benefit of clearing the bff memory
     const response = yield rawAxios.post(
-        "/bff/logout",
+		CONFIG.LOGOUT_URL,
         {},
         {
             headers: {
-                "X-POST-LOGOUT-SUCCESS-URI": process.env.REACT_APP_BASE_URI,
+                "X-POST-LOGOUT-SUCCESS-URI": CONFIG.BASE_URI,
             },
         }
     );

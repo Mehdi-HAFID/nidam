@@ -3,6 +3,8 @@ import Button from "@mui/material/Button";
 import axios from "axios";
 import {useLocation} from "react-router-dom";
 
+import { CONFIG } from "../config";
+
 const Logout = props => {
 	const location = useLocation();
 	const [disabled, setDisabled] = useState(false);
@@ -15,11 +17,11 @@ const Logout = props => {
 		console.log("currentPath: ", currentPath);
 
 		const response = await axios.post(
-			"/bff/logout",
+			CONFIG.LOGOUT_URL,
 			{},
 			{
 				headers: {
-					"X-POST-LOGOUT-SUCCESS-URI": process.env.REACT_APP_BASE_URI + currentPath,
+					"X-POST-LOGOUT-SUCCESS-URI": CONFIG.BASE_URI + currentPath,
 				},
 			}
 		);
