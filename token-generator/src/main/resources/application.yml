@@ -1,0 +1,82 @@
+authorization-server-name: token-generator
+
+host: http://localhost
+browser-facing-domain: http://localhost
+# for docker purposes, this must stay whatever the domain name is. in development it is localhost, wheareas the internal is the container name TODO test
+# for now always use internal.
+
+users-db-url: jdbc:mysql://localhost:3306/identity_hub
+users-db-user: root
+users-db-password: "CcmN*`6@3T9H%P#yg^V<7v"
+
+password-encoders: scrypt,bcrypt,argon2,pbkdf2
+password-idless: scrypt
+
+reverse-proxy-port: 7080
+reverse-proxy-uri: ${host}:${reverse-proxy-port}
+
+authorization-server-port: 4002
+authorization-server-prefix: /auth
+issuer: ${reverse-proxy-uri}${authorization-server-prefix}
+
+bff-prefix: /bff
+react-prefix: /react-ui
+bff-post-logout-endpoint: /post-logout
+
+client:
+  id: client
+  secret-hash: '{bcrypt}$2a$10$.ld6BfZescPDfVVduvu.6O9.7FLMI64l4PfvnBZJQEBhTLFFbeKei'  #value is 'secret', must use hash because of password encoders
+  internal-identifier: nidam-bff-internal-id
+  login-uri: ${reverse-proxy-uri}${bff-prefix}/login/oauth2/code/${authorization-server-name}   # Explanation below
+#  localhost here because this is the same as bff\src\main\resources\application.yml, for docker purposes.
+  logout-uri: ${reverse-proxy-uri}${react-prefix}
+  bff-post-logout-uri: ${reverse-proxy-uri}${bff-prefix}${bff-post-logout-endpoint}     # TODO this change will break docker-compose.yml: update file
+
+
+server:
+  port: ${authorization-server-port}
+  servlet:
+    contextPath: ${authorization-server-prefix}
+  forward-headers-strategy: framework
+
+# TODO externalize and auto load and auto created
+keystore:
+  password: keypass
+  privateKey: keystore.jks
+  alias: alias
+
+# first in the list is the default encoder
+custom:
+  password:
+    encoders: ${token-generator.password-encoders:${password-encoders}}
+    idless: ${token-generator.password-idless:${password-idless}}    # encoder for hashes without {id}
+
+spring:
+  datasource:
+    url: ${token-generator.users-db-url:${users-db-url}}
+    username: ${token-generator.users-db-user:${users-db-user}}
+    password: ${token-generator.users-db-password:${users-db-password}}
+  config:
+    import: optional:file:./configuration.yml
+
+rate-limiter:
+  enabled: true
+  lockout-duration: 5    # minutes
+  max-attempts: 5
+  cleanup-interval-ms: 60000      # miliseconds
+
+#logging:
+#  level:
+#    root: INFO
+#    org.springframework: INFO
+#    org.springframework.security: INFO
+#    org.springframework.security.oauth2: INFO
+#    org.springframework.web: INFO
+#    reactor.netty: INFO
+#    io.netty: INFO
+#    io.projectreactor:
+#    org.apache.tomcat: INFO
+#    org.springframework.boot: INFO
+#    org.springframework.beans: INFO
+#    org.apache.catalina.session.ManagerBase: INFO
+#trace: true
