@@ -1,6 +1,7 @@
 package nidam.tokengenerator.service.scheduled;
 
 import nidam.tokengenerator.service.LoginFailureAuditor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -16,6 +17,7 @@ import java.util.logging.Logger;
  * especially in systems with aggressive rate-limiting policies.
  */
 @Component
+@ConditionalOnProperty(name = "rate-limiter.enabled", havingValue = "true")
 public class LoginFailureCleanupTask {
 	private final Logger log = Logger.getLogger(LoginFailureCleanupTask.class.getName());
 
@@ -36,7 +38,7 @@ public class LoginFailureCleanupTask {
 	 */
 	@Scheduled(fixedRateString = "${rate-limiter.cleanup-interval-ms:60000}") // every 1 minute
 	public void cleanup() {
-		log.info("Cleaning up expired lockouts");
+//		log.info("Cleaning up expired lockouts");
 		auditor.cleanupExpiredLockouts();
 	}
 }
