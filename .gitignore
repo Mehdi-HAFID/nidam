@@ -1,0 +1,29 @@
+# IDE
+.idea/
+.vscode/
+
+## Logs
+#*.log
+#
+## Env
+#.env
+#.env.*
+#
+## Node
+#node_modules/
+#npm-debug.log*
+#
+## Java
+#target/
+#build/
+#*.class
+#
+## Maven wrapper
+#.mvn/wrapper/maven-wrapper.jar
+#
+## Git LFS temp
+#.git/lfs/tmp/
+
+# OS
+.DS_Store
+Thumbs.db
