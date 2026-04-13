@@ -1,49 +1,53 @@
-#scheme: http
-#hostname: localhost
-#
-#reverse-proxy-port: 7080
-reverse-proxy-uri: http://localhost:7080      # because of docker logout, do not override in compose
+host: http://localhost
+reverse-proxy-port: 7080
+reverse-proxy-uri: ${host}:${reverse-proxy-port}      # because of docker logout, do not override in compose
 
+authorization-server-name: token-generator
 authorization-server-prefix: /auth
 issuer: ${reverse-proxy-uri}${authorization-server-prefix}
 
 
-client-id: client
-client-secret: secret
+client:
+  id: client
+  secret: secret
 
 bff-port: 7081
 bff-prefix: /bff
+bff-proxy-uri: ${reverse-proxy-uri}${bff-prefix}
 bff-post-logout-endpoint: /post-logout
 
 react-prefix: /react-ui
-react-uri: http://localhost:7080${react-prefix}   # also changed because of docker
+react-proxy-uri: ${reverse-proxy-uri}${react-prefix}   # also changed because of docker
 
-#resource-server-port: 4003
-resource-server-uri: http://localhost:4003
+resource-server-port: 4003
+resource-server-uri: ${host}:${resource-server-port}
 
 logout:
-  auth-server-uri: ${reverse-proxy-uri}/auth/connect/logout
+  auth-server-uri: ${issuer}/connect/logout
   token-hint-param-name: id_token_hint
   post-redirect-param-name: post_logout_redirect_uri
   client-id-param-name: client_id
   success-redirect-header: X-POST-LOGOUT-SUCCESS-URI
-  success-redirect-default-uri: ${reverse-proxy-uri}${react-prefix}
-  bff-post-logout-uri: ${reverse-proxy-uri}${bff-prefix}${bff-post-logout-endpoint}
-  allowed-redirect-uri-prefixes:
-    - ${react-uri}
+  success-redirect-default-uri: ${react-proxy-uri}
+  bff-post-logout-uri: ${bff-proxy-uri}${bff-post-logout-endpoint}
+  allowed-redirect-uri-prefixes: ${react-proxy-uri}
+    # in the global configuration.yml you can set it like: allowed-redirect-uri-prefixes: http://a,http://b,http://c
 
 login:
   success-redirect-param-name: post_login_success_uri
   session-redirect-uri-attribute: POST_LOGIN_SUCCESS_URI
-  allowed-redirect-uri-prefixes:
-    - ${react-uri}
+  allowed-redirect-uri-prefixes: ${react-proxy-uri}
 
 
 server:
   port: ${bff-port}
   forward-headers-strategy: framework
 
+bff-redirect-call-to-resource-server-predicate: /api/**
+
 spring:
+  config:
+    import: optional:file:./configuration.yml
   cloud:
     gateway:
       server:
@@ -52,7 +56,7 @@ spring:
             - id: bff
               uri: ${resource-server-uri}
               predicates:
-                - Path=/api/**
+                - Path=${bff-redirect-call-to-resource-server-predicate}
               filters:
                 - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
                 - TokenRelay=
@@ -64,15 +68,15 @@ spring:
         provider:
           token-generator:
             issuer-uri: ${issuer}
-            authorization-uri: http://localhost:7080/auth/oauth2/authorize # Explanation below
+            authorization-uri: ${issuer}/oauth2/authorize # Explanation below
         registration:
           token-generator:
             provider: token-generator
             authorization-grant-type: authorization_code
-            client-id: ${client-id}
-            client-secret: ${client-secret}
+            client-id: ${client.id}
+            client-secret: ${client.secret}
             scope: openid
-            redirect-uri: http://localhost:7080${bff-prefix}/login/oauth2/code/token-generator
+            redirect-uri: ${bff-proxy-uri}/login/oauth2/code/${authorization-server-name}
 
               #            Spring Security’s issuer-uri is used for both:
               # Discovery at startup (server-to-server call from BFF → Auth Server)
@@ -80,7 +84,7 @@ spring:
               # You need to split the two concerns:
               # Internal service-to-service URL (Docker network hostname, e.g. reverse-proxy:7080)
               # External/public URL (what the browser should see, e.g. localhost:7080 in dev)
-              # this acheived by using reverse-proxy in docker-compose.yml
+              # this achieved by using reverse-proxy in docker-compose.yml
               # and setting spring.security.oauth2.client.provider.token-generator.authorization-uri with localhost since it is browser facing
 
 #trace: true

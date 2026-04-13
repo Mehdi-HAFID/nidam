@@ -58,7 +58,7 @@ public class LogoutRedirectConfig implements ServerLogoutSuccessHandler {
 
 	private final LogoutProperties logoutProperties;
 
-	@Value("${client-id}")
+	@Value("${client.id}")
 	private String clientId;
 
 	public LogoutRedirectConfig(LogoutProperties logoutProperties) {

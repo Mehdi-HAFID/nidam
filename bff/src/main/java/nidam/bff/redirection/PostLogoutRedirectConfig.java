@@ -50,7 +50,7 @@ public class PostLogoutRedirectConfig {
 
 	private static final Logger log = Logger.getLogger(PostLogoutRedirectConfig.class.getName());
 
-	@Value("${react-uri}")
+	@Value("${react-proxy-uri}")
 	private String defaultReactUri;
 
 	private final LogoutProperties logoutProperties;
