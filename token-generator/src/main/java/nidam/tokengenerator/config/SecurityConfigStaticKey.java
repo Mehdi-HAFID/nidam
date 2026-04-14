@@ -6,7 +6,6 @@ import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
 import nidam.tokengenerator.config.properties.ClientProperties;
-import nidam.tokengenerator.config.properties.KeystoreProperties;
 import nidam.tokengenerator.handler.OAuth2AwareFailureHandler;
 import nidam.tokengenerator.handler.OAuth2AwareSuccessHandler;
 import org.springframework.beans.factory.annotation.Value;
@@ -37,17 +36,13 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.web.filter.ForwardedHeaderFilter;
 
-import java.security.KeyPair;
-import java.security.interfaces.RSAPrivateKey;
-import java.security.interfaces.RSAPublicKey;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 import java.util.logging.Logger;
 
 /**
- * Security configuration for the Authorization Server using a static RSA key loaded from a JKS keystore.
+ * Security configuration for the Authorization Server using a static RSA key loaded from a JWK manager.
  * <p>
  * This class sets up the necessary security filter chains, JWT decoder, token customizer,
  * registered clients, and other security-related beans for OAuth2 Authorization Server.
@@ -64,13 +59,11 @@ public class SecurityConfigStaticKey {
 	public static final String LOGIN_ENDPOINT = "/login";
 	public static final String JWT_CLAIM_TOKEN = "authorities";
 
-	private final KeystoreProperties keystoreProperties;
 	private final ClientProperties clientProperties;
 
 	private static final String[] ALLOWED_PATHS = {"/css/**", "/media/**", "/vendors/**", "/error"};
 
-	public SecurityConfigStaticKey(KeystoreProperties keystoreProperties, ClientProperties clientProperties) {
-		this.keystoreProperties = keystoreProperties;
+	public SecurityConfigStaticKey(ClientProperties clientProperties) {
 		this.clientProperties = clientProperties;
 	}
 
@@ -160,22 +153,28 @@ public class SecurityConfigStaticKey {
 	}
 
 	/**
-	 * Loads an RSA key pair from a JKS keystore and exposes it as a {@link JWKSource}.
+	 * Provides the application's JSON Web Key (JWK) source used for signing
+	 * and verifying OAuth2 / OpenID Connect tokens.
 	 *
-	 * @return an {@link ImmutableJWKSet} containing the RSA key
-	 * @throws Exception if the key pair cannot be loaded
+	 * <p>This method relies on {@link JWKKeyManager} to load an existing
+	 * RSA key from the filesystem or generate and persist a new one if none exists.
+	 * The key is then exposed as an immutable {@link JWKSet}.</p>
+	 *
+	 * <p>The resulting {@link JWKSource} is used internally by Spring Authorization Server
+	 * to:
+	 * <ul>
+	 *     <li>Sign ID tokens and access tokens</li>
+	 *     <li>Expose the public key via the JWK Set endpoint ({@code /oauth2/jwks})</li>
+	 * </ul>
+	 *
+	 * <p>The underlying key material is persisted in {@code key/jwk.json}, ensuring
+	 * stability across application restarts.</p>
+	 *
+	 * @return a {@link JWKSource} backed by a single RSA key
 	 */
 	@Bean
-	public JWKSource<SecurityContext> jwkSource() throws Exception {
-
-		KeyPair keyPair = JKSFileKeyPairLoader.loadKeyStore(keystoreProperties.getPrivateKey(), keystoreProperties.getPassword(), keystoreProperties.getAlias());
-		RSAPublicKey publicKey = (RSAPublicKey) keyPair.getPublic();
-		RSAPrivateKey privateKey = (RSAPrivateKey) keyPair.getPrivate();
-
-		RSAKey rsaKey = new RSAKey.Builder(publicKey)
-				.privateKey(privateKey)
-				.keyID(UUID.randomUUID().toString())
-				.build();
+	public JWKSource<SecurityContext> jwkSource() {
+		RSAKey rsaKey = JWKKeyManager.loadOrCreate();
 		JWKSet jwkSet = new JWKSet(rsaKey);
 		return new ImmutableJWKSet<>(jwkSet);
 	}

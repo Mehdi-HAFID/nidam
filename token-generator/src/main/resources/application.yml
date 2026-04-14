@@ -39,12 +39,6 @@ server:
     contextPath: ${authorization-server-prefix}
   forward-headers-strategy: framework
 
-# TODO externalize and auto load and auto created
-keystore:
-  password: keypass
-  privateKey: keystore.jks
-  alias: alias
-
 # first in the list is the default encoder
 custom:
   password:
