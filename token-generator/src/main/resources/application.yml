@@ -5,9 +5,15 @@ browser-facing-domain: http://localhost
 # for docker purposes, this must stay whatever the domain name is. in development it is localhost, wheareas the internal is the container name TODO test
 # for now always use internal.
 
-users-db-url: jdbc:mysql://localhost:3306/identity_hub
-users-db-user: root
-users-db-password: "CcmN*`6@3T9H%P#yg^V<7v"
+# MySQL
+#users-db-url: jdbc:mysql://localhost:3306/identity_hub
+#users-db-user: root
+#users-db-password: "CcmN*`6@3T9H%P#yg^V<7v"
+# Embedded H2
+users-db-url: jdbc:h2:tcp://localhost:9092/identity_hub
+users-db-user: nidam
+users-db-password: "gF2mshbI819AV2L3"
+
 
 password-encoders: scrypt,bcrypt,argon2,pbkdf2
 password-idless: scrypt
@@ -58,6 +64,11 @@ rate-limiter:
   lockout-duration: 5    # minutes
   max-attempts: 5
   cleanup-interval-ms: 60000      # miliseconds
+
+management:
+  endpoints:
+    access:
+      default: none
 
 #logging:
 #  level:

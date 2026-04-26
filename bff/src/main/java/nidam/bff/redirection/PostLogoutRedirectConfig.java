@@ -65,14 +65,16 @@ public class PostLogoutRedirectConfig {
 	/**
 	 * Defines a {@link WebFilter} that handles the post-logout callback from the OP.
 	 *
-	 * <p>Runs early in the chain ({@code @Order(-1)}) to catch {@code /post-logout}
-	 * requests before other filters process them.</p>
+	 * <p>This filter processes {@code /post-logout} requests after the logout flow
+	 * completes. Unlike login-related filters, this endpoint is not intercepted by
+	 * Spring Security, so strict ordering is not required. The filter may execute
+	 * late in the chain as long as no earlier filter consumes the request.</p>
 	 *
 	 * @return a filter that validates the {@code state} parameter and issues a redirect
 	 *         to a trusted post-logout URI
 	 */
 	@Bean
-	@Order(-1) // run early, before default filters
+	@Order(1000)
 	public WebFilter onLogoutSuccessFilter() {
 		return (exchange, chain) -> {
 			String path = exchange.getRequest().getURI().getPath();

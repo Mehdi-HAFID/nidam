@@ -25,8 +25,8 @@ public class SessionMonitor {
 
 		if (activeSessions > 0) {
 			log.info("[SESSION-MONITOR] Active sessions: " + activeSessions);
-			log.info("First Session in List. getAttributes : " + getFirstSession().getAttributes()
-					+ ", getMaxIdleTime : " + getFirstSession().getMaxIdleTime() + ", isExpired - " + getFirstSession().isExpired());
+//			log.info("First Session in List. getAttributes : " + getFirstSession().getAttributes()
+//					+ ", getMaxIdleTime : " + getFirstSession().getMaxIdleTime() + ", isExpired - " + getFirstSession().isExpired());
 		}
 	}
 

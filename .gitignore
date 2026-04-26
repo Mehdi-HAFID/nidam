@@ -2,6 +2,10 @@
 .idea/
 .vscode/
 
+# H2 Dev db
+dev/db/
+dev/pids/
+
 ## Logs
 #*.log
 #

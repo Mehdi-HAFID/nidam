@@ -5,13 +5,17 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
 import org.springframework.security.oauth2.jwt.*;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.server.SecurityWebFilterChain;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -48,6 +52,31 @@ public class SecurityConfig {
     @Value("${audience:client}")
     private String expectedAudience;
 
+    private static final String ACTUATOR_MATCHER = "/actuator/**";
+
+   /**
+    * Security configuration dedicated exclusively to Actuator endpoints. Actuator is only available with {@code dev profile}.
+    *
+    * <p>This filter chain is evaluated with the highest precedence ({@code @Order(0)})
+    * and applies only to requests matching {@code /actuator/**}. It isolates Actuator
+    * from the main application security configuration to avoid unintended side effects
+    * such as CSRF enforcement, session handling, or custom filters interfering with
+    * operational endpoints.</p>
+    *
+    * @param http the {@link ServerHttpSecurity} to configure
+    * @return a {@link SecurityWebFilterChain} that secures Actuator endpoints
+    */
+    @Bean
+    @Order(0)
+    @Profile("dev")
+    public SecurityFilterChain actuatorChain(HttpSecurity http) throws Exception {
+        return http
+                .securityMatcher(ACTUATOR_MATCHER)
+                .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
+                .csrf(csrf -> csrf.disable())
+                .build();
+    }
+
     /**
      * Configures the main security filter chain for the application.
      *
@@ -65,6 +94,7 @@ public class SecurityConfig {
      * @throws Exception in case of configuration errors
      */
     @Bean
+    @Order(1)
     public SecurityFilterChain securityFilterChain(HttpSecurity http, SecurityProps securityProps) throws Exception {
         http
                 .authorizeHttpRequests(auth ->

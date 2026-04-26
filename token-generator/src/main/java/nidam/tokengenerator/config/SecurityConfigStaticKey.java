@@ -12,9 +12,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
@@ -34,6 +36,7 @@ import org.springframework.security.oauth2.server.authorization.token.JwtEncodin
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
+import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.web.filter.ForwardedHeaderFilter;
 
 import java.time.Duration;
@@ -62,9 +65,33 @@ public class SecurityConfigStaticKey {
 	private final ClientProperties clientProperties;
 
 	private static final String[] ALLOWED_PATHS = {"/css/**", "/media/**", "/vendors/**", "/error"};
+	private static final String ACTUATOR_MATCHER = "/actuator/**";
 
 	public SecurityConfigStaticKey(ClientProperties clientProperties) {
 		this.clientProperties = clientProperties;
+	}
+
+	/**
+	 * Security configuration dedicated exclusively to Actuator endpoints. Actuator is only available with {@code dev profile}.
+	 *
+	 * <p>This filter chain is evaluated with the highest precedence ({@code @Order(0)})
+	 * and applies only to requests matching {@code /actuator/**}. It isolates Actuator
+	 * from the main application security configuration to avoid unintended side effects
+	 * such as CSRF enforcement, session handling, or custom filters interfering with
+	 * operational endpoints.</p>
+	 *
+	 * @param http the {@link ServerHttpSecurity} to configure
+	 * @return a {@link SecurityWebFilterChain} that secures Actuator endpoints
+	 */
+	@Bean
+	@Order(0)
+	@Profile("dev")
+	public SecurityFilterChain actuatorChain(HttpSecurity http) throws Exception {
+		return http
+				.securityMatcher(ACTUATOR_MATCHER)
+				.authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
+				.csrf(csrf -> csrf.disable())
+				.build();
 	}
 
 	/**
