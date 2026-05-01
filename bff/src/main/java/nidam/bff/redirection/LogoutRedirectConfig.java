@@ -93,7 +93,7 @@ public class LogoutRedirectConfig implements ServerLogoutSuccessHandler {
 			String idToken = oidcUser.getIdToken().getTokenValue();
 
 			String redirectUri = buildLogoutRedirectUri(webExchange, idToken);
-			log.info("logout uri: " + redirectUri);
+//			log.info("logout uri: " + redirectUri);
 
 			response.setStatusCode(HttpStatus.ACCEPTED);
 			response.getHeaders().setLocation(URI.create(redirectUri));

@@ -6,8 +6,11 @@ import nidam.registration.config.properties.PasswordProperties;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.crypto.argon2.Argon2PasswordEncoder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.DelegatingPasswordEncoder;
@@ -15,6 +18,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.crypto.password.Pbkdf2PasswordEncoder;
 import org.springframework.security.crypto.scrypt.SCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 
@@ -32,6 +36,31 @@ public class ProjectConfig {
 	private static final String REGISTER_ENDPOINT = "/register";
 	private static final String REGISTER_RECAPTCHA_ENDPOINT = "/registerCaptcha";
 	private final Logger log = Logger.getLogger(ProjectConfig.class.getName());
+
+	private static final String ACTUATOR_MATCHER = "/actuator/**";
+
+	/**
+	 * Security configuration dedicated exclusively to Actuator endpoints. Actuator is only available with {@code dev profile}.
+	 *
+	 * <p>This filter chain is evaluated with the highest precedence ({@code @Order(0)})
+	 * and applies only to requests matching {@code /actuator/**}. It isolates Actuator
+	 * from the main application security configuration to avoid unintended side effects
+	 * such as CSRF enforcement, session handling, or custom filters interfering with
+	 * operational endpoints.</p>
+	 *
+	 * @param http the {@link ServerHttpSecurity} to configure
+	 * @return a {@link SecurityWebFilterChain} that secures Actuator endpoints
+	 */
+	@Bean
+	@Order(0)
+	@Profile("dev")
+	public SecurityFilterChain actuatorChain(HttpSecurity http) throws Exception {
+		return http
+				.securityMatcher(ACTUATOR_MATCHER)
+				.authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
+				.csrf(csrf -> csrf.disable())
+				.build();
+	}
 
 	/**
 	 * Configures the Spring Security filter chain for the registration microservice.
@@ -82,10 +111,12 @@ public class ProjectConfig {
 	 * @throws Exception if an error occurs while building the security configuration
 	 */
 	@Bean
+	@Order(1)
 	public SecurityFilterChain filterChain(HttpSecurity http, AllowedCorsUriProperties corsUris) throws Exception {
 		http.authorizeHttpRequests((authorizeHttpRequests) ->
 						authorizeHttpRequests.dispatcherTypeMatchers(DispatcherType.ERROR).permitAll().
 								requestMatchers(HttpMethod.POST, REGISTER_ENDPOINT, REGISTER_RECAPTCHA_ENDPOINT).permitAll().
+//								requestMatchers("/actuator/**").permitAll().
 								anyRequest().denyAll()
 				);
 		http.csrf((csrf) -> csrf.disable());

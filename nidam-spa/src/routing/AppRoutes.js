@@ -16,6 +16,7 @@ const AppRoutes = () => {
 			<>
 				<Route path="secret" element={<Private/>} />
 				{/*<Route path='/*' element={<PrivateRoutes />} />*/}
+				<Route path='signup' element={<Navigate to='/secret' />} />
 				<Route index element={<Navigate to='/secret' />} />
                 <Route path='*' element={<Navigate to='/error/404' />} />
 			</>

@@ -42,6 +42,10 @@ login:
 server:
   port: ${bff-port}
   forward-headers-strategy: framework
+management:
+  endpoints:
+    access:
+      default: none
 
 bff-redirect-call-to-resource-server-predicate: /api/**
 
