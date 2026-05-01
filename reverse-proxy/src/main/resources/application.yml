@@ -18,6 +18,10 @@ bff-uri: ${host}:${bff-port}
 server:
   port: ${reverse-proxy-port}
   forward-headers-strategy: framework
+management:
+  endpoints:
+    access:
+      default: none
 
 spring:
   config:

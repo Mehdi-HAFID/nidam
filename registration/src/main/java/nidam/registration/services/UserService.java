@@ -81,7 +81,7 @@ public class UserService {
 		user.setEnabled(true);
 
 		user = userRepository.save(user);
-		log.info("entity: " + user);
+//		log.info("entity: " + user);
 
 		UserRegisteredDto dto = registeredMapper.toDto(user);
 		log.info("return dto: " + dto);

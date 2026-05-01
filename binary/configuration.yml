@@ -1,0 +1,119 @@
+# Global but first just use a variable holdding the value with the per project config used
+# Registration
+registration-port: 4000
+authorities: manage-users,manage-projects
+recaptcha-secret: "6LcyyEMpAAAAANm0qZB6kzDQRT5Li4FSGCTe8ESf"
+allowed-cors-uri: http://localhost:4001,http://127.0.0.1:4001,http://localhost:7080,http://127.0.0.1:7080
+
+# token Generator
+rate-limiter:
+  enabled: true
+  lockout-duration: 5    # minutes
+  max-attempts: 2
+  cleanup-interval-ms: 60000      # miliseconds
+client:
+  id: client
+  secret-hash: '{bcrypt}$2a$10$.ld6BfZescPDfVVduvu.6O9.7FLMI64l4PfvnBZJQEBhTLFFbeKei'  #value is 'secret', must use hash because of password encoders
+  secret: secret
+  internal-identifier: nidam-bff-internal-id
+  # TODO must decide if I should expose these urls or keep them internal, for I will expose them
+  login-uri: ${reverse-proxy-uri}${bff-prefix}/login/oauth2/code/${authorization-server-name}
+  logout-uri: ${reverse-proxy-uri}${react-prefix}
+  bff-post-logout-uri: ${reverse-proxy-uri}${bff-prefix}${bff-post-logout-endpoint}
+
+
+
+
+# Global, used by 2 projects or more: no prefix with global or anything just copy paste and it will work
+users-db-url: jdbc:mysql://localhost:3306/identity_hub
+users-db-user: root
+users-db-password: "CcmN*`6@3T9H%P#yg^V<7v"
+password-encoders: scrypt,bcrypt,argon2,pbkdf2
+password-idless: scrypt
+
+host: http://localhost
+
+authorization-server-name: token-generator
+authorization-server-port: 4002
+authorization-server-prefix: /auth
+authorization-server-uri: ${host}:${authorization-server-port}${authorization-server-prefix}
+
+
+reverse-proxy-port: 7080
+reverse-proxy-uri: ${host}:${reverse-proxy-port}
+
+
+issuer: ${reverse-proxy-uri}${authorization-server-prefix}
+
+bff-port: 7081
+bff-prefix: /bff
+bff-uri: ${host}:${bff-port}
+bff-proxy-uri: ${reverse-proxy-uri}${bff-prefix}
+
+react-port: 4001
+react-prefix: /react-ui
+react-proxy-uri: ${reverse-proxy-uri}${react-prefix}
+react-uri: ${host}:${react-port}${react-prefix}
+
+resource-server-port: 4003
+resource-server-uri: ${host}:${resource-server-port}
+
+bff-post-logout-endpoint: /post-logout
+bff-redirect-call-to-resource-server-predicate: /api/**
+# the following is use by the SPA and SPA Server
+bff-redirect-call-to-resource-server-prefix: /api
+
+
+# Project override
+# Registration specific
+registration:
+  users-db-url: ${users-db-url}
+  users-db-user: ${users-db-user}
+  users-db-password: ${users-db-password}
+  authorities: ${authorities}
+  password-encoders: ${password-encoders}
+  idless: ${password-idless}
+  recaptcha-secret: ${recaptcha-secret}
+  allowed-cors-uri: http://localhost:4001,http://127.0.0.1:4001,http://localhost:7080,http://127.0.0.1:7080
+
+# Token Generator
+token-generator:
+  users-db-url: ${users-db-url}
+  users-db-user: ${users-db-user}
+  users-db-password: ${users-db-password}
+  password-encoders: ${password-encoders}
+  idless: ${password-idless}
+    
+
+# Reverse Proxy
+# nothing specific
+
+# BFF
+
+logout:
+  auth-server-uri: ${issuer}/connect/logout
+  token-hint-param-name: id_token_hint
+  post-redirect-param-name: post_logout_redirect_uri
+  client-id-param-name: client_id
+  success-redirect-header: X-POST-LOGOUT-SUCCESS-URI
+  success-redirect-default-uri: ${react-proxy-uri}
+  bff-post-logout-uri: ${bff-proxy-uri}${bff-post-logout-endpoint}
+  allowed-redirect-uri-prefixes: ${react-proxy-uri}     # you can set it like:
+                                                          # allowed-redirect-uri-prefixes: http://a,http://b,http://c
+login:
+  success-redirect-param-name: post_login_success_uri
+  session-redirect-uri-attribute: POST_LOGIN_SUCCESS_URI
+  allowed-redirect-uri-prefixes: ${react-proxy-uri}    
+
+
+# SPA
+# Important Note: if you were to change react-prefix value you must ALWAYS change it in the spa source code: package.json "homepage": "/react-ui" and index.js <BrowserRouter basename="/react-ui" >
+registration-uri: ${host}:${registration-port}
+
+resource-server-through-bff-proxy-uri: ${reverse-proxy-uri}${bff-prefix}${bff-redirect-call-to-resource-server-prefix}
+
+react-login-url: ${bff-proxy-uri}/oauth2/authorization/${authorization-server-name}
+
+react-logout-url: ${bff-proxy-uri}/logout
+
+

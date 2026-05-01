@@ -10,7 +10,6 @@ issuer: ${reverse-proxy-uri}${authorization-server-prefix}
 security:
   permit-all:
     - /me
-    - /actuator/health/**
     - /docs/**
 
 resource-server-port: 4003
@@ -26,6 +25,10 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: ${issuer}
+management:
+  endpoints:
+    access:
+      default: none
 
 #logging:
 #  level:

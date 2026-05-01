@@ -2,6 +2,8 @@ package nidam.bff.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.config.Customizer;
@@ -13,6 +15,7 @@ import org.springframework.security.web.server.authentication.logout.ServerLogou
 import org.springframework.security.web.server.csrf.CookieServerCsrfTokenRepository;
 import org.springframework.security.web.server.csrf.CsrfToken;
 import org.springframework.security.web.server.csrf.ServerCsrfTokenRequestAttributeHandler;
+import org.springframework.security.web.server.util.matcher.ServerWebExchangeMatchers;
 import org.springframework.web.server.WebFilter;
 import org.springframework.web.server.WebSession;
 import org.springframework.web.server.session.DefaultWebSessionManager;
@@ -49,8 +52,9 @@ public class SecurityConfig {
 	public static final String COOKIE_XSRF_TOKEN = "XSRF-TOKEN";
 	public static final String BFF_LOGOUT_ENDPOINT = "/logout";
 
-	private static final String[] UNAUTHENTICATED_PATHS =
-			{"/api/me", "/login/**", "/oauth2/**", "/error", "/post-logout"};
+	private static final String[] UNAUTHENTICATED_PATHS = {"/api/me", "/login/**", "/oauth2/**", "/error", "/post-logout"};
+
+	private static final String ACTUATOR_MATCHER = "/actuator/**";
 
 	/**
 	 * Constructs a new {@code SecurityConfig} with required components.
@@ -64,10 +68,51 @@ public class SecurityConfig {
 	}
 
 	/**
+	 * Security configuration dedicated exclusively to Actuator endpoints. Actuator is only available with {@code dev profile}.
+	 *
+	 * <p>This filter chain is evaluated with the highest precedence ({@code @Order(0)})
+	 * and applies only to requests matching {@code /actuator/**}. It isolates Actuator
+	 * from the main application security configuration to avoid unintended side effects
+	 * such as CSRF enforcement, session handling, or custom filters interfering with
+	 * operational endpoints.</p>
+	 *
+	 * <p>Key characteristics:</p>
+	 * <ul>
+	 *     <li><b>Scoped matching:</b> Applies only to Actuator endpoints via
+	 *     {@link ServerWebExchangeMatchers#pathMatchers(String...)}.</li>
+	 *     <li><b>Open access:</b> All requests are permitted. This is typically suitable
+	 *     for development environments; production setups should restrict access
+	 *     (e.g., to specific roles or networks).</li>
+	 *     <li><b>CSRF disabled:</b> Cross-Site Request Forgery protection is turned off
+	 *     since Actuator endpoints are not intended to be accessed via browser-based
+	 *     sessions.</li>
+	 *     <li><b>Full isolation:</b> Prevents the main security filter chain (e.g., OAuth2,
+	 *     session management, custom filters) from applying to Actuator requests.</li>
+	 * </ul>
+	 *
+	 * <p>This approach follows Spring Security best practices by defining a dedicated
+	 * {@link SecurityWebFilterChain} for operational endpoints instead of relying on
+	 * conditional logic within a single chain.</p>
+	 *
+	 * @param http the {@link ServerHttpSecurity} to configure
+	 * @return a {@link SecurityWebFilterChain} that secures Actuator endpoints
+	 */
+	@Bean
+	@Order(0)
+	@Profile("dev")
+	public SecurityWebFilterChain actuatorChain(ServerHttpSecurity http) {
+		return http
+				.securityMatcher(ServerWebExchangeMatchers.pathMatchers(ACTUATOR_MATCHER))
+				.authorizeExchange(ex -> ex.anyExchange().permitAll())
+				.csrf(ServerHttpSecurity.CsrfSpec::disable)
+				.build();
+	}
+
+	/**
 	 * Defines the Spring Security filter chain for the BFF.
 	 *
 	 * <ul>
-	 *     <li>Permits unauthenticated access to login endpoints, actuator, and logout</li>
+	 *     <li>Permits unauthenticated access to login endpoints, and logout</li>
 	 *     <li>Protects other paths with authentication</li>
 	 *     <li>Enables OAuth2 login and client support</li>
 	 *     <li>Applies CSRF protection using a cookie</li>
@@ -89,7 +134,6 @@ public class SecurityConfig {
 	 *   <li>Allows unauthenticated access to:
 	 *       <ul>
 	 *           <li>login endpoints</li>
-	 *           <li>actuator endpoints</li>
 	 *           <li>the BFF logout endpoint (POST)</li>
 	 *       </ul>
 	 *   </li>
@@ -105,6 +149,7 @@ public class SecurityConfig {
 	 * @return the configured {@link SecurityWebFilterChain}
 	 */
 	@Bean
+	@Order(1)
 	public SecurityWebFilterChain securityFilterChain(ServerHttpSecurity http, ReactiveClientRegistrationRepository clients) {
 		http
 				.authorizeExchange(exchanges -> exchanges
@@ -150,7 +195,7 @@ public class SecurityConfig {
 					String currentCookie = exchange.getRequest().getCookies().getFirst(COOKIE_XSRF_TOKEN) != null
 							? exchange.getRequest().getCookies().getFirst(COOKIE_XSRF_TOKEN).getValue()
 							: null;
-					log.info("csrfTokenWebFilter() currentCookie: " + currentCookie);
+//					log.info("csrfTokenWebFilter() currentCookie: " + currentCookie);
 
 					if (!token.getToken().equals(currentCookie)) {
 						ResponseCookie cookie = ResponseCookie.from(COOKIE_XSRF_TOKEN, token.getToken())
@@ -159,7 +204,7 @@ public class SecurityConfig {
 								.httpOnly(false) // must be accessible to JS
 								.secure(false) // set to true if using HTTPS
 								.build();
-						log.info("csrfTokenWebFilter()  Setting new XSRF-TOKEN cookie: {} " + cookie);
+//						log.info("csrfTokenWebFilter()  Setting new XSRF-TOKEN cookie: {} " + cookie);
 						exchange.getResponse().addCookie(cookie);
 					}
 					return chain.filter(exchange);
@@ -210,7 +255,7 @@ public class SecurityConfig {
 						if (session.getAttribute("SESSION_TIMEOUT_SET") == null) {
 							session.setMaxIdleTime(Duration.ofHours(12));
 							session.getAttributes().put("SESSION_TIMEOUT_SET", true);
-							log.info("Session timeout set to 12h for session ID:" + session.getId());
+//							log.info("Session timeout set to 12h for session ID:" + session.getId());
 //							log.info("Max idle time: " + session.getMaxIdleTime());
 //							log.info("Creation time: " + session.getCreationTime());
 						}

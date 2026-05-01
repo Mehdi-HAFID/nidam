@@ -52,17 +52,22 @@ public class LoginRedirectConfig {
 	 * <p>This bean delegates configuration values such as the redirect parameter name,
 	 * session attribute key, and allowed URI prefixes to {@link LoginProperties}.</p>
 	 *
+	 * <p><strong>Ordering constraint:</strong> This filter must be configured with an
+	 * order of {@code -100} or lower (e.g. {@code -201}). If the order is greater than
+	 * {@code -100}, the filter will not be invoked at all due to its position relative
+	 * to the Spring Security WebFlux filter chain.</p>
+	 *
 	 * @param loginProperties injected configuration for redirect capture
 	 * @return a filter that stores the validated post-login redirect URI in session
 	 */
 	@Bean
-	@Order(-2)
+	@Order(-201)
 	public WebFilter recordLoginRedirectFilter(LoginProperties loginProperties) {
 		return (exchange, chain) -> {
 			String path = exchange.getRequest().getURI().getPath();
 
 			if (!path.startsWith(BFF_LOGIN_INIT_ENDPOINT)) {
-				log.info("skipped a 'post login redirectUri'");
+//				log.info("skipped a 'post login redirectUri'");
 				// Skip this filter if the path is not under /login
 				return chain.filter(exchange);
 			}
