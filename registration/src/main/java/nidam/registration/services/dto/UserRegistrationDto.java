@@ -24,9 +24,6 @@ public class UserRegistrationDto {
 
 	@Override
 	public String toString() {
-		return "UserRegistrationDto{" +
-				"email='" + email + '\'' +
-				", password='" + password + '\'' +
-				'}';
+		return "UserRegistrationDto{" + "email='" + email + '\'' + ", password='" + password + '\'' + '}';
 	}
 }

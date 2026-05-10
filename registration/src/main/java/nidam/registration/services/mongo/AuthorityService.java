@@ -1,8 +1,9 @@
-package nidam.registration.services;
+package nidam.registration.services.mongo;
 
 import nidam.registration.config.properties.AuthorizationProperties;
-import nidam.registration.entities.sql.Authority;
-import nidam.registration.repositories.sql.AuthorityRepository;
+import nidam.registration.entities.mongo.Authority;
+import nidam.registration.repositories.mongo.AuthorityRepository;
+import nidam.registration.services.AuthorityServiceSpec;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
@@ -11,25 +12,16 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 /**
- * SQL-based implementation of {@link AuthorityServiceSpec}.
+ * MongoDB-based implementation of {@link AuthorityServiceSpec}.
  *
- * <p>Active when {@code nidam.persistence-mode=sql} (default).</p>
+ * <p>Active when {@code nidam.persistence-mode=mongo}.</p>
  *
- * <p>This service synchronizes authorities defined in
- * {@link AuthorizationProperties} with the relational database.</p>
- *
- * <p>Behavior:
- * <ul>
- *   <li>Fetch all existing authorities</li>
- *   <li>Insert missing ones</li>
- *   <li>Skip already persisted authorities</li>
- * </ul>
- * </p>
+ * <p>Performs the same synchronization logic as the SQL implementation,
+ * adapted to MongoDB repositories.</p>
  */
 @Service
-@ConditionalOnProperty(name = "nidam.persistence-mode", havingValue = "sql", matchIfMissing = true)
+@ConditionalOnProperty(name = "nidam.persistence-mode", havingValue = "mongo")
 public class AuthorityService implements AuthorityServiceSpec {
-
 	private final Logger log = Logger.getLogger(AuthorityService.class.getName());
 
 	private final AuthorityRepository authorityRepo;
@@ -42,7 +34,6 @@ public class AuthorityService implements AuthorityServiceSpec {
 
 	@Override
 	public void addToDatabase(){
-		// 1. get all, 2 loop nidamProperties.authorities, if exists skip, if not create.
 		Set<String> existing = authorityRepo.findAll().stream().map(Authority::getName).collect(Collectors.toSet());
 		for(String authority : authorizationProperties.getAuthorities()){
 			if (existing.contains(authority)){
@@ -52,6 +43,7 @@ public class AuthorityService implements AuthorityServiceSpec {
 				authorityRepo.save(new Authority(authority));
 			}
 		}
-
 	}
+
+
 }
