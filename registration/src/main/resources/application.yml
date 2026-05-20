@@ -1,8 +1,8 @@
 registration-port: 4000
 
-#users-db-url: jdbc:mysql://localhost:3306/identity_hub
-#users-db-user: root
-#users-db-password: "CcmN*`6@3T9H%P#yg^V<7v"
+users-db-url: jdbc:mysql://localhost:3306/identity_hub
+users-db-user: root
+users-db-password: "CcmN*`6@3T9H%P#yg^V<7v"
 
 #users-db-url: jdbc:h2:file:./db/identity_hub
 #users-db-url: jdbc:h2:tcp://localhost:9092/identity_hub
@@ -12,7 +12,7 @@ registration-port: 4000
 #users-db-password: ""
 
 # Mongo
-users-db-url: mongodb://localhost:27017/identity_hub
+#users-db-url: mongodb://localhost:27017/identity_hub
 
 authorities: manage-users,manage-projects
 password-encoders: scrypt,bcrypt,argon2,pbkdf2
@@ -37,6 +37,13 @@ spring:
     import: optional:file:./configuration.yml
   profiles:
     active: ${nidam.persistence-mode}
+    group:
+      dev-sql:
+        - dev
+        - sql
+      dev-mongo:
+        - dev
+        - mongo
 
 custom:
   authorization:
@@ -55,6 +62,6 @@ custom:
 
 # options: sql, mongo . default: sql . When changing don't forget to update ${users-db-url/username/password}
 nidam:
-  persistence-mode: "mongo"
+  persistence-mode: "sql"
 
 

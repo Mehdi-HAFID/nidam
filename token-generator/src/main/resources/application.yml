@@ -6,13 +6,13 @@ browser-facing-domain: http://localhost
 # for now always use internal.
 
 # MySQL
-#users-db-url: jdbc:mysql://localhost:3306/identity_hub
-#users-db-user: root
-#users-db-password: "CcmN*`6@3T9H%P#yg^V<7v"
+users-db-url: jdbc:mysql://localhost:3306/identity_hub
+users-db-user: root
+users-db-password: "CcmN*`6@3T9H%P#yg^V<7v"
 # Embedded H2
-users-db-url: jdbc:h2:tcp://localhost:9092/identity_hub
-users-db-user: nidam
-users-db-password: "gF2mshbI819AV2L3"
+#users-db-url: jdbc:h2:tcp://localhost:9092/identity_hub
+#users-db-user: nidam
+#users-db-password: "gF2mshbI819AV2L3"
 
 
 password-encoders: scrypt,bcrypt,argon2,pbkdf2
