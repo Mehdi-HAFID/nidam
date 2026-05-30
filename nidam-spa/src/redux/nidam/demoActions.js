@@ -5,3 +5,9 @@ export const GetSecret = () => {
         type: actionsTypes.GET_SECRET,
 	}
 };
+
+export const GetTopSecret = () => {
+	return {
+		type: actionsTypes.GET_TOP_SECRET,
+	}
+};
