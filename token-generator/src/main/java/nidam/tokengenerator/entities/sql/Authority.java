@@ -1,4 +1,4 @@
-package nidam.tokengenerator.entities;
+package nidam.tokengenerator.entities.sql;
 
 import jakarta.persistence.*;
 
@@ -31,6 +31,11 @@ public class Authority {
 
 	public void setName(String name) {
 		this.name = name;
+	}
+
+	@Override
+	public String toString() {
+		return "Authority{" + "id=" + id + ", name='" + name + '\'' + '}';
 	}
 
 	@Override

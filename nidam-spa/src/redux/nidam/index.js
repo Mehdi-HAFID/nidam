@@ -1,1 +1,3 @@
-export {GetSecret} from "./demoActions"
+export {
+	GetSecret, GetTopSecret
+} from "./demoActions"

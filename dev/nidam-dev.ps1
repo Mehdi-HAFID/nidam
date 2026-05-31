@@ -188,17 +188,17 @@ function Stop-ProcessByPort {
 function Start-Nidam {
     Write-Output "🚀 Starting Nidam Dev Env..."
     # Start-ServiceTab -Index 1 -Name "Documentation" -Directory "C:\Users\mehdi\Root\Dev\Auth Server\documentation" -Command "npm start"
-    Start-DBTab -Index 1 -Name "H2 db" -Directory $PSScriptRoot -Command "java -cp h2-2.4.240.jar org.h2.tools.Server -tcp -tcpAllowOthers -ifNotExists -baseDir ./db -tcpPassword 'shutdown-secret'" -Port 9092
-    SetupH2
-    Start-SpringServiceTab -Index 2 -Name "Registration" -Directory (Join-Path $Root "registration") -Command "mvn spring-boot:run '-Dspring-boot.run.profiles=dev'" -Port 4000
-    Start-SpringServiceTab -Index 3 -Name "Token-Generator" -Directory (Join-Path $Root "token-generator") -Command "mvn spring-boot:run '-Dspring-boot.run.profiles=dev'" -Port 4002 -ContextPath "/auth"
+#    Start-DBTab -Index 1 -Name "H2 db" -Directory $PSScriptRoot -Command "java -cp h2-2.4.240.jar org.h2.tools.Server -tcp -tcpAllowOthers -ifNotExists -baseDir ./db -tcpPassword 'shutdown-secret'" -Port 9092
+#    SetupH2
+    Start-SpringServiceTab -Index 2 -Name "Registration" -Directory (Join-Path $Root "registration") -Command "mvn spring-boot:run '-Dspring-boot.run.profiles=dev-mongo'" -Port 4000
+    Start-SpringServiceTab -Index 3 -Name "Token-Generator" -Directory (Join-Path $Root "token-generator") -Command "mvn spring-boot:run '-Dspring-boot.run.profiles=dev-mongo'" -Port 4002 -ContextPath "/auth"
     Start-SpringServiceTab -Index 4 -Name "Reverse-Proxy" -Directory (Join-Path $Root "reverse-proxy") -Command "mvn spring-boot:run '-Dspring-boot.run.profiles=dev'" -Port 7080
     Start-SpringServiceTab -Index 5 -Name "BFF" -Directory (Join-Path $Root "bff") -Command "mvn spring-boot:run '-Dspring-boot.run.profiles=dev'" -Port 7081
     Start-SpringServiceTab -Index 6 -Name "Nidam" -Directory (Join-Path $Root "nidam") -Command "mvn spring-boot:run '-Dspring-boot.run.profiles=dev'" -Port 4003
     # Recommended: remove/comment this section section after the first run, so logs are clean: START
-    Push-Location (Join-Path $Root "nidam-spa")
-    npm install
-    Pop-Location
+#    Push-Location (Join-Path $Root "nidam-spa")
+#    npm install
+#    Pop-Location
     # END
     Start-Spa -Index 7 -Name "SPA" -Directory (Join-Path $Root "nidam-spa") -Command "npm start" -Port 4001
 
@@ -216,7 +216,7 @@ function Stop-Nidam {
     Stop-SpringService -Name "Reverse-Proxy" -Port 7080
     Stop-SpringService -Name "Token-Generator" -Port 4002 -ContextPath "/auth"
     Stop-SpringService -Name "Registration" -Port 4000
-    Stop-H2
+#    Stop-H2
     Write-Host "✅ Nidam stopped."
 }
 

@@ -7,7 +7,7 @@ import * as authenticationTypes from "./authentication/saga/authenticationAction
 import {isLoggedIn, logoutBeforeTokenExpires} from "./authentication/saga/authentication";
 
 import * as nidamTypes from "./nidam/demoActionTypes";
-import {getSecret} from "./nidam/demoSaga";
+import {getSecret, getTopSecret} from "./nidam/demoSaga";
 
 
 export function* watchRegistration() {
@@ -16,9 +16,10 @@ export function* watchRegistration() {
 
 export function* watchAuthentication() {
 	yield takeEvery(authenticationTypes.IS_LOGGED_IN, isLoggedIn);
-    yield takeEvery(authenticationTypes.LOGOUT_BEFORE_TOKEN_EXPIRES, logoutBeforeTokenExpires);
+	yield takeEvery(authenticationTypes.LOGOUT_BEFORE_TOKEN_EXPIRES, logoutBeforeTokenExpires);
 }
 
 export function* watchNidam() {
-    yield takeEvery(nidamTypes.GET_SECRET, getSecret);
+	yield takeEvery(nidamTypes.GET_SECRET, getSecret);
+	yield takeEvery(nidamTypes.GET_TOP_SECRET, getTopSecret);
 }

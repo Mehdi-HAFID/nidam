@@ -1,13 +1,13 @@
 package nidam.registration.services.mapper;
 
-import nidam.registration.entities.Authority;
-import nidam.registration.entities.Role;
-import nidam.registration.entities.User;
+import nidam.registration.entities.sql.Authority;
+import nidam.registration.entities.sql.Role;
+import nidam.registration.entities.sql.User;
 import nidam.registration.services.dto.UserRegisteredDto;
 import org.mapstruct.Mapper;
 
 @Mapper(componentModel = "spring")
-public abstract class UserRegisteredMapper {
+public abstract class UserRegisteredSqlMapper {
 
 //	public User toEntity(UserRegistrationDto dto);
 

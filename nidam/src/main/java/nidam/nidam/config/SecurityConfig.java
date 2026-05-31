@@ -1,12 +1,15 @@
 package nidam.nidam.config;
 
+import jakarta.servlet.http.HttpServletResponse;
 import nidam.nidam.config.validator.AudienceValidator;
+import nidam.nidam.controller.error.NidamAccessDeniedHandler;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.Order;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.core.GrantedAuthority;
@@ -29,6 +32,7 @@ import java.util.logging.Logger;
  * It includes custom authority mapping, audience validation, and clock skew tolerance.</p>
  */
 @Configuration
+@EnableMethodSecurity
 @EnableConfigurationProperties(SecurityProps.class)
 public class SecurityConfig {
 
@@ -88,26 +92,34 @@ public class SecurityConfig {
      * </ul>
      * </p>
      *
+     * <h3>Error Handling</h3>
+     * <ul>
+     *   <li>401 handled by the authentication entry point (rare due to BFF)</li>
+     *   <li>403 handled by {@link NidamAccessDeniedHandler} (JSON + OAuth2 headers)</li>
+     * </ul>
+     *
      * @param http the {@link HttpSecurity} object provided by Spring Security
      * @param securityProps the custom configuration properties that define permit-all paths
+     * @param nidamAccessDeniedHandler custom handler for 403 responses
      * @return the configured {@link SecurityFilterChain}
      * @throws Exception in case of configuration errors
      */
     @Bean
     @Order(1)
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, SecurityProps securityProps) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, SecurityProps securityProps,
+                                                   NidamAccessDeniedHandler nidamAccessDeniedHandler) throws Exception {
         http
-                .authorizeHttpRequests(auth ->
-                        auth
-                                .requestMatchers(securityProps.getPermitAll().toArray(new String[0])).permitAll()
-                                .anyRequest().authenticated()
-                )
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(securityProps.getPermitAll().toArray(new String[0])).permitAll()
+                        .anyRequest().authenticated())
                 .oauth2ResourceServer(
-                        configurer ->
-                                configurer.jwt(jwt ->
-                                        jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())
-                        )
-                );
+                        configurer -> configurer
+                                .jwt(jwt ->
+                                        jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()))
+                                .accessDeniedHandler(nidamAccessDeniedHandler)
+                                .authenticationEntryPoint((request, response, ex) -> {
+                                    response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+                                }));
 
         return http.build();
     }

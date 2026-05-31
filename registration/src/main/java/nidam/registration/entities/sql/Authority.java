@@ -1,12 +1,12 @@
-package nidam.tokengenerator.entities;
+package nidam.registration.entities.sql;
 
 import jakarta.persistence.*;
 
 import java.util.Objects;
 
 @Entity
-@Table(name = "ROLES")
-public class Role {
+@Table
+public class Authority {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -14,10 +14,10 @@ public class Role {
 
 	private String name;
 
-	public Role() {
+	public Authority() {
 	}
 
-	public Role(String name) {
+	public Authority(String name) {
 		this.name = name;
 	}
 
@@ -34,10 +34,15 @@ public class Role {
 	}
 
 	@Override
+	public String toString() {
+		return "Authority{" + "id=" + id + ", name='" + name + '\'' + '}';
+	}
+
+	@Override
 	public boolean equals(Object o) {
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
-		Role authority = (Role) o;
+		Authority authority = (Authority) o;
 		return Objects.equals(id, authority.id);
 	}
 

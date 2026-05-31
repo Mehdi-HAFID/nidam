@@ -10,7 +10,6 @@ issuer: ${reverse-proxy-uri}${authorization-server-prefix}
 security:
   permit-all:
     - /me
-    - /docs/**
 
 resource-server-port: 4003
 audience: client
