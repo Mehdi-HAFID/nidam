@@ -10,10 +10,12 @@ browser-facing-domain: http://localhost
 #users-db-user: root
 #users-db-password: "CcmN*`6@3T9H%P#yg^V<7v"
 # Embedded H2
-users-db-url: jdbc:h2:tcp://localhost:9092/identity_hub
-users-db-user: nidam
-users-db-password: "gF2mshbI819AV2L3"
+#users-db-url: jdbc:h2:tcp://localhost:9092/identity_hub
+#users-db-user: nidam
+#users-db-password: "gF2mshbI819AV2L3"
 
+# Mongo
+users-db-url: mongodb://localhost:27017/identity_hub
 
 password-encoders: scrypt,bcrypt,argon2,pbkdf2
 password-idless: scrypt
@@ -58,12 +60,26 @@ spring:
     password: ${token-generator.users-db-password:${users-db-password}}
   config:
     import: optional:file:./configuration.yml
+  profiles:
+    active: ${nidam.persistence-mode}
+    group:
+      dev-sql:
+        - dev
+        - sql
+      dev-mongo:
+        - dev
+        - mongo
 
 rate-limiter:
   enabled: true
   lockout-duration: 5    # minutes
   max-attempts: 5
   cleanup-interval-ms: 60000      # miliseconds
+
+# options: sql, mongo . default: sql . When changing don't forget to update ${users-db-url/username/password},
+#  also update nidam-dev.ps1 -Command "mvn spring-boot:run '-Dspring-boot.run.profiles=dev-mongo'"
+nidam:
+  persistence-mode: "mongo"
 
 management:
   endpoints:

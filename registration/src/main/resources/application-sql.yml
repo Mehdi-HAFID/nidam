@@ -1,0 +1,17 @@
+spring:
+  datasource:
+    url: ${registration.users-db-url:${users-db-url}}
+    username: ${registration.users-db-user:${users-db-user}}
+    password: ${registration.users-db-password:${users-db-password}}
+  sql:
+    init:
+      mode: always
+  jpa:
+    generate-ddl: true
+    open-in-view: false
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration
+      - org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.mongo.MongoRepositoriesAutoConfiguration

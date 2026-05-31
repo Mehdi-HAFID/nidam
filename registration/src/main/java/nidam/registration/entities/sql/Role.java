@@ -1,4 +1,4 @@
-package nidam.registration.entities;
+package nidam.registration.entities.sql;
 
 import jakarta.persistence.*;
 

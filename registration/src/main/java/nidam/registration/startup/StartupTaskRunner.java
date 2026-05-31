@@ -7,6 +7,17 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+/**
+ * Executes all {@link StartupTask} beans at application startup.
+ *
+ * <p>This runner collects all registered {@link StartupTask} implementations,
+ * sorts them, and executes them sequentially.</p>
+ *
+ * <p>Tasks can control their execution order via {@link Order}
+ *
+ * <p>This provides a simple and extensible mechanism for running
+ * initialization logic (e.g., data seeding, validation) during startup.</p>
+ */
 @Component
 public class StartupTaskRunner implements ApplicationRunner {
 

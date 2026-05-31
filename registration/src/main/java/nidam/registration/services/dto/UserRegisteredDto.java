@@ -1,23 +1,22 @@
 package nidam.registration.services.dto;
 
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
 public class UserRegisteredDto {
 
-	private BigInteger id;
+	private String id;
 
 	private String email;
 
 	private List<String> authorities = new ArrayList<>();
 	private List<String> roles = new ArrayList<>();
 
-	public BigInteger getId() {
+	public String getId() {
 		return id;
 	}
 
-	public void setId(BigInteger id) {
+	public void setId(String id) {
 		this.id = id;
 	}
 
@@ -47,11 +46,6 @@ public class UserRegisteredDto {
 
 	@Override
 	public String toString() {
-		return "UserRegisteredDto{" +
-				"id=" + id +
-				", email='" + email + '\'' +
-				", authorities=" + authorities +
-				", roles=" + roles +
-				'}';
+		return "UserRegisteredDto{" + "id=" + id + ", email='" + email + '\'' + ", authorities=" + authorities + '}';
 	}
 }

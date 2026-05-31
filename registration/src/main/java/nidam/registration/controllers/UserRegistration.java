@@ -1,6 +1,6 @@
 package nidam.registration.controllers;
 
-import nidam.registration.services.UserService;
+import nidam.registration.services.UserServiceSpec;
 import nidam.registration.services.dto.UserRegisteredDto;
 import nidam.registration.services.dto.UserRegistrationCaptchaDto;
 import nidam.registration.services.dto.UserRegistrationDto;
@@ -17,15 +17,15 @@ public class UserRegistration {
 
 	private Logger log = Logger.getLogger(UserRegistration.class.getName());
 
-	private UserService userService;
+	private final UserServiceSpec userService;
 
-	public UserRegistration(UserService userService){
+	public UserRegistration(UserServiceSpec userService){
 		this.userService = userService;
 	}
 
 	@PostMapping("/register")
 	public ResponseEntity<UserRegisteredDto> register(@RequestBody UserRegistrationDto userDto){
-		log.info("userDto: " + userDto);
+//		log.info("userDto: " + userDto);
 		UserRegisteredDto entity = userService.save(userDto);
 		return ResponseEntity.status(HttpStatus.CREATED)
 				.body(entity);
@@ -33,7 +33,7 @@ public class UserRegistration {
 
 	@PostMapping("/registerCaptcha")
 	public ResponseEntity<UserRegisteredDto> register(@RequestBody UserRegistrationCaptchaDto userDto){
-		log.info("userDto: " + userDto);
+//		log.info("userDto: " + userDto);
 
 		UserRegisteredDto entity = userService.save(userDto);
 		return ResponseEntity.status(HttpStatus.CREATED)
