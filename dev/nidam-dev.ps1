@@ -190,8 +190,8 @@ function Start-Nidam {
     # Start-ServiceTab -Index 1 -Name "Documentation" -Directory "C:\Users\mehdi\Root\Dev\Auth Server\documentation" -Command "npm start"
 #    Start-DBTab -Index 1 -Name "H2 db" -Directory $PSScriptRoot -Command "java -cp h2-2.4.240.jar org.h2.tools.Server -tcp -tcpAllowOthers -ifNotExists -baseDir ./db -tcpPassword 'shutdown-secret'" -Port 9092
 #    SetupH2
-    Start-SpringServiceTab -Index 2 -Name "Registration" -Directory (Join-Path $Root "registration") -Command "mvn spring-boot:run '-Dspring-boot.run.profiles=dev-sql'" -Port 4000
-    Start-SpringServiceTab -Index 3 -Name "Token-Generator" -Directory (Join-Path $Root "token-generator") -Command "mvn spring-boot:run '-Dspring-boot.run.profiles=dev'" -Port 4002 -ContextPath "/auth"
+    Start-SpringServiceTab -Index 2 -Name "Registration" -Directory (Join-Path $Root "registration") -Command "mvn spring-boot:run '-Dspring-boot.run.profiles=dev-mongo'" -Port 4000
+    Start-SpringServiceTab -Index 3 -Name "Token-Generator" -Directory (Join-Path $Root "token-generator") -Command "mvn spring-boot:run '-Dspring-boot.run.profiles=dev-mongo'" -Port 4002 -ContextPath "/auth"
     Start-SpringServiceTab -Index 4 -Name "Reverse-Proxy" -Directory (Join-Path $Root "reverse-proxy") -Command "mvn spring-boot:run '-Dspring-boot.run.profiles=dev'" -Port 7080
     Start-SpringServiceTab -Index 5 -Name "BFF" -Directory (Join-Path $Root "bff") -Command "mvn spring-boot:run '-Dspring-boot.run.profiles=dev'" -Port 7081
     Start-SpringServiceTab -Index 6 -Name "Nidam" -Directory (Join-Path $Root "nidam") -Command "mvn spring-boot:run '-Dspring-boot.run.profiles=dev'" -Port 4003

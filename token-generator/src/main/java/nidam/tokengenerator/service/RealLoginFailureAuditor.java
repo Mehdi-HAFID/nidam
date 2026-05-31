@@ -166,7 +166,9 @@ public class RealLoginFailureAuditor implements LoginFailureAuditor {
 				return fr.isExpired(now, MAX_ATTEMPTS, LOCKOUT_DURATION);
 			});
 			int finalSize = attempts.size();
-			log.info("cleanup expired lockouts: " + initial + " -> " + finalSize);
+			if(initial != finalSize){
+				log.info("cleanup expired lockouts: " + initial + " -> " + finalSize);
+			}
 		}
 	}
 }

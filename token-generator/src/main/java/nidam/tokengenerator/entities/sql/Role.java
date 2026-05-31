@@ -1,4 +1,4 @@
-package nidam.tokengenerator.entities;
+package nidam.tokengenerator.entities.sql;
 
 import jakarta.persistence.*;
 
