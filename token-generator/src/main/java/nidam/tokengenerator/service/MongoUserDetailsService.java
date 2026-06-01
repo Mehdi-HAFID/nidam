@@ -5,6 +5,7 @@ import nidam.tokengenerator.model.MongoUserDetails;
 import nidam.tokengenerator.repositories.mongo.AuthorityRepository;
 import nidam.tokengenerator.repositories.mongo.UserRepository;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -49,9 +50,9 @@ public class MongoUserDetailsService implements UserDetailsService {
 	public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
 		User user = userRepository.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
-		List<String> authoritiesAsString = authorityRepository.findByIdIn(user.getAuthoritiesIds())
-				.stream().map(authority -> authority.getName()).toList();
-		MongoUserDetails userDetails = new MongoUserDetails(user, authoritiesAsString);
+		List<SimpleGrantedAuthority> authorities = authorityRepository.findByIdIn(user.getAuthoritiesIds())
+				.stream().map(authority -> new SimpleGrantedAuthority(authority.getName())).toList();
+		MongoUserDetails userDetails = new MongoUserDetails(user.getEmail(), authorities, user.getPassword(), user.isEnabled());
 		log.info("mongoUserDetails: " + userDetails.getUsername() + " , authorities: " + userDetails.getAuthorities());
 		return userDetails;
 	}

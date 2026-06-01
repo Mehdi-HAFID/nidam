@@ -27,33 +27,35 @@ import java.util.stream.Collectors;
 
 public class MongoUserDetails implements UserDetails {
 
-	private final User user;
-	private final List<String> authoritiesAsString;
+//	private final User user;
+//	private final List<String> authoritiesAsString;
 
-	public MongoUserDetails(User user, List<String> authoritiesAsString) {
-		this.user = user;
-		this.authoritiesAsString = authoritiesAsString;
-	}
+	private final String email;
+	private final Collection<? extends GrantedAuthority> authorities;
+	private final String password;
+	private final boolean enabled;
 
-	public User getUser() {
-		return user;
+
+	public MongoUserDetails(String email, Collection<? extends GrantedAuthority> authorities, String password, boolean isEnabled) {
+		this.email = email;
+		this.authorities = authorities;
+		this.password = password;
+		this.enabled = isEnabled;
 	}
 
 	@Override
 	public Collection<? extends GrantedAuthority> getAuthorities() {
-		return authoritiesAsString.stream()
-				.map(authority -> new SimpleGrantedAuthority(authority))
-				.collect(Collectors.toList());
+		return authorities;
 	}
 
 	@Override
 	public String getPassword() {
-		return user.getPassword();
+		return password;
 	}
 
 	@Override
 	public String getUsername() {
-		return user.getEmail();
+		return email;
 	}
 
 	@Override
@@ -73,6 +75,6 @@ public class MongoUserDetails implements UserDetails {
 
 	@Override
 	public boolean isEnabled() {
-		return user.isEnabled();
+		return enabled;
 	}
 }

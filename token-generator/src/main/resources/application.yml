@@ -45,6 +45,8 @@ server:
   port: ${authorization-server-port}
   servlet:
     contextPath: ${authorization-server-prefix}
+    session:
+      timeout: 12h
   forward-headers-strategy: framework
 
 # first in the list is the default encoder
@@ -69,6 +71,12 @@ spring:
       dev-mongo:
         - dev
         - mongo
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      repositories:
+        enabled: false
 
 rate-limiter:
   enabled: true
