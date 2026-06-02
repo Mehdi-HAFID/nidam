@@ -1,5 +1,8 @@
 package nidam.tokengenerator.config;
 
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
@@ -14,10 +17,13 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.Order;
+import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.jackson2.SecurityJackson2Modules;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
@@ -30,6 +36,7 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
+import org.springframework.security.oauth2.server.authorization.jackson2.OAuth2AuthorizationServerJackson2Module;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.settings.TokenSettings;
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
@@ -123,12 +130,12 @@ public class SecurityConfigStaticKey {
 	 * Defines the default security filter chain for the application.
 	 * <p>
 	 * Configures form-based login with custom success and failure handlers,
-	 *  * and enforces authentication for all incoming HTTP requests except static resources and the login page.
+	 * * and enforces authentication for all incoming HTTP requests except static resources and the login page.
 	 * <p>
 	 * Assets required for rendering the custom login page are publicly accessible.
 	 * All other requests require authentication.
 	 *
-	 * @param http the {@link HttpSecurity} to configure
+	 * @param http           the {@link HttpSecurity} to configure
 	 * @param successHandler the {@link OAuth2AwareSuccessHandler} used after successful login
 	 * @param failureHandler the {@link OAuth2AwareFailureHandler} used for login failures
 	 * @return the configured {@link SecurityFilterChain}
@@ -137,7 +144,7 @@ public class SecurityConfigStaticKey {
 	@Bean
 	@Order(2)
 	public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http, OAuth2AwareSuccessHandler successHandler,
-														  OAuth2AwareFailureHandler failureHandler) throws Exception {
+	                                                      OAuth2AwareFailureHandler failureHandler) throws Exception {
 		http.formLogin(formLogin -> formLogin
 				.loginPage(LOGIN_ENDPOINT)
 				.successHandler(successHandler)
@@ -152,6 +159,7 @@ public class SecurityConfigStaticKey {
 	// now that I use password encoders, the rules apply to the client password too. so it must be hashed with spring CLI
 	// .\spring encodepassword secret
 	// {bcrypt}$2a$10$.ld6BfZescPDfVVduvu.6O9.7FLMI64l4PfvnBZJQEBhTLFFbeKei
+
 	/**
 	 * Registers a single OAuth2 client in-memory using client properties defined in the application configuration.
 	 * <p>
@@ -167,9 +175,9 @@ public class SecurityConfigStaticKey {
 				.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
 				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
 //				.authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)	waiting for spring auth server logout bug to be fixed
-				.redirectUri(clientProperties.getLoginUri())	// changed from http://localhost:4004/login/oauth2/code/token-generator
+				.redirectUri(clientProperties.getLoginUri())    // changed from http://localhost:4004/login/oauth2/code/token-generator
 				.scope(OidcScopes.OPENID)
-				.postLogoutRedirectUri(clientProperties.getBffPostLogoutUri())			//.postLogoutRedirectUri("http://localhost:7080/bff/post-logout")
+				.postLogoutRedirectUri(clientProperties.getBffPostLogoutUri())            //.postLogoutRedirectUri("http://localhost:7080/bff/post-logout")
 				.tokenSettings(TokenSettings.builder()
 						.accessTokenTimeToLive(Duration.ofHours(12))
 //						.refreshTokenTimeToLive(Duration.ofHours(24))  waiting for spring auth server logout bug to be fixed
@@ -235,6 +243,7 @@ public class SecurityConfigStaticKey {
 //			 "manage-users",
 //			 "manage-projects"
 //			 ]
+
 	/**
 	 * Customizes the JWT access token by adding a claim containing the user's granted authorities.
 	 * <p>
@@ -256,7 +265,7 @@ public class SecurityConfigStaticKey {
 			if (OAuth2TokenType.ACCESS_TOKEN.equals(context.getTokenType())) {
 				log.info("Principal: " + context.getPrincipal().getAuthorities());
 				List<String> auths = new ArrayList<>();
-				for (GrantedAuthority auth : context.getPrincipal().getAuthorities()){
+				for (GrantedAuthority auth : context.getPrincipal().getAuthorities()) {
 					auths.add(auth.getAuthority());
 				}
 				JwtClaimsSet.Builder claims = context.getClaims();
@@ -280,6 +289,7 @@ public class SecurityConfigStaticKey {
 //  		- PreserveHostHeader
 //          - AddRequestHeader=X-Forwarded-Proto, http
 //	the authorization server redirects to http://localhost/auth/login instead of http://localhost:7080/auth/login
+
 	/**
 	 * Registers a {@link ForwardedHeaderFilter} to correctly handle {@code X-Forwarded-*} headers when
 	 * the application is behind a reverse proxy (e.g., Spring Cloud Gateway).
@@ -291,6 +301,58 @@ public class SecurityConfigStaticKey {
 		FilterRegistrationBean<ForwardedHeaderFilter> filter = new FilterRegistrationBean<>();
 		filter.setFilter(new ForwardedHeaderFilter());
 		return filter;
+	}
+
+//	TODO when switching to spring boot 4, use GenericJacksonJsonRedisSerializer instead of GenericJackson2JsonRedisSerializer,
+//	 because the latter is deprecated in favor of the former in spring boot 4.
+	/**
+	 * Configures the default Redis serializer for Spring Session to use JSON serialization
+	 * instead of standard Java native serialization.
+	 * <p>
+	 * This custom configuration is specifically tailored to safely serialize and deserialize
+	 * Spring Security and Spring Authorization Server contexts. It utilizes a custom
+	 * {@link ObjectMapper} configured with the following constraints and capabilities:
+	 * <ul>
+	 * <li><b>Polymorphic Type Validation:</b> Restricts deserialization to specific, trusted
+	 * types and packages (e.g., standard Java collections/time, Spring Security classes,
+	 * and the custom {@code nidam.tokengenerator} domain). This safely prevents arbitrary
+	 * code execution vulnerabilities during JSON deserialization.</li>
+	 * <li><b>Type Information Inclusion:</b> Activates default typing using
+	 * {@link JsonTypeInfo.As#PROPERTY}. This ensures type metadata is stored as a JSON
+	 * property ({@code @class}), which is strictly required by Spring Security's Jackson
+	 * mixins to accurately reconstruct nested security contexts and custom Principals.</li>
+	 * <li><b>Module Registration:</b> Registers both standard Spring Security modules
+	 * and the {@link OAuth2AuthorizationServerJackson2Module} to ensure proper handling
+	 * of complex OAuth2 objects, such as saved OIDC requests and authorization consents.</li>
+	 * </ul>
+	 *
+	 * @return a {@link GenericJackson2JsonRedisSerializer} equipped with a highly customized,
+	 * security-aware {@link ObjectMapper}.
+	 */
+	@Bean
+	public RedisSerializer<Object> springSessionDefaultRedisSerializer() {
+		ObjectMapper mapper = new ObjectMapper();
+
+		BasicPolymorphicTypeValidator ptv = BasicPolymorphicTypeValidator.builder()
+				.allowIfSubType(java.util.Collection.class)
+				.allowIfSubType("java.time")
+				.allowIfSubType("java.lang")
+				.allowIfSubType("org.springframework.security")
+				.allowIfSubType("nidam.tokengenerator")
+				.allowIfSubType(java.util.Map.class)
+				.build();
+
+		// MUST use JsonTypeInfo.As.PROPERTY for Spring Security compatibility
+		mapper.activateDefaultTyping(ptv, ObjectMapper.DefaultTyping.NON_FINAL, JsonTypeInfo.As.PROPERTY);
+
+		// Register standard Security modules
+		mapper.registerModules(SecurityJackson2Modules.getModules(getClass().getClassLoader()));
+
+		// Register Authorization Server specific module
+		mapper.registerModule(new OAuth2AuthorizationServerJackson2Module());
+//		mapper.registerModules(SecurityJackson2Modules.getModules(getClass().getClassLoader()));
+
+		return new GenericJackson2JsonRedisSerializer(mapper);
 	}
 
 }

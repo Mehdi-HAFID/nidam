@@ -77,6 +77,10 @@ spring:
       port: 6379
       repositories:
         enabled: false
+  session:
+    timeout: 12h
+    redis:
+      namespace: nidam:token-generator
 
 rate-limiter:
   enabled: true
@@ -96,7 +100,12 @@ management:
 
 #logging:
 #  level:
+    # Enable TRACE logging for Redis
 #    root: INFO
+#    org.springframework.data.redis: TRACE
+#    org.springframework.session.data.redis: TRACE
+#    io.lettuce.core: TRACE
+#    org.springframework.cache: TRACE
 #    org.springframework: INFO
 #    org.springframework.security: INFO
 #    org.springframework.security.oauth2: INFO
