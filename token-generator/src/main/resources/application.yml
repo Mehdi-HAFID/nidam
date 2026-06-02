@@ -92,6 +92,7 @@ rate-limiter:
 #  also update nidam-dev.ps1 -Command "mvn spring-boot:run '-Dspring-boot.run.profiles=dev-mongo'"
 nidam:
   persistence-mode: "mongo"
+  session-mode: "redis"    # options: tomcat, redis
 
 management:
   endpoints:
@@ -100,7 +101,7 @@ management:
 
 #logging:
 #  level:
-    # Enable TRACE logging for Redis
+#    # Enable TRACE logging for Redis
 #    root: INFO
 #    org.springframework.data.redis: TRACE
 #    org.springframework.session.data.redis: TRACE
