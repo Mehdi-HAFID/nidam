@@ -9,7 +9,10 @@ react-uri: ${host}:${react-port}${react-prefix}
 
 authorization-server-port: 4002
 authorization-server-prefix: /auth
+authorization-server-uri-no-context-path: ${host}:${authorization-server-port}
 authorization-server-uri: ${host}:${authorization-server-port}${authorization-server-prefix}
+
+authorization-server-load-balancer-uri: lb://token-generator
 
 bff-port: 7081
 bff-prefix: /bff
@@ -47,7 +50,8 @@ spring:
                 - AddRequestHeader=X-Forwarded-Proto, http
             # Authorization-server
             - id: authorization-server
-              uri: ${authorization-server-uri}
+#              uri: ${authorization-server-uri}
+              uri: ${authorization-server-load-balancer-uri}   # Load balancer URI, for multiple instances of the authorization server
               predicates:
                 - Path=${authorization-server-prefix}/**
               filters:
@@ -62,4 +66,18 @@ spring:
                 - StripPrefix=1
                 - PreserveHostHeader
                 - AddRequestHeader=X-Forwarded-Proto, http
+    discovery:
+      client:
+        simple:
+          instances:
+            token-generator:
+              - uri: ${authorization-server-uri}
+              - uri: http://localhost:4010/auth
+    loadbalancer:
+      health-check:
+        initial-delay: 0
+        interval: 1s
+        path:
+          token-generator: /auth/actuator/health
+
 #trace: true

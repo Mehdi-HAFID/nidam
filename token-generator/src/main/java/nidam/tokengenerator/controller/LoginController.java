@@ -1,7 +1,6 @@
 package nidam.tokengenerator.controller;
 
 import jakarta.servlet.http.HttpServletRequest;
-import nidam.tokengenerator.config.SecurityConfigStaticKey;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;

@@ -2,33 +2,51 @@ package nidam.tokengenerator.model;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import nidam.tokengenerator.redis.convert.NidamUserDetailsMixin;
+import org.springframework.security.core.CredentialsContainer;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
 
 /**
- * Nidam implementation of {@link UserDetails}.
+ * Nidam implementation of {@link UserDetails} and {@link CredentialsContainer}.
  *
- * <p>This class represents a flattened security profile for a user. It is explicitly
- * designed with Jackson annotations to guarantee seamless JSON serialization and
- * deserialization, making it perfectly suited for distributed session storage
- * (e.g., Spring Session with Redis).</p>
+ * <p>Represents a flattened security principal for an authenticated user. Designed
+ * for safe serialization across distributed session storage (Spring Session with Redis)
+ * and Redis-backed OAuth2 authorization records.</p>
  *
  * <h3>Responsibilities</h3>
  * <ul>
- * <li><b>Principal Identification:</b> Uses the user's email address as the core {@code username}.</li>
- * <li><b>Authority Management:</b> Holds a pre-resolved collection of {@link GrantedAuthority} objects.</li>
- * <li><b>Account Status:</b> Tracks the user's {@code enabled} state. Note that while other
- * status flags (locked, expired) are accepted during instantiation, their getter methods
- * currently default to returning {@code true}.</li>
+ *     <li><b>Principal identification:</b> Uses the user's email address as the
+ *     {@code username}.</li>
+ *     <li><b>Authority management:</b> Holds a pre-resolved collection of
+ *     {@link GrantedAuthority} objects mapped from the user's authorities.</li>
+ *     <li><b>Credential erasure:</b> Implements {@link CredentialsContainer#eraseCredentials()}
+ *     so that Spring Security automatically nulls the password after authentication
+ *     succeeds, preventing the password hash from being written to Redis session
+ *     storage or OAuth2 authorization records.</li>
  * </ul>
+ *
+ * <h3>Serialization</h3>
+ * <p>Jackson annotations ({@link com.fasterxml.jackson.annotation.JsonCreator},
+ * {@link com.fasterxml.jackson.annotation.JsonProperty}) allow this class to be
+ * reconstructed from JSON without a no-argument constructor, which is required
+ * by both Spring Session's {@link org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer}
+ * and the custom Redis byte converters used for OAuth2 authorization persistence.</p>
+ *
+ * <p>A {@link NidamUserDetailsMixin} is registered
+ * on the converter-level {@link com.fasterxml.jackson.databind.ObjectMapper} to allowlist
+ * this class for polymorphic deserialization by Spring Security's Jackson infrastructure.
+ * Without it, deserializing a {@code UsernamePasswordAuthenticationToken} whose principal
+ * is a {@code NidamUserDetails} from Redis would fail with an
+ * {@link IllegalArgumentException} indicating the class is not in the allowlist.</p>
  */
-public class NidamUserDetails implements UserDetails {
+public class NidamUserDetails implements UserDetails, CredentialsContainer {
 
 	private final String email;
 	private final Collection<? extends GrantedAuthority> authorities;
-	private final String password;
+	private String password;
 	private final boolean enabled;
 
 	private boolean accountNonExpired;
@@ -98,5 +116,10 @@ public class NidamUserDetails implements UserDetails {
 	@Override
 	public boolean isEnabled() {
 		return enabled;
+	}
+
+	@Override
+	public void eraseCredentials() {
+		this.password = null;
 	}
 }
