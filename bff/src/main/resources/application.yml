@@ -90,5 +90,17 @@ spring:
               # External/public URL (what the browser should see, e.g. localhost:7080 in dev)
               # this achieved by using reverse-proxy in docker-compose.yml
               # and setting spring.security.oauth2.client.provider.token-generator.authorization-uri with localhost since it is browser facing
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      repositories:
+        enabled: false
+  session:
+    timeout: 12h
+    redis:
+      namespace: nidam:bff
 
+nidam:
+  session-mode: "redis"    # options: tomcat, redis
 #trace: true

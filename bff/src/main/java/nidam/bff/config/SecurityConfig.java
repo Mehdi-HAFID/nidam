@@ -1,5 +1,6 @@
 package nidam.bff.config;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -27,19 +28,35 @@ import java.time.Duration;
 import java.util.logging.Logger;
 
 /**
- * {@code SecurityConfig} defines the security configuration for the BFF (Backend-for-Frontend) layer
- * using Spring Security WebFlux.
+ * {@code SecurityConfig} defines the reactive (WebFlux) security configuration for the BFF
+ * (Backend-for-Frontend) layer.
  *
- * <p>This class sets up:</p>
+ * <p>This class configures:</p>
  * <ul>
- *     <li>OAuth2 login and token relay</li>
- *     <li>Session-based authentication</li>
- *     <li>Custom logout flow with RP-Initiated logout support</li>
- *     <li>CSRF protection using a cookie-based token repository</li>
+ *     <li>An isolated, dev-only filter chain for Actuator endpoints, evaluated before the main chain</li>
+ *     <li>The main filter chain: authenticates requests via the session (no valid SESSION
+ *         cookie mapped to a token → redirected to the OIDC provider's authorization endpoint
+ *         via the OAuth2 Authorization Code flow); after a successful authorization callback,
+ *         the custom {@code postLoginRedirectHandler} sends the browser back to the originally
+ *         requested SPA route. Also enables OAuth2 client support (the {@code TokenRelay} filter
+ *         relies on this to attach the access token to proxied requests), logout with a custom
+ *         {@code ServerLogoutSuccessHandler}, and cookie-based CSRF protection</li>
+ *     <li>A {@link WebFilter} that propagates the CSRF token to the frontend as a JS-readable cookie</li>
+ *     <li>A {@link WebFilter} that raises session idle timeout to 12h, working around WebFlux's
+ *         30-minute default so the session (and the {@code OAuth2AuthorizedClient} it holds) doesn't
+ *         expire before the access token does — {@code tomcat} mode only; see inline note for the
+ *         upstream issue this works around</li>
+ *     <li>The in-memory {@link WebSessionManager}/{@link InMemoryWebSessionStore} pair backing
+ *         sessions in {@code tomcat} mode. In {@code redis} mode these beans back off (via
+ *         {@code nidam.session-mode}) and Spring Session's reactive autoconfiguration wires the
+ *         Redis-backed manager instead — see {@code SessionConfig} for the serializer that makes
+ *         that possible</li>
  * </ul>
  *
- * <p>It also exposes a {@link WebFilter} to ensure the CSRF token is propagated to the frontend
- * as a readable cookie, and handles secure logout redirection to the OIDC Provider.</p>
+ * <p>Note: the OAuth2 authorized-client repository itself (what actually makes the access token
+ * ride along in the session for {@code TokenRelay} to find) is declared separately in
+ * {@code OAuth2ClientConfig}, deliberately unconditional on {@code nidam.session-mode} — see that
+ * class for why.</p>
  */
 @Configuration
 public class SecurityConfig {
@@ -109,21 +126,6 @@ public class SecurityConfig {
 	}
 
 	/**
-	 * Defines the Spring Security filter chain for the BFF.
-	 *
-	 * <ul>
-	 *     <li>Permits unauthenticated access to login endpoints, and logout</li>
-	 *     <li>Protects other paths with authentication</li>
-	 *     <li>Enables OAuth2 login and client support</li>
-	 *     <li>Applies CSRF protection using a cookie</li>
-	 * </ul>
-	 *
-	 * @param http    the reactive HTTP security config
-	 * @param clients OAuth2 client repository (used for login)
-	 * @return the configured security filter chain
-	 */
-
-	/**
 	 * Configures the Spring Security filter chain for the BFF application.
 	 *
 	 * <p>This setup secures the BFF endpoints, integrates with the OAuth2
@@ -137,8 +139,11 @@ public class SecurityConfig {
 	 *           <li>the BFF logout endpoint (POST)</li>
 	 *       </ul>
 	 *   </li>
-	 *   <li>Requires authentication for all other requests</li>
-	 *   <li>Enables OAuth2 login with a custom {@code AuthenticationSuccessHandler}</li>
+	 *   <li>Requires authentication for all other requests — unauthenticated requests
+	 *   (no SESSION cookie mapped to a valid access token) are redirected to the
+	 * 	 OIDC provider via the OAuth2 Authorization Code flow, not handled locally</li>
+	 *   <li>Runs the custom {@code postLoginRedirectHandler} after a successful authorization
+	 *   callback, to send the browser back to the originally requested SPA route</li>
 	 *   <li>Enables OAuth2 client support (including Token Relay)</li>
 	 *   <li>Configures logout at the BFF endpoint with a custom {@code ServerLogoutSuccessHandler}</li>
 	 *   <li>Applies CSRF protection using a cookie-based {@code CsrfTokenRepository}</li>
@@ -246,6 +251,7 @@ public class SecurityConfig {
 	 *
 	 * @return a {@link WebFilter} that sets session idle timeout to 12 hours, only once per session
 	 */
+	@ConditionalOnProperty(name = "nidam.session-mode", havingValue = "tomcat", matchIfMissing = true)
 	@Bean
 	public WebFilter sessionTimeoutWebFilter() {
 		return (exchange, chain) -> {
@@ -323,13 +329,42 @@ public class SecurityConfig {
 //				).switchIfEmpty(chain.filter(exchange));
 //	}
 
+	/**
+	 * Default (non-Redis) reactive session store, active when {@code nidam.session-mode} is unset
+	 * or {@code tomcat}. Sessions live in process memory and don't survive a restart or scale past
+	 * a single instance — this is the local-dev / pre-Redis-migration fallback, kept alongside the
+	 * {@code redis} mode via {@code nidam.session-mode} rather than removed outright.
+	 * <p>
+	 * {@code maxSessions} is raised from the store's low built-in default (workaround, not a real
+	 * capacity plan) since the in-memory store evicts oldest sessions once that cap is hit. Redis
+	 * mode has no equivalent setting — expiry there is TTL-based, not a size-capped map, so this
+	 * concern disappears once {@code redis} mode is used instead.
+	 */
+	@ConditionalOnProperty(name = "nidam.session-mode", havingValue = "tomcat", matchIfMissing = true)
 	@Bean
 	public InMemoryWebSessionStore inMemoryWebSessionStore() {
 		InMemoryWebSessionStore store = new InMemoryWebSessionStore();
 		store.setMaxSessions(Integer.MAX_VALUE);
 		return store;
-}
+	}
 
+	/**
+	 * Wires the in-memory store above into the reactive session manager. Only present in
+	 * {@code tomcat} mode — Redis mode gets its {@link WebSessionManager} wired automatically by
+	 * Spring Session's reactive autoconfiguration ({@code SessionDataRedisAutoConfiguration} /
+	 * equivalent) once {@code spring-session-data-redis} is on the classpath and a
+	 * {@code ReactiveRedisConnectionFactory} bean exists;
+	 * Spring Boot resolves it via implicit bean-presence ordering.
+	 * <p>
+	 * Worth double-checking: that autoconfiguration backs off on
+	 * {@code @ConditionalOnMissingBean(ReactiveSessionRepository.class)}, not on the presence of a
+	 * {@link WebSessionManager} bean — and Spring Session's own Redis-mode configuration defines a
+	 * bean literally named {@code webSessionManager}, same as this one. Since
+	 * {@code spring-session-data-redis} appears to be unconditionally on the classpath here, confirm
+	 * that {@code tomcat} mode doesn't also trigger Boot's Redis session autoconfiguration
+	 * alongside this bean — that would be a bean name collision, not a graceful fallback.
+	 */
+	@ConditionalOnProperty(name = "nidam.session-mode", havingValue = "tomcat", matchIfMissing = true)
 	@Bean
 	public WebSessionManager webSessionManager(InMemoryWebSessionStore store) {
 		DefaultWebSessionManager manager = new DefaultWebSessionManager();
