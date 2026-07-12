@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.server.WebFilterExchange;
+import org.springframework.security.web.server.authentication.RedirectServerAuthenticationSuccessHandler;
 import org.springframework.security.web.server.authentication.ServerAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
@@ -47,6 +48,8 @@ public class PostLoginRedirectConfig implements ServerAuthenticationSuccessHandl
 	private final LoginProperties loginProperties;
 //	private final ReactiveOAuth2AuthorizedClientService authorizedClientService;
 
+	private final ServerAuthenticationSuccessHandler delegate = new RedirectServerAuthenticationSuccessHandler();
+
 	public PostLoginRedirectConfig(LoginProperties loginProperties
 //			, ReactiveOAuth2AuthorizedClientService authorizedClientService
 	) {
@@ -69,7 +72,9 @@ public class PostLoginRedirectConfig implements ServerAuthenticationSuccessHandl
 	@Override
 	public Mono<Void> onAuthenticationSuccess(WebFilterExchange webFilterExchange, Authentication authentication) {
 		ServerWebExchange exchange = webFilterExchange.getExchange();
-		return exchange.getSession()
+		return delegate.onAuthenticationSuccess(webFilterExchange, authentication)
+//		return exchange.getSession()
+				.then(exchange.getSession())
 				.flatMap(session -> {
 					// pull out what we saved earlier (or fall back)
 

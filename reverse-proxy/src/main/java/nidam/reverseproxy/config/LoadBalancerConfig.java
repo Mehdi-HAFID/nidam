@@ -1,23 +1,34 @@
 package nidam.reverseproxy.config;
 
 import org.springframework.cloud.loadbalancer.annotation.LoadBalancerClient;
+import org.springframework.cloud.loadbalancer.annotation.LoadBalancerClients;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * Registers a custom Spring Cloud LoadBalancer configuration for the
- * {@code token-generator} service.
+ * Registers Spring Cloud LoadBalancer configuration for each load-balanced
+ * downstream service the reverse proxy routes to.
  *
- * <p>Associates {@link TokenGeneratorLoadBalancerConfig} with the
- * {@code token-generator} service name, which corresponds to the
- * {@code lb://token-generator} URI used in the Spring Cloud Gateway route
- * definition. Spring Cloud LoadBalancer instantiates
- * {@link TokenGeneratorLoadBalancerConfig} in an isolated child context
- * separate from the main application context — this is a Spring Cloud
- * LoadBalancer requirement, which is why the two classes cannot be merged.</p>
+ * <p>Each {@link LoadBalancerClient @LoadBalancerClient} entry associates
+ * {@link DefaultHealthCheckLoadBalancerConfig} with a service name matching the
+ * {@code lb://<service-name>} URI used in that service's Spring Cloud Gateway route
+ * definition — currently {@code token-generator} and {@code bff}. Spring Cloud
+ * LoadBalancer instantiates {@link DefaultHealthCheckLoadBalancerConfig} in its own
+ * isolated child context per entry, separate from the main application context and
+ * from each other — this is a Spring Cloud LoadBalancer requirement, which is why
+ * the same configuration class is reused rather than merged into one shared bean.</p>
  *
- * @see TokenGeneratorLoadBalancerConfig
+ * <p>Adding load balancing for a new downstream service means adding another
+ * {@code @LoadBalancerClient} entry here (reusing
+ * {@link DefaultHealthCheckLoadBalancerConfig}) plus a matching
+ * {@code spring.cloud.loadbalancer.health-check.path.<service-name>} entry in
+ * configuration — no new Java class required.</p>
+ *
+ * @see DefaultHealthCheckLoadBalancerConfig
  */
 @Configuration
-@LoadBalancerClient(name = "token-generator", configuration = TokenGeneratorLoadBalancerConfig.class)
+@LoadBalancerClients({
+		@LoadBalancerClient( name = "token-generator", configuration = DefaultHealthCheckLoadBalancerConfig.class),
+		@LoadBalancerClient( name = "bff", configuration = DefaultHealthCheckLoadBalancerConfig.class)
+})
 public class LoadBalancerConfig {
 }

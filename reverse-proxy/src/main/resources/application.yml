@@ -17,6 +17,7 @@ authorization-server-load-balancer-uri: lb://token-generator
 bff-port: 7081
 bff-prefix: /bff
 bff-uri: ${host}:${bff-port}
+bff-load-balancer-uri: lb://bff
 
 server:
   port: ${reverse-proxy-port}
@@ -59,7 +60,8 @@ spring:
                 - AddRequestHeader=X-Forwarded-Proto, http
             # BFF
             - id: bff
-              uri: ${bff-uri}
+#              uri: ${bff-uri}
+              uri: ${bff-load-balancer-uri} # Load balancer URI, for multiple instances of the BFF
               predicates:
                 - Path=${bff-prefix}/**
               filters:
@@ -73,11 +75,15 @@ spring:
             token-generator:
               - uri: ${authorization-server-uri}
               - uri: http://localhost:4010/auth
+            bff:
+              - uri: ${bff-uri}
+              - uri: http://localhost:7082
     loadbalancer:
       health-check:
         initial-delay: 0
-        interval: 1s
+        interval: 5s
         path:
           token-generator: /auth/actuator/health
+          bff: /actuator/health
 
 #trace: true
