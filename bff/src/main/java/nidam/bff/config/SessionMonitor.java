@@ -1,5 +1,6 @@
 package nidam.bff.config;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -10,6 +11,7 @@ import java.util.logging.Logger;
 
 @Configuration
 @EnableScheduling
+@ConditionalOnProperty(name = "nidam.session-mode", havingValue = "tomcat", matchIfMissing = true)
 public class SessionMonitor {
 
 	private static final Logger log = Logger.getLogger(SessionMonitor.class.getName());
