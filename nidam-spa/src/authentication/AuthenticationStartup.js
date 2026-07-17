@@ -38,7 +38,7 @@ const AuthenticationStartup = props => {
 					dispatch(authenticated());
 
                     // this is the best place to fire logoutBeforeTokenExpires
-                    logoutBeforeTokenExpires();
+                    // logoutBeforeTokenExpires();
 				}
 			}
 			setPhase(3);

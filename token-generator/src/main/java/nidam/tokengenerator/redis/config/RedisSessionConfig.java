@@ -54,8 +54,9 @@ public class RedisSessionConfig {
 	@Value("${spring.session.redis.namespace:nidam:token-generator}")
 	private String redisNamespace;
 
-	@Value("${spring.session.timeout:12h}")
-	private Duration sessionTimeout;
+	// Using spring default of 30 minutes
+//	@Value("${spring.session.timeout:12h}")
+//	private Duration sessionTimeout;
 
 	private static final String JAVA_TIME_PACKAGE = "java.time";
 	private static final String JAVA_LANG_PACKAGE = "java.lang";
@@ -73,7 +74,7 @@ public class RedisSessionConfig {
 	public SessionRepositoryCustomizer<RedisSessionRepository> redisSessionCustomizer() {
 		return repository -> {
 			repository.setRedisKeyNamespace(redisNamespace);
-			repository.setDefaultMaxInactiveInterval(sessionTimeout);
+//			repository.setDefaultMaxInactiveInterval(sessionTimeout);
 		};
 	}
 
