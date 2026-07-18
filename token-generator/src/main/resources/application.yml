@@ -78,7 +78,6 @@ spring:
       repositories:
         enabled: false
   session:
-    timeout: 12h
     redis:
       namespace: nidam:token-generator
 
@@ -87,6 +86,12 @@ rate-limiter:
   lockout-duration: 5    # minutes
   max-attempts: 5
   cleanup-interval-ms: 60000      # miliseconds
+
+ttl:
+  id-token: 1h          # minimum of 2 minutes
+  access-token: 1h      # minimum of 2 minutes
+  refresh-token: 7d
+  auth-code: 5m         # spring default ttl
 
 # options: sql, mongo . default: sql . When changing don't forget to update ${users-db-url/username/password},
 #  also update nidam-dev.ps1 -Command "mvn spring-boot:run '-Dspring-boot.run.profiles=dev-mongo'"

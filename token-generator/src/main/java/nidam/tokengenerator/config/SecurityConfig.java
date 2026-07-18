@@ -6,6 +6,7 @@ import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
 import nidam.tokengenerator.config.properties.ClientProperties;
+import nidam.tokengenerator.config.properties.TTLProperties;
 import nidam.tokengenerator.handler.OAuth2AwareFailureHandler;
 import nidam.tokengenerator.handler.OAuth2AwareSuccessHandler;
 import nidam.tokengenerator.redis.config.RedisOAuth2Config;
@@ -264,20 +265,21 @@ public class SecurityConfig {
 	 * @return a {@link RegisteredClientRepository} containing the configured client
 	 */
 	@Bean
-	public RegisteredClientRepository registeredClientRepository() {
+	public RegisteredClientRepository registeredClientRepository(TTLProperties ttlProperties) {
 		RegisteredClient registeredClient = RegisteredClient.withId(clientProperties.getInternalIdentifier())
 				.clientId(clientProperties.getId())
 				.clientSecret(clientProperties.getSecretHash()) //secret
 				.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
 				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-//				.authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)	waiting for spring auth server logout bug to be fixed
+				.authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
 				.redirectUri(clientProperties.getLoginUri())    // changed from http://localhost:4004/login/oauth2/code/token-generator
 				.scope(OidcScopes.OPENID)
 				.postLogoutRedirectUri(clientProperties.getBffPostLogoutUri())            //.postLogoutRedirectUri("http://localhost:7080/bff/post-logout")
 				.tokenSettings(TokenSettings.builder()
-						.accessTokenTimeToLive(Duration.ofHours(12))
-//						.refreshTokenTimeToLive(Duration.ofHours(24))  waiting for spring auth server logout bug to be fixed
-//						.reuseRefreshTokens(false)
+						.accessTokenTimeToLive(ttlProperties.getAccessToken())
+						.refreshTokenTimeToLive(ttlProperties.getRefreshToken())
+						.authorizationCodeTimeToLive(ttlProperties.getAuthCode())
+						.reuseRefreshTokens(false)
 						.build())
 				.build();
 		return new InMemoryRegisteredClientRepository(registeredClient);
@@ -348,7 +350,7 @@ public class SecurityConfig {
 	 * @return an {@link OAuth2TokenCustomizer} for {@link JwtEncodingContext}
 	 */
 	@Bean
-	public OAuth2TokenCustomizer<JwtEncodingContext> jwtCustomizer() {
+	public OAuth2TokenCustomizer<JwtEncodingContext> jwtCustomizer(TTLProperties ttlProperties) {
 		return context -> {
 //			log.info("grant: " + context.getAuthorizationGrant().getAuthorities());
 //			log.info("Authorization: " + context.getAuthorization().getAttributes());
@@ -369,10 +371,9 @@ public class SecurityConfig {
 				claims.claim(StandardClaimNames.EMAIL, context.getPrincipal().getName());
 			}
 
-			// TODO enable refresh token and test to see if logout after refresh is now working
-			// change default 30 minutes to use the same value of accessTokenTimeToLive(Duration.ofHours(12))
+			// change default 30 minutes to use the same value of ttl id token
 			if ("id_token".equals(context.getTokenType().getValue())) {
-				context.getClaims().expiresAt(context.getClaims().build().getIssuedAt().plus(Duration.ofHours(12)));
+				context.getClaims().expiresAt(context.getClaims().build().getIssuedAt().plus(ttlProperties.getIdToken()));
 			}
 		};
 	}
