@@ -97,7 +97,7 @@ spring:
       repositories:
         enabled: false
   session:
-    timeout: 12h
+    timeout: 7d     # same as token generator refresh token TTL
     redis:
       namespace: nidam:bff
 

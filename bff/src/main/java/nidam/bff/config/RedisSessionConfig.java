@@ -49,7 +49,7 @@ public class RedisSessionConfig {
 	@Value("${spring.session.redis.namespace:nidam:token-generator}")
 	private String redisNamespace;
 
-	@Value("${spring.session.timeout:12h}")
+	@Value("${spring.session.timeout:7d}")
 	private Duration sessionTimeout;
 
 	/**

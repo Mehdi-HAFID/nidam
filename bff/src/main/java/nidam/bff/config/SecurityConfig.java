@@ -1,5 +1,6 @@
 package nidam.bff.config;
 
+import nidam.bff.security.IdTokenSyncingRefreshTokenAuthorizedClientProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -9,14 +10,23 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
+import org.springframework.security.oauth2.client.ReactiveOAuth2AuthorizedClientManager;
+import org.springframework.security.oauth2.client.ReactiveOAuth2AuthorizedClientProvider;
+import org.springframework.security.oauth2.client.ReactiveOAuth2AuthorizedClientProviderBuilder;
 import org.springframework.security.oauth2.client.registration.ReactiveClientRegistrationRepository;
+import org.springframework.security.oauth2.client.web.DefaultReactiveOAuth2AuthorizedClientManager;
+import org.springframework.security.oauth2.client.web.server.ServerOAuth2AuthorizedClientRepository;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.security.web.server.authentication.ServerAuthenticationSuccessHandler;
 import org.springframework.security.web.server.authentication.logout.ServerLogoutSuccessHandler;
+import org.springframework.security.web.server.context.ServerSecurityContextRepository;
+import org.springframework.security.web.server.context.WebSessionServerSecurityContextRepository;
 import org.springframework.security.web.server.csrf.CookieServerCsrfTokenRepository;
 import org.springframework.security.web.server.csrf.CsrfToken;
 import org.springframework.security.web.server.csrf.ServerCsrfTokenRequestAttributeHandler;
 import org.springframework.security.web.server.util.matcher.ServerWebExchangeMatchers;
+import org.springframework.web.filter.reactive.ServerWebExchangeContextFilter;
+import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;
 import org.springframework.web.server.WebSession;
 import org.springframework.web.server.session.DefaultWebSessionManager;
@@ -271,64 +281,6 @@ public class SecurityConfig {
 		};
 	}
 
-
-	// waiting for the auth server bug to be fixed to uncomment this
-	// refreshing cookies values when bff automatically use refresh token to get a new token.
-//	/**
-//	 * Configures a {@link WebFilter} that detects when the OAuth2 access token has been refreshed
-//	 * and reacts by regenerating the session ID.
-//	 *
-//	 * <p>This is important to avoid session fixation attacks and to ensure consistency in CSRF and session
-//	 * data. When a new access token is issued (via refresh token), the filter compares the current access token
-//	 * with the one stored in the session under {@code lastAccessToken}.</p>
-//	 *
-//	 * <p>If the token has changed, the new one is saved into the session and {@link WebSession#changeSessionId()}
-//	 * is invoked to force session regeneration. This ensures the server-side session and the client's access token
-//	 * remain synchronized.</p>
-//	 *
-//	 * <p>The filter executes after Spring Security filters (order 200) and uses the provided
-//	 * {@link ReactiveOAuth2AuthorizedClientService} to look up the currently authorized client.</p>
-//	 *
-//	 * @param clientService the authorized client service used to retrieve the access token
-//	 * @return a {@link WebFilter} that refreshes the session on access token refresh
-//	 */
-//	@Bean
-//	@Order(200) // after Spring Security filters
-//	public WebFilter refreshSessionOnAccessTokenRefreshFilter(ReactiveOAuth2AuthorizedClientService clientService) {
-//		return (exchange, chain) -> exchange.getPrincipal()
-//				.cast(OAuth2AuthenticationToken.class)
-//				.flatMap(auth -> clientService.loadAuthorizedClient(auth.getAuthorizedClientRegistrationId(), auth.getName())
-//						.flatMap(client -> {
-//							String currentToken = client.getAccessToken().getTokenValue();
-//							log.info("refreshSessionOnAccessTokenRefreshFilter currentToken: " + currentToken);
-//							return exchange.getSession().flatMap(session -> {
-//								String previousToken = (String) session.getAttributes().get("lastAccessToken");
-//								log.info("refreshSessionOnAccessTokenRefreshFilter previousToken: " + previousToken);
-//								if (previousToken != null && !currentToken.equals(previousToken)) {
-//									log.info("Token was refreshed!");
-//									// Token was refreshed!
-//									session.getAttributes().put("lastAccessToken", currentToken);
-//
-//									// START this code is a workaround the exception thrown by auth server during logout after a refresh token,
-//									// yet even when sending the updated id_token_hint the exception still happens. this section temporarily here
-//									// to remove before deploying v 2. add this to the .docx documentation
-////									// ✅ Also update the ID Token using OidcUser
-////									if (auth.getPrincipal() instanceof OidcUser oidcUser) {
-////										String idToken = oidcUser.getIdToken().getTokenValue();
-////										log.info("saving idTokenHint (in session as originalIdToken) in refreshSessionOnAccessTokenRefreshFilter: " + idToken);
-////										session.getAttributes().put("originalIdToken", idToken);
-////										log.info("Updated ID token in session in refreshSessionOnAccessTokenRefreshFilter: " + idToken);
-////									}
-//									// END
-//
-//									return session.changeSessionId().then(chain.filter(exchange));
-//								}
-//								return chain.filter(exchange);
-//							});
-//						})
-//				).switchIfEmpty(chain.filter(exchange));
-//	}
-
 	/**
 	 * Default (non-Redis) reactive session store, active when {@code nidam.session-mode} is unset
 	 * or {@code tomcat}. Sessions live in process memory and don't survive a restart or scale past
@@ -372,5 +324,133 @@ public class SecurityConfig {
 		return manager;
 	}
 
+	/**
+	 * Supplies the {@link ReactiveOAuth2AuthorizedClientManager} that
+	 * {@code TokenRelayGatewayFilterFactory} uses to authorize and refresh clients for
+	 * every proxied request.
+	 *
+	 * <h2>Why this bean has to exist at all</h2>
+	 * <p>Without it, {@code ReactiveOAuth2ClientConfiguration.ReactiveOAuth2AuthorizedClientManagerRegistrar}
+	 * auto-creates a default manager (visible in trace logs as the singleton bean
+	 * {@code 'authorizedClientManager'} or similar, resolved via
+	 * {@code @ConditionalOnMissingBean(ReactiveOAuth2AuthorizedClientManager.class)}) whose
+	 * provider chain includes the stock {@code RefreshTokenReactiveOAuth2AuthorizedClientProvider}.
+	 * That provider refreshes the access/refresh token pair but never touches the
+	 * {@code SecurityContext} — see {@link IdTokenSyncingRefreshTokenAuthorizedClientProvider}'s
+	 * class-level Javadoc for the full failure mode this causes at logout. Declaring our
+	 * own bean of this exact type makes the registrar back off entirely (type-based
+	 * conditional, not name-based), handing {@code TokenRelayGatewayFilterFactory} — via
+	 * {@code .oauth2Client(Customizer.withDefaults())} in the security config, which looks
+	 * the manager up from the application context rather than building its own — this bean
+	 * instead.</p>
+	 *
+	 * <h2>How the pieces fit together</h2>
+	 * <ol>
+	 *   <li>{@code .authorizationCode()} handles the initial code-exchange grant type,
+	 *   unchanged from Spring's default — this bean only customizes the refresh path.</li>
+	 *   <li>{@code .provider(new IdTokenSyncingRefreshTokenAuthorizedClientProvider(...))}
+	 *   replaces (not supplements) the stock refresh provider. It must be the only
+	 *   refresh-capable provider in this chain: {@code DelegatingReactiveOAuth2AuthorizedClientProvider}
+	 *   stops at the first provider returning a non-empty {@code Mono}, so having both
+	 *   would risk one silently shadowing the other depending on order.</li>
+	 *   <li>The freshly-constructed {@link WebSessionServerSecurityContextRepository}
+	 *   handed to the provider is safe as a standalone instance rather than an injected
+	 *   bean: the class is stateless, reading/writing the same well-known
+	 *   {@code "SPRING_SECURITY_CONTEXT"} WebSession attribute regardless of which
+	 *   instance touches it — including the one {@code ServerHttpSecurity} builds
+	 *   internally by default when {@link org.springframework.security.config.web.server.ServerHttpSecurity#securityContextRepository}
+	 *   is never explicitly called, which is the case in this app's security config.</li>
+	 *   <li>{@code authorizedClientRepository} is expected to resolve to this app's
+	 *   backed {@code WebSessionServerOAuth2AuthorizedClientRepository} bean (see
+	 *   {@code OAuth2ClientConfig}) by type — required so refreshed access/refresh tokens
+	 *   actually persist to the session rather than the framework's disconnected
+	 *   in-memory default.</li>
+	 * </ol>
+	 *
+	 * <p><strong>Depends on {@link #serverWebExchangeContextFilter()} being registered</strong> —
+	 * the provider's ID-token sync step needs a {@link ServerWebExchange} that this bean
+	 * has no way to supply directly; see that method's Javadoc for why.</p>
+	 *
+	 * @param clientRegistrationRepository source of registered OAuth2/OIDC client metadata
+	 *                                     (issuer, token endpoint, client id, etc.)
+	 * @param authorizedClientRepository   where authorized clients (access + refresh
+	 *                                     tokens) are persisted between requests
+	 * @return a manager wired with the authorization_code provider plus our ID-token-syncing
+	 * replacement for the refresh_token provider
+	 */
+	@Bean
+	public ReactiveOAuth2AuthorizedClientManager authorizedClientManager(ReactiveClientRegistrationRepository clientRegistrationRepository,
+			ServerOAuth2AuthorizedClientRepository authorizedClientRepository) {
+
+		// Freshly instantiated rather than autowired - see Javadoc above for why that's safe here.
+		ServerSecurityContextRepository securityContextRepository = new WebSessionServerSecurityContextRepository();
+
+		// Compose the provider chain: default authorization_code handling, custom refresh handling.
+		ReactiveOAuth2AuthorizedClientProvider authorizedClientProvider = ReactiveOAuth2AuthorizedClientProviderBuilder.builder()
+				.authorizationCode()
+				.provider(new IdTokenSyncingRefreshTokenAuthorizedClientProvider(securityContextRepository))
+				.build();
+
+		// The concrete manager type TokenRelay/WebClient's OAuth2 support expects; same class the
+		// framework's own auto-configured bean would have used, just with our provider chain instead.
+		DefaultReactiveOAuth2AuthorizedClientManager manager = new DefaultReactiveOAuth2AuthorizedClientManager(
+				clientRegistrationRepository, authorizedClientRepository);
+
+		// Swap in our chain in place of whatever DefaultReactiveOAuth2AuthorizedClientManager's own
+		// constructor would have defaulted to.
+		manager.setAuthorizedClientProvider(authorizedClientProvider);
+		return manager;
+	}
+
+	/**
+	 * Publishes the current {@link ServerWebExchange} into Reactor {@code Context} for
+	 * every request, so reactive code with no direct parameter access to the exchange —
+	 * specifically, {@link IdTokenSyncingRefreshTokenAuthorizedClientProvider}, invoked
+	 * deep inside {@code TokenRelayGatewayFilterFactory}'s reactive call graph — can still
+	 * retrieve it.
+	 *
+	 * <h2>Why this is necessary</h2>
+	 * <p>{@code ServerOAuth2AuthorizedClientExchangeFilterFunction} (used by plain
+	 * {@code WebClient} calls) threads the {@link ServerWebExchange} through as an
+	 * {@code OAuth2AuthorizeRequest} attribute, making it available via
+	 * {@code OAuth2AuthorizationContext.getAttribute(ServerWebExchange.class.getName())}.
+	 * {@code TokenRelayGatewayFilterFactory} does not do this — confirmed empirically via
+	 * trace logging, not assumed from documentation — so that attribute lookup returns
+	 * {@code null} for every refresh triggered through the gateway's token relay path.
+	 * {@link ServerWebExchangeContextFilter} (standard Spring Framework since 5.2,
+	 * originally proposed specifically to benefit Spring Security's OAuth2 support — see
+	 * spring-projects/spring-framework#21746) is the general-purpose alternative: it
+	 * writes the exchange into Reactor {@code Context} rather than a request attribute,
+	 * which propagates correctly across the thread hops in TokenRelay's reactive
+	 * pipeline regardless of who's calling.</p>
+	 *
+	 * <h2>Why {@code @Order} doesn't actually matter here</h2>
+	 * <p>Confirmed empirically: this works identically at {@code Ordered.LOWEST_PRECEDENCE}
+	 * as it does at {@code HIGHEST_PRECEDENCE}. Every {@link WebFilter} — regardless of its
+	 * configured order — ultimately delegates to the same terminal destination (routing,
+	 * then {@code TokenRelayGatewayFilterFactory}, then this provider) via its own
+	 * {@code chain.filter(exchange)} call, and that terminal destination is only ever
+	 * reached after every WebFilter, in whatever order, has done its part. Wrapping
+	 * <em>this</em> filter's own {@code chain.filter(exchange)} call in
+	 * {@code contextWrite(...)} makes the context visible to everything reached from that
+	 * call onward — which always includes the terminal routing/dispatch, irrespective of
+	 * this filter's position relative to its peers. What would actually break propagation
+	 * is something between this filter and dispatch detaching into a separate subscription
+	 * instead of composing normally (flatMap/then/etc.) — not order.</p>
+	 *
+	 * <p>That Reactor Context propagation actually works end-to-end in this exact
+	 * application is not theoretical: {@code ReactiveSecurityContextHolder}'s read of the
+	 * {@code SecurityContext} inside {@code AuthenticatedReactiveAuthorizationManager} —
+	 * visible in this app's own trace logs on every authenticated request — relies on the
+	 * identical mechanism, just for a different context value. This filter adds one more
+	 * entry alongside it; the two coexist without conflict since Reactor Context entries
+	 * are keyed independently.</p>
+	 *
+	 * @return a {@link ServerWebExchangeContextFilter} instance
+	 */
+	@Bean
+	public ServerWebExchangeContextFilter serverWebExchangeContextFilter() {
+		return new ServerWebExchangeContextFilter();
+	}
 
 }

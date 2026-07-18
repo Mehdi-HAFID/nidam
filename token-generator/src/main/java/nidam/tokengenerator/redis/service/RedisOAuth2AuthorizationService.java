@@ -8,6 +8,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.convert.MappingRedisConverter;
 import org.springframework.lang.Nullable;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
+import org.springframework.security.oauth2.core.OAuth2RefreshToken;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.security.oauth2.core.oidc.endpoint.OidcParameterNames;
@@ -128,7 +129,7 @@ public class RedisOAuth2AuthorizationService implements OAuth2AuthorizationServi
 	 * enabling token-value-based lookups via the repository finder methods. These keys
 	 * are separate from the main HASH key and must have their TTL set independently.
 	 * <p>
-	 * Covers: access token, authorization code, and OIDC ID token index keys.
+	 * Covers: access token, authorization code, refresh token and OIDC ID token index keys.
 	 * State index keys are not covered here since the {@code state} attribute is
 	 * consumed and cleared before the second save, making it absent from the
 	 * authorization object at TTL-setting time.
@@ -145,12 +146,19 @@ public class RedisOAuth2AuthorizationService implements OAuth2AuthorizationServi
 
 		OAuth2Authorization.Token<OAuth2AuthorizationCode> authCode = authorization.getToken(OAuth2AuthorizationCode.class);
 		if (authCode != null) {
-			stringRedisTemplate.expire(prefix + "authorizationCode.tokenValue:" + authCode.getToken().getTokenValue(), ttl);
+			// this should be short lived, by default 5 minutes
+			Duration ttlAuthCode = Duration.between(Instant.now(), authCode.getToken().getExpiresAt());
+			stringRedisTemplate.expire(prefix + "authorizationCode.tokenValue:" + authCode.getToken().getTokenValue(), ttlAuthCode);
 		}
 
 		OAuth2Authorization.Token<OidcIdToken> idToken = authorization.getToken(OidcIdToken.class);
 		if (idToken != null) {
 			stringRedisTemplate.expire(prefix + "idToken.tokenValue:" + idToken.getToken().getTokenValue(), ttl);
+		}
+
+		OAuth2Authorization.Token<OAuth2RefreshToken> refreshToken = authorization.getRefreshToken();
+		if( refreshToken != null) {
+			stringRedisTemplate.expire(prefix + "refreshToken.tokenValue:" + refreshToken.getToken().getTokenValue(), ttl);
 		}
 	}
 
