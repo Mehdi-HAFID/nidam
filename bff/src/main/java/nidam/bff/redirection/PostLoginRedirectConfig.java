@@ -95,39 +95,4 @@ public class PostLoginRedirectConfig implements ServerAuthenticationSuccessHandl
 					return response.setComplete();
 				});
 	}
-
-	// TODO IMPORTANT do not remove this is the version that support automatic refresh token, just waiting for the spring auth server bug to be fixed
-//	@Override
-//	public Mono<Void> onAuthenticationSuccess(WebFilterExchange webFilterExchange, Authentication authentication) {
-//		ServerWebExchange exchange = webFilterExchange.getExchange();
-//
-//		// Fallback for non-OAuth2 login
-//		return exchange.getSession()
-//				.flatMap(session -> authorizedClientService
-//						.loadAuthorizedClient(
-//								((OAuth2AuthenticationToken) authentication).getAuthorizedClientRegistrationId(), authentication.getName())
-//						.doOnNext(client -> {
-//							String accessToken = client.getAccessToken().getTokenValue();
-//							log.info("onAuthenticationSuccess accessToken: " + accessToken);
-//							session.getAttributes().put("lastAccessToken", accessToken);
-//						})
-//						.then(Mono.defer(() -> {
-//							String redirect = session.getAttribute(loginProperties.getSessionRedirectUriAttribute());
-//							log.info("onAuthenticationSuccess Redirect to: " + redirect);
-//
-//							boolean isAllowed = redirect != null &&
-//									loginProperties.getAllowedRedirectUriPrefixes().stream().anyMatch(redirect::startsWith);
-//							String finalRedirect = isAllowed ? redirect : defaultReactUri;
-//
-//							if (!isAllowed) {
-//								log.warning("Untrusted or missing redirect URI in session. Falling back to default: " + finalRedirect);
-//							}
-//
-//							ServerHttpResponse response = exchange.getResponse();
-//							response.setStatusCode(HttpStatus.FOUND);
-//							response.getHeaders().setLocation(URI.create(finalRedirect));
-//							return response.setComplete();
-//						}))
-//				);
-//	}
 }
