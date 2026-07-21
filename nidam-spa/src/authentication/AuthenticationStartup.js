@@ -1,4 +1,4 @@
-import {useEffect, useState} from "react";
+import {useEffect, useRef, useState} from "react";
 import {useDispatch, useSelector} from "react-redux";
 import {LayoutSplashScreen} from "../pages/SplashScreen";
 
@@ -15,12 +15,16 @@ const AuthenticationStartup = props => {
 	const [phase, setPhase] = useState(1);
 	const [showSplashScreen, setShowSplashScreen] = useState(true);
 
+	const initialized = useRef(false);
 
 	useEffect(() => {
 		// call /me phase 2
-		dispatch(authenticationActions.isLoggedIn());
-		setPhase(2);
-		setShowSplashScreen(true); // loading
+		if (!initialized.current) {
+			initialized.current = true;
+			dispatch(authenticationActions.isLoggedIn());
+			setPhase(2);
+			setShowSplashScreen(true); // loading
+		}
 	}, []);
 
 	useEffect(() => {
