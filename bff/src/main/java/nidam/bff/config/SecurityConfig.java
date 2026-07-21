@@ -400,6 +400,7 @@ public class SecurityConfig {
 		// constructor would have defaulted to.
 		manager.setAuthorizedClientProvider(authorizedClientProvider);
 		return manager;
+//		return new SessionCoalescingAuthorizedClientManager(manager); this how SessionCoalescingAuthorizedClientManager is set to be used
 	}
 
 	/**

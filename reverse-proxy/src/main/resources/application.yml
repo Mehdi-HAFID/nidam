@@ -74,10 +74,10 @@ spring:
           instances:
             token-generator:
               - uri: ${authorization-server-uri}
-              - uri: http://localhost:4010/auth
+#              - uri: http://localhost:4010/auth
             bff:
               - uri: ${bff-uri}
-              - uri: http://localhost:7082
+#              - uri: http://localhost:7082
     loadbalancer:
       health-check:
         initial-delay: 0
