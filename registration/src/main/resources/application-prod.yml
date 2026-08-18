@@ -1,0 +1,12 @@
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "health"
+  endpoint:
+    health:
+      access: read_only
+      probes:
+        enabled: true
+    shutdown:
+      access: none
