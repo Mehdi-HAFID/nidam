@@ -1,25 +1,40 @@
 registration-port: 4000
 
+# MySQL
 #users-db-url: jdbc:mysql://localhost:3306/identity_hub
 #users-db-user: root
 #users-db-password: "CcmN*`6@3T9H%P#yg^V<7v"
 
+# this accessing H2 directly, without going through the server: not recommended
 #users-db-url: jdbc:h2:file:./db/identity_hub
-#users-db-url: jdbc:h2:tcp://localhost:9092/identity_hub
-#users-db-user: nidam
-#users-db-password: "gF2mshbI819AV2L3"
 #users-db-user: sa
 #users-db-password: ""
 
+
+# Dev and Binary Scripts: embedded H2
+users-db-url: jdbc:h2:tcp://localhost:9092/identity_hub
+users-db-user: nidam
+users-db-password: "gF2mshbI819AV2L3"
+
 # Mongo
-users-db-url: mongodb://localhost:27017/identity_hub
+#users-db-url: mongodb://localhost:27017/identity_hub
 
 authorities: manage-users,manage-projects
 password-encoders: scrypt,bcrypt,argon2,pbkdf2
 password-idless: scrypt
 
 recaptcha-secret: "6LcyyEMpAAAAANm0qZB6kzDQRT5Li4FSGCTe8ESf"
-allowed-cors-uri: http://localhost:4001,http://127.0.0.1:4001,http://localhost:7080,http://127.0.0.1:7080
+# CORS Start
+host: http://localhost
+reverse-proxy-port: 7080
+react-port: 4001
+
+react-host: ${host}:${react-port}
+react-ip: ${ip-address}:${react-port}
+reverse-host: ${host}:${reverse-proxy-port}
+reverse-ip: ${ip-address}:${reverse-proxy-port}
+allowed-cors-uri: ${react-host},${react-ip},${reverse-host},${reverse-ip}
+# CORS END
 
 server:
   port: ${registration-port}
@@ -36,14 +51,7 @@ spring:
   config:
     import: optional:file:./configuration.yml
   profiles:
-    active: ${nidam.persistence-mode}
-    group:
-      dev-sql:
-        - dev
-        - sql
-      dev-mongo:
-        - dev
-        - mongo
+    include: ${nidam.persistence-mode}
 
 custom:
   authorization:
@@ -62,6 +70,6 @@ custom:
 
 # options: sql, mongo . default: sql . When changing don't forget to update ${users-db-url/username/password}
 nidam:
-  persistence-mode: "mongo"
+  persistence-mode: "sql"
 
 
