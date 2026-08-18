@@ -246,7 +246,9 @@ function Start-Nidam {
     # Phase 2
     # -------------------------------
     $jobRegistration = Start-ServiceAsync 4000 "Registration" "registration" "registration-2.0.0.jar" "$logs\registration.log" "Started RegistrationApplication" "--spring.profiles.active=prod"
+    # To remove
     Wait-And-PrintJobs @($jobRegistration)
+    # To remove END
 
     #$jobSpa = Start-ServiceAsync 4001 "SPA Server" "spa" "spa-server-1.0.0.jar" "$logs\spa.log" "Started SpaServerApplication"
 
@@ -257,16 +259,16 @@ function Start-Nidam {
     ## -------------------------------
     ## Phase 3
     ## -------------------------------
-    #$jobProxy = Start-ServiceAsync 7080 "Reverse Proxy" "reverse-proxy" "reverse-proxy-2.0.0.jar" "$logs\proxy.log" "Started ReverseProxyApplication"
-    #
-    #$jobToken = Start-ServiceAsync 4002 "Token Generator" "token-generator" "token-generator-2.0.0.jar" "$logs\token.log" "Started TokenGeneratorApplication"
-    #
-    #$jobsPhase2 = @($jobProxy, $jobToken) | Where-Object { $_ -ne $null }
-    #
-    #if ($jobsPhase2.Count -gt 0) {
-    #    Wait-And-PrintJobs $jobsPhase2
-    #}
-    #
+    $jobProxy = Start-ServiceAsync 7080 "Reverse Proxy" "reverse-proxy" "reverse-proxy-2.0.0.jar" "$logs\proxy.log" "Started ReverseProxyApplication" "--spring.profiles.active=prod"
+
+    $jobToken = Start-ServiceAsync 4002 "Token Generator" "token-generator" "token-generator-2.0.0.jar" "$logs\token.log" "Started TokenGeneratorApplication" "--spring.profiles.active=prod"
+
+    $jobsPhase2 = @($jobProxy, $jobToken) | Where-Object { $_ -ne $null }
+
+    if ($jobsPhase2.Count -gt 0) {
+        Wait-And-PrintJobs $jobsPhase2
+    }
+
     ## -------------------------------
     ## Phase 4
     ## -------------------------------
@@ -311,7 +313,7 @@ function Stop-Nidam {
     Write-Output "Stopping Nidam services..."
 
     #"spa", "nidam", "bff", "reverse-proxy", "token-generator",
-    "registration",
+    "token-generator", "reverse-proxy", "registration",
     "h2" |
             ForEach-Object { Stop-ServiceByPid $_ }
 
