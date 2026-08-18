@@ -40,7 +40,7 @@ public class ProjectConfig {
 	private static final String ACTUATOR_MATCHER = "/actuator/**";
 
 	/**
-	 * Security configuration dedicated exclusively to Actuator endpoints. Actuator is only available with {@code dev profile}.
+	 * Security configuration dedicated exclusively to Actuator endpoints. Actuator is only available with {@code dev and prod profiles}.
 	 *
 	 * <p>This filter chain is evaluated with the highest precedence ({@code @Order(0)})
 	 * and applies only to requests matching {@code /actuator/**}. It isolates Actuator
@@ -53,7 +53,7 @@ public class ProjectConfig {
 	 */
 	@Bean
 	@Order(0)
-	@Profile("dev")
+	@Profile({"dev", "prod"})
 	public SecurityFilterChain actuatorChain(HttpSecurity http) throws Exception {
 		return http
 				.securityMatcher(ACTUATOR_MATCHER)
