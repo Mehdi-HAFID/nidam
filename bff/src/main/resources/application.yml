@@ -49,6 +49,9 @@ management:
 
 bff-redirect-call-to-resource-server-predicate: /api/**
 
+redis-url: redis://localhost:6379
+redis-namespace: nidam:bff
+
 spring:
   config:
     import: optional:file:./configuration.yml
@@ -74,7 +77,7 @@ spring:
             issuer-uri: ${issuer}
             authorization-uri: ${issuer}/oauth2/authorize # Explanation below
         registration:
-          token-generator:
+          token-generator: # this is where the 'token-generator' comes from that's used all over nidam, mainly in urls. it's called OAuth2 client registrationId
             provider: token-generator
             authorization-grant-type: authorization_code
             client-id: ${client.id}
@@ -92,15 +95,14 @@ spring:
               # and setting spring.security.oauth2.client.provider.token-generator.authorization-uri with localhost since it is browser facing
   data:
     redis:
-      host: localhost
-      port: 6379
+      url: ${redis-url}
       repositories:
         enabled: false
   session:
     timeout: 7d     # same as token generator refresh token TTL
     redis:
-      namespace: nidam:bff
+      namespace: ${redis-namespace}
 
 nidam:
-  session-mode: "redis"    # options: tomcat, redis
+  session-mode: "tomcat"    # options: tomcat, redis
 #trace: true

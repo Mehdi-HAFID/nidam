@@ -14,7 +14,6 @@ import java.util.logging.Logger;
 public class SpaWebConfig {
 	private final static Logger log = Logger.getLogger(SpaWebConfig.class.getName());
 
-	// SPA_ROOT is the name of the folder where the build folder content are copied, to rename to 'spa'
 	private static final String SPA_ROOT = "spa";
 
 	@Value("${registration-uri}")

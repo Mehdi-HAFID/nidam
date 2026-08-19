@@ -11,7 +11,6 @@ public class ClientProperties {
 	private String secretHash;
 	private String internalIdentifier;
 	private String loginUri;
-	private String logoutUri;
 	private String bffPostLogoutUri;
 
 	public String getId() {
@@ -44,14 +43,6 @@ public class ClientProperties {
 
 	public void setLoginUri(String loginUri) {
 		this.loginUri = loginUri;
-	}
-
-	public String getLogoutUri() {
-		return logoutUri;
-	}
-
-	public void setLogoutUri(String logoutUri) {
-		this.logoutUri = logoutUri;
 	}
 
 	public String getBffPostLogoutUri() {
