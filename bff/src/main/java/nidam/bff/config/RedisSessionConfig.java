@@ -4,9 +4,12 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.actuate.data.redis.RedisReactiveHealthIndicator;
+import org.springframework.boot.actuate.health.ReactiveHealthIndicator;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.connection.ReactiveRedisConnectionFactory;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.security.jackson2.SecurityJackson2Modules;
@@ -105,6 +108,29 @@ public class RedisSessionConfig {
 			sessionRepository.setRedisKeyNamespace(redisNamespace);
 			sessionRepository.setDefaultMaxInactiveInterval(sessionTimeout);
 		};
+	}
+
+	/**
+	 * Re-registers the standard reactive Redis health indicator, under Boot's default bean
+	 * name and {@code /actuator/health} key ({@code redis}), for {@code nidam.session-mode=redis}
+	 * deployments only.
+	 *
+	 * <p>Mirrors the token generator's blocking counterpart. Boot's
+	 * {@code RedisReactiveHealthContributorAutoConfiguration} is excluded application-wide
+	 * because it activates off the presence of a
+	 * {@link org.springframework.data.redis.connection.ReactiveRedisConnectionFactory} bean
+	 * alone, independent of {@code nidam.session-mode}. This bean restores it only when
+	 * session state and the token-relay's authorized-client repository
+	 * ({@link org.springframework.security.oauth2.client.web.server.WebSessionServerOAuth2AuthorizedClientRepository})
+	 * actually live in Redis.</p>
+	 *
+	 * <p>The bean name {@code redisHealthIndicator} matches Boot's default so the resulting
+	 * {@code /actuator/health} JSON key ({@code redis}) is unchanged from what the excluded
+	 * autoconfiguration would have produced.</p>
+	 */
+	@Bean
+	public ReactiveHealthIndicator redisHealthIndicator(ReactiveRedisConnectionFactory connectionFactory) {
+		return new RedisReactiveHealthIndicator(connectionFactory);
 	}
 
 }

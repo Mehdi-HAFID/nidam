@@ -1,6 +1,8 @@
 package nidam.bff;
 
 import org.springframework.boot.SpringApplication;
+import org.springframework.boot.actuate.autoconfigure.data.redis.RedisHealthContributorAutoConfiguration;
+import org.springframework.boot.actuate.autoconfigure.data.redis.RedisReactiveHealthContributorAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.session.SessionAutoConfiguration;
 
@@ -20,8 +22,26 @@ import org.springframework.boot.autoconfigure.session.SessionAutoConfiguration;
  * {@code @EnableRedisWebSession} on {@code RedisSessionConfig} — itself gated on
  * {@code nidam.session-mode=redis} — so the two modes can no longer conflict at startup
  * regardless of classpath contents.
+ * <p>
+ * {@code RedisHealthContributorAutoConfiguration} and
+ * {@code RedisReactiveHealthContributorAutoConfiguration} are excluded for the same reason
+ * as in the token generator: both gate purely on bean <em>type</em> presence —
+ * {@code RedisConnectionFactory} for the blocking one, {@code ReactiveRedisConnectionFactory}
+ * for the reactive one — not on {@code nidam.session-mode}. Because {@code RedisAutoConfiguration}
+ * always registers a Lettuce-backed connection factory that implements <b>both</b> interfaces on
+ * the same bean, both conditions are satisfied together regardless of the BFF being a WebFlux
+ * (reactive) application; excluding only the reactive one would still leave the blocking
+ * contributor active and able to flip {@code /actuator/health} to {@code DOWN}. In
+ * {@code tomcat} mode the BFF has no functional dependency on Redis, so that would be a false
+ * alarm rather than a meaningful signal. The equivalent indicator is re-registered manually,
+ * gated to {@code session-mode=redis}, as {@code redisHealthIndicator} alongside
+ * {@code RedisSessionConfig}, so the resulting {@code /actuator/health} shape is unchanged from
+ * Boot's default whenever Redis genuinely backs the session store.
+ *
+ * @see nidam.bff.config.RedisSessionConfig
  */
-@SpringBootApplication(exclude = { SessionAutoConfiguration.class })
+@SpringBootApplication(exclude = { SessionAutoConfiguration.class,
+		RedisHealthContributorAutoConfiguration.class, RedisReactiveHealthContributorAutoConfiguration.class})
 public class BffApplication {
 
 	public static void main(String[] args) {
