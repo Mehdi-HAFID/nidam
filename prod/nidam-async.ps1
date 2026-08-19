@@ -273,17 +273,14 @@ function Start-Nidam {
     ## Phase 4
     ## -------------------------------
     $jobNidam = Start-ServiceAsync 4003 "Nidam" "nidam" "nidam-2.0.0.jar" "$logs\nidam.log" "Started NidamApplication" "--spring.profiles.active=prod"
-    # To remove
-    Wait-And-PrintJobs @($jobNidam)
-    # To remove END
 
-    #$jobBff = Start-ServiceAsync 7081 "BFF" "bff" "bff-2.0.0.jar" "$logs\bff.log" "Started BffApplication"
-    #
-    #$jobsPhase3 = @($jobNidam, $jobBff) | Where-Object { $_ -ne $null }
-    #
-    #if ($jobsPhase3.Count -gt 0) {
-    #    Wait-And-PrintJobs $jobsPhase3
-    #}
+    $jobBff = Start-ServiceAsync 7081 "BFF" "bff" "bff-2.0.0.jar" "$logs\bff.log" "Started BffApplication" "--spring.profiles.active=prod"
+
+    $jobsPhase3 = @($jobNidam, $jobBff) | Where-Object { $_ -ne $null }
+
+    if ($jobsPhase3.Count -gt 0) {
+        Wait-And-PrintJobs $jobsPhase3
+    }
 
     Write-Output "✅ Nidam started."
     #Get-Job | Remove-Job -Force -ErrorAction SilentlyContinue
@@ -302,8 +299,8 @@ function Stop-Nidam {
 
     Write-Output "Stopping Nidam services..."
 
-    #"spa", "bff"
-    "nidam", "token-generator", "reverse-proxy", "registration", "h2" | ForEach-Object { Stop-ServiceByPid $_ }
+    #"spa",
+    "bff", "nidam", "token-generator", "reverse-proxy", "registration", "h2" | ForEach-Object { Stop-ServiceByPid $_ }
 
     Write-Output "✅ Nidam stopped."
 }
