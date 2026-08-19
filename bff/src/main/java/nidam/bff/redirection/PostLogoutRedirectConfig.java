@@ -55,7 +55,9 @@ public class PostLogoutRedirectConfig {
 
 	private final LogoutProperties logoutProperties;
 
-	private static final String POST_LOGOUT_ENDPOINT = "/post-logout";
+	@Value("${bff-post-logout-endpoint}")
+	private String postLogoutEndpoint;
+
 	private static final String STATE_QUERY_PARAMETER = "state";
 
 	public PostLogoutRedirectConfig(LogoutProperties logoutProperties) {
@@ -79,7 +81,7 @@ public class PostLogoutRedirectConfig {
 		return (exchange, chain) -> {
 			String path = exchange.getRequest().getURI().getPath();
 
-			if (!path.startsWith(POST_LOGOUT_ENDPOINT)) {
+			if (!path.startsWith(postLogoutEndpoint)) {
 				// Skip unless we’re on the OP → BFF post-logout callback
 				return chain.filter(exchange);
 			}

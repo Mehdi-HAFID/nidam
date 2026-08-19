@@ -1,8 +1,8 @@
 spring:
   datasource:
-    url: ${registration.users-db-url:${users-db-url}}
-    username: ${registration.users-db-user:${users-db-user}}
-    password: ${registration.users-db-password:${users-db-password}}
+    url: ${token-generator.users-db-url:${users-db-url}}
+    username: ${token-generator.users-db-user:${users-db-user}}
+    password: ${token-generator.users-db-password:${users-db-password}}
   sql:
     init:
       mode: always

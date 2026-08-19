@@ -246,7 +246,9 @@ function Start-Nidam {
     # Phase 2
     # -------------------------------
     $jobRegistration = Start-ServiceAsync 4000 "Registration" "registration" "registration-2.0.0.jar" "$logs\registration.log" "Started RegistrationApplication" "--spring.profiles.active=prod"
+    # To remove
     Wait-And-PrintJobs @($jobRegistration)
+    # To remove END
 
     #$jobSpa = Start-ServiceAsync 4001 "SPA Server" "spa" "spa-server-1.0.0.jar" "$logs\spa.log" "Started SpaServerApplication"
 
@@ -257,28 +259,28 @@ function Start-Nidam {
     ## -------------------------------
     ## Phase 3
     ## -------------------------------
-    #$jobProxy = Start-ServiceAsync 7080 "Reverse Proxy" "reverse-proxy" "reverse-proxy-2.0.0.jar" "$logs\proxy.log" "Started ReverseProxyApplication"
-    #
-    #$jobToken = Start-ServiceAsync 4002 "Token Generator" "token-generator" "token-generator-2.0.0.jar" "$logs\token.log" "Started TokenGeneratorApplication"
-    #
-    #$jobsPhase2 = @($jobProxy, $jobToken) | Where-Object { $_ -ne $null }
-    #
-    #if ($jobsPhase2.Count -gt 0) {
-    #    Wait-And-PrintJobs $jobsPhase2
-    #}
-    #
+    $jobProxy = Start-ServiceAsync 7080 "Reverse Proxy" "reverse-proxy" "reverse-proxy-2.0.0.jar" "$logs\proxy.log" "Started ReverseProxyApplication" "--spring.profiles.active=prod"
+
+    $jobToken = Start-ServiceAsync 4002 "Token Generator" "token-generator" "token-generator-2.0.0.jar" "$logs\token.log" "Started TokenGeneratorApplication" "--spring.profiles.active=prod"
+
+    $jobsPhase2 = @($jobProxy, $jobToken) | Where-Object { $_ -ne $null }
+
+    if ($jobsPhase2.Count -gt 0) {
+        Wait-And-PrintJobs $jobsPhase2
+    }
+
     ## -------------------------------
     ## Phase 4
     ## -------------------------------
-    #$jobNidam = Start-ServiceAsync 4003 "Nidam" "nidam" "nidam-2.0.0.jar" "$logs\nidam.log" "Started NidamApplication"
-    #
-    #$jobBff = Start-ServiceAsync 7081 "BFF" "bff" "bff-2.0.0.jar" "$logs\bff.log" "Started BffApplication"
-    #
-    #$jobsPhase3 = @($jobNidam, $jobBff) | Where-Object { $_ -ne $null }
-    #
-    #if ($jobsPhase3.Count -gt 0) {
-    #    Wait-And-PrintJobs $jobsPhase3
-    #}
+    $jobNidam = Start-ServiceAsync 4003 "Nidam" "nidam" "nidam-2.0.0.jar" "$logs\nidam.log" "Started NidamApplication" "--spring.profiles.active=prod"
+
+    $jobBff = Start-ServiceAsync 7081 "BFF" "bff" "bff-2.0.0.jar" "$logs\bff.log" "Started BffApplication" "--spring.profiles.active=prod"
+
+    $jobsPhase3 = @($jobNidam, $jobBff) | Where-Object { $_ -ne $null }
+
+    if ($jobsPhase3.Count -gt 0) {
+        Wait-And-PrintJobs $jobsPhase3
+    }
 
     Write-Output "✅ Nidam started."
     #Get-Job | Remove-Job -Force -ErrorAction SilentlyContinue
@@ -286,19 +288,6 @@ function Start-Nidam {
     #$url = Get-ResolvedReactProxyUri
     #Write-Output "Opening $url ..."
     #Start-Process $url
-
-
-    # Start-IfNotRunning 4000 "Registration" "registration" "registration-2.0.0.jar" "$logs\registration.log" "Started RegistrationApplication"
-
-    # Start-IfNotRunning 4002 "Token Generator" "token-generator" "token-generator-2.0.0.jar" "$logs\token.log" "Started TokenGeneratorApplication"
-
-    # Start-IfNotRunning 7080 "Reverse Proxy" "reverse-proxy" "reverse-proxy-2.0.0.jar" "$logs\proxy.log" "Started ReverseProxyApplication"
-
-    # Start-IfNotRunning 7081 "BFF" "bff" "bff-2.0.0.jar" "$logs\bff.log" "Started BffApplication"
-
-    # Start-IfNotRunning 4003 "Nidam" "nidam" "nidam-2.0.0.jar" "$logs\nidam.log" "Started NidamApplication"
-
-    # Start-IfNotRunning 4001 "SPA Server" "spa" "spa-server-1.0.0.jar" "$logs\spa.log" "Started SpaServerApplication"
 
 }
 
@@ -310,10 +299,8 @@ function Stop-Nidam {
 
     Write-Output "Stopping Nidam services..."
 
-    #"spa", "nidam", "bff", "reverse-proxy", "token-generator",
-    "registration",
-    "h2" |
-            ForEach-Object { Stop-ServiceByPid $_ }
+    #"spa",
+    "bff", "nidam", "token-generator", "reverse-proxy", "registration", "h2" | ForEach-Object { Stop-ServiceByPid $_ }
 
     Write-Output "✅ Nidam stopped."
 }
