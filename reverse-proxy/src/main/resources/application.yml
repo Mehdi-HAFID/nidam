@@ -13,11 +13,13 @@ authorization-server-uri-no-context-path: ${host}:${authorization-server-port}
 authorization-server-uri: ${host}:${authorization-server-port}${authorization-server-prefix}
 
 authorization-server-load-balancer-uri: lb://token-generator
+authorization-server-health-check-path: /auth/actuator/health
 
 bff-port: 7081
 bff-prefix: /bff
 bff-uri: ${host}:${bff-port}
 bff-load-balancer-uri: lb://bff
+bff-health-check-path: /actuator/health
 
 server:
   port: ${reverse-proxy-port}
@@ -83,7 +85,7 @@ spring:
         initial-delay: 0
         interval: 5s
         path:
-          token-generator: /auth/actuator/health
-          bff: /actuator/health
+          token-generator: ${authorization-server-health-check-path}
+          bff: ${bff-health-check-path}
 
 #trace: true

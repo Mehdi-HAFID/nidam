@@ -45,7 +45,6 @@ import org.springframework.security.web.authentication.LoginUrlAuthenticationEnt
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.web.filter.ForwardedHeaderFilter;
 
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
@@ -144,7 +143,7 @@ public class SecurityConfig {
 	 */
 	@Bean
 	@Order(0)
-	@Profile("dev")
+	@Profile({"dev", "prod"})
 	public SecurityFilterChain actuatorChain(HttpSecurity http) throws Exception {
 		return http
 				.securityMatcher(ACTUATOR_MATCHER)
@@ -272,7 +271,7 @@ public class SecurityConfig {
 				.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
 				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
 				.authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
-				.redirectUri(clientProperties.getLoginUri())    // changed from http://localhost:4004/login/oauth2/code/token-generator
+				.redirectUri(clientProperties.getLoginUri())
 				.scope(OidcScopes.OPENID)
 				.postLogoutRedirectUri(clientProperties.getBffPostLogoutUri())            //.postLogoutRedirectUri("http://localhost:7080/bff/post-logout")
 				.tokenSettings(TokenSettings.builder()

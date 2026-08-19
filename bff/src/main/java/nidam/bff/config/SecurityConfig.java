@@ -1,6 +1,7 @@
 package nidam.bff.config;
 
 import nidam.bff.security.IdTokenSyncingRefreshTokenAuthorizedClientProvider;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -126,7 +127,7 @@ public class SecurityConfig {
 	 */
 	@Bean
 	@Order(0)
-	@Profile("dev")
+	@Profile({"dev", "prod"})
 	public SecurityWebFilterChain actuatorChain(ServerHttpSecurity http) {
 		return http
 				.securityMatcher(ServerWebExchangeMatchers.pathMatchers(ACTUATOR_MATCHER))
@@ -239,12 +240,12 @@ public class SecurityConfig {
 	  * Resource server sees no bearer token → 401
 
 	  After 30 minutes of inactivity, the session is evicted from memory due to the default maxIdleTime = 30m
-	  WebFilter that sets session max idle time to 12 hours.
+	  WebFilter that sets session max idle time to 7 days.
 	  submitted an issue https://github.com/spring-projects/spring-framework/issues/35240
 	 */
 
 	/**
-	 * Configures a {@link WebFilter} that sets a maximum idle timeout of 12 hours on each WebFlux session,
+	 * Configures a {@link WebFilter} that sets a maximum idle timeout of 7 days on each WebFlux session,
 	 * but only once per session lifecycle and only if the session has already started.
 	 * <p>
 	 * This is necessary to keep the session (and therefore the {@code SESSION} cookie and any stored
@@ -263,13 +264,13 @@ public class SecurityConfig {
 	 */
 	@ConditionalOnProperty(name = "nidam.session-mode", havingValue = "tomcat", matchIfMissing = true)
 	@Bean
-	public WebFilter sessionTimeoutWebFilter() {
+	public WebFilter sessionTimeoutWebFilter(@Value("${spring.session.timeout}") Duration ttlTomcatSession) {
 		return (exchange, chain) -> {
 			Mono<WebSession> sessionMono = exchange.getSession()
 					.filter(WebSession::isStarted)
 					.doOnNext(session -> {
 						if (session.getAttribute("SESSION_TIMEOUT_SET") == null) {
-							session.setMaxIdleTime(Duration.ofHours(12));
+							session.setMaxIdleTime(ttlTomcatSession);
 							session.getAttributes().put("SESSION_TIMEOUT_SET", true);
 //							log.info("Session timeout set to 12h for session ID:" + session.getId());
 //							log.info("Max idle time: " + session.getMaxIdleTime());
