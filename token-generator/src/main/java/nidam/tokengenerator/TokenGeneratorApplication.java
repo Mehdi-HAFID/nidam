@@ -3,6 +3,8 @@ package nidam.tokengenerator;
 import nidam.tokengenerator.redis.config.RedisOAuth2Config;
 import nidam.tokengenerator.redis.config.RedisSessionConfig;
 import org.springframework.boot.SpringApplication;
+import org.springframework.boot.actuate.autoconfigure.data.redis.RedisHealthContributorAutoConfiguration;
+import org.springframework.boot.actuate.autoconfigure.data.redis.RedisReactiveHealthContributorAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.session.SessionAutoConfiguration;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -18,7 +20,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
  * <ul>
  *     <li><b>{@code tomcat}</b> — uses Tomcat's native in-memory {@link jakarta.servlet.http.HttpSession}.
  *     This is always available as part of the Tomcat servlet container and requires no
- *     Spring Boot auto-configuration. It is completely unaffected by the exclusion below.</li>
+ *     Spring Boot auto-configuration. It is completely unaffected by the exclusions below.</li>
  *     <li><b>{@code redis}</b> — activates {@link RedisSessionConfig},
  *     which uses {@code @EnableRedisHttpSession} to replace Tomcat's native session handling
  *     with a Spring Session Redis-backed repository.</li>
@@ -39,10 +41,34 @@ import org.springframework.scheduling.annotation.EnableScheduling;
  * any Spring Boot auto-configuration class.
  * </p>
  *
+ * <h3>Why {@code RedisHealthContributorAutoConfiguration} and
+ * {@code RedisReactiveHealthContributorAutoConfiguration} are excluded</h3>
+ * <p>
+ * Both autoconfiguration classes register a Redis {@code /actuator/health} contributor
+ * based purely on bean <em>type</em> presence — {@code RedisConnectionFactory} for the
+ * blocking one, {@code ReactiveRedisConnectionFactory} for the reactive one — with no
+ * regard for {@code nidam.session-mode}. Since {@code RedisAutoConfiguration} always
+ * registers a Lettuce-backed connection factory when the Redis starter is on the
+ * classpath (Lettuce's {@code LettuceConnectionFactory} implements <b>both</b>
+ * interfaces on the same bean, and {@code reactor-core} is transitively present), both
+ * conditions are satisfied even though this application is a purely blocking Tomcat
+ * servlet app. Excluding only one leaves the other active and still capable of dragging
+ * {@code /actuator/health} to {@code DOWN}.
+ * </p>
+ * <p>
+ * In {@code tomcat} mode the token generator has no functional dependency on Redis
+ * whatsoever, so a Redis outage flipping health status here is a false alarm rather than
+ * a meaningful signal — this service is purely internal, with nothing consuming that
+ * status to make a routing or failover decision. Both autoconfigurations are excluded
+ * unconditionally, and the equivalent indicator is re-registered manually, gated to
+ * {@code session-mode=redis}, as {@code redisHealthIndicator} in {@link RedisOAuth2Config}.
+ * </p>
+ *
  * @see RedisSessionConfig
  * @see RedisOAuth2Config
  */
-@SpringBootApplication(exclude = { SessionAutoConfiguration.class })
+@SpringBootApplication(exclude = { SessionAutoConfiguration.class,
+		RedisHealthContributorAutoConfiguration.class, RedisReactiveHealthContributorAutoConfiguration.class})
 @EnableScheduling
 public class TokenGeneratorApplication {
 
