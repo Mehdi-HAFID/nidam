@@ -272,8 +272,11 @@ function Start-Nidam {
     ## -------------------------------
     ## Phase 4
     ## -------------------------------
-    #$jobNidam = Start-ServiceAsync 4003 "Nidam" "nidam" "nidam-2.0.0.jar" "$logs\nidam.log" "Started NidamApplication"
-    #
+    $jobNidam = Start-ServiceAsync 4003 "Nidam" "nidam" "nidam-2.0.0.jar" "$logs\nidam.log" "Started NidamApplication" "--spring.profiles.active=prod"
+    # To remove
+    Wait-And-PrintJobs @($jobNidam)
+    # To remove END
+
     #$jobBff = Start-ServiceAsync 7081 "BFF" "bff" "bff-2.0.0.jar" "$logs\bff.log" "Started BffApplication"
     #
     #$jobsPhase3 = @($jobNidam, $jobBff) | Where-Object { $_ -ne $null }
@@ -289,19 +292,6 @@ function Start-Nidam {
     #Write-Output "Opening $url ..."
     #Start-Process $url
 
-
-    # Start-IfNotRunning 4000 "Registration" "registration" "registration-2.0.0.jar" "$logs\registration.log" "Started RegistrationApplication"
-
-    # Start-IfNotRunning 4002 "Token Generator" "token-generator" "token-generator-2.0.0.jar" "$logs\token.log" "Started TokenGeneratorApplication"
-
-    # Start-IfNotRunning 7080 "Reverse Proxy" "reverse-proxy" "reverse-proxy-2.0.0.jar" "$logs\proxy.log" "Started ReverseProxyApplication"
-
-    # Start-IfNotRunning 7081 "BFF" "bff" "bff-2.0.0.jar" "$logs\bff.log" "Started BffApplication"
-
-    # Start-IfNotRunning 4003 "Nidam" "nidam" "nidam-2.0.0.jar" "$logs\nidam.log" "Started NidamApplication"
-
-    # Start-IfNotRunning 4001 "SPA Server" "spa" "spa-server-1.0.0.jar" "$logs\spa.log" "Started SpaServerApplication"
-
 }
 
 # -----------------------------------
@@ -312,10 +302,8 @@ function Stop-Nidam {
 
     Write-Output "Stopping Nidam services..."
 
-    #"spa", "nidam", "bff", "reverse-proxy", "token-generator",
-    "token-generator", "reverse-proxy", "registration",
-    "h2" |
-            ForEach-Object { Stop-ServiceByPid $_ }
+    #"spa", "bff"
+    "nidam", "token-generator", "reverse-proxy", "registration", "h2" | ForEach-Object { Stop-ServiceByPid $_ }
 
     Write-Output "✅ Nidam stopped."
 }

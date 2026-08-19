@@ -88,7 +88,7 @@ function Wait-ForService{
         } catch {
             # ignore until service is up
         }
-        Start-Sleep -Milliseconds 200
+        Start-Sleep -Milliseconds 100
     }
 #    Write-Host "$Name is READY"
 }
