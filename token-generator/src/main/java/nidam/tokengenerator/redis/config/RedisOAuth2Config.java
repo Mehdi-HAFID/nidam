@@ -8,9 +8,12 @@ import nidam.tokengenerator.redis.repository.OAuth2AuthorizationGrantAuthorizati
 import nidam.tokengenerator.redis.repository.OAuth2UserConsentRepository;
 import nidam.tokengenerator.redis.service.RedisOAuth2AuthorizationConsentService;
 import nidam.tokengenerator.redis.service.RedisOAuth2AuthorizationService;
+import org.springframework.boot.actuate.data.redis.RedisHealthIndicator;
+import org.springframework.boot.actuate.health.HealthIndicator;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisKeyValueAdapter;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.convert.RedisCustomConversions;
@@ -204,5 +207,34 @@ public class RedisOAuth2Config {
 		return new RedisOAuth2AuthorizationConsentService(userConsentRepository);
 	}
 
+	/**
+	 * Re-registers the standard Redis health indicator, under Boot's default bean name
+	 * and {@code /actuator/health} key ({@code redis}), for {@code nidam.session-mode=redis}
+	 * deployments only.
+	 *
+	 * <p>Boot's {@code RedisHealthContributorAutoConfiguration} is excluded application-wide
+	 * in {@link nidam.tokengenerator.TokenGeneratorApplication} because it activates purely off the presence of a
+	 * {@link org.springframework.data.redis.connection.RedisConnectionFactory} bean, with no
+	 * regard for {@code nidam.session-mode}. In {@code tomcat} mode the token generator has
+	 * zero functional dependency on Redis, so without the exclusion a Redis outage still flips
+	 * {@code /actuator/health} to {@code DOWN} for no operationally meaningful reason — this
+	 * service is entirely internal, so nothing is even watching that status to make a routing
+	 * decision off it. It's a false alarm, not a signal.</p>
+	 *
+	 * <p>This bean restores the indicator only when {@code session-mode=redis}, where Redis
+	 * genuinely backs OAuth2 authorization state via {@link RedisOAuth2Config} and, when also
+	 * configured, HTTP sessions via {@link RedisSessionConfig}. The bean name
+	 * {@code redisHealthIndicator} deliberately matches the name Boot's own autoconfiguration
+	 * would have used, so the resulting health JSON shape is identical to the default —
+	 * nothing downstream needs to change to consume it.</p>
+	 *
+	 * @see RedisOAuth2Config
+	 * @see RedisSessionConfig
+	 * @see nidam.tokengenerator.TokenGeneratorApplication
+	 */
+	@Bean
+	public HealthIndicator redisHealthIndicator(RedisConnectionFactory connectionFactory) {
+		return new RedisHealthIndicator(connectionFactory);
+	}
 
 }
