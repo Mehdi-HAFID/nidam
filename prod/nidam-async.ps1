@@ -201,17 +201,12 @@ function Get-ResolvedReactProxyUri {
     return "${hostUri}:$reverseProxyPort$reactPrefix"
 }
 
-# NEW
 function SetupH2 {
-    while (-not ((Get-NetTCPConnection -State Listen -LocalPort 9092 -ErrorAction SilentlyContinue) -ne $null )) {
-        # Write-Host "Waiting for H2"
-        Start-Sleep -Milliseconds 100
-    }
     #$h2Jar = Join-Path $PSScriptRoot "h2-2.4.240.jar" dev
     $h2Jar = Join-Path $Root "db\h2-2.4.240.jar"
     $dbUrl = "jdbc:h2:tcp://localhost:9092/identity_hub"
 
-    $result = java -cp $h2Jar org.h2.tools.Shell -url $dbUrl -user sa -password "" -sql "SELECT COUNT(*) FROM INFORMATION_SCHEMA.USERS WHERE USER_NAME = 'NIDAM';" 2>&1
+    $result = & $JavaExe -cp $h2Jar org.h2.tools.Shell -url $dbUrl -user sa -password "" -sql "SELECT COUNT(*) FROM INFORMATION_SCHEMA.USERS WHERE USER_NAME = 'NIDAM';" 2>&1
     Write-Host $result
     $lines = $result -split "`n"
     $nidamcount = [int]$lines[1].Trim()
@@ -221,7 +216,7 @@ function SetupH2 {
         return
     } else {
         Write-Host "H2 Nidam user does not exist. Creating..."
-        java -cp $h2Jar org.h2.tools.Shell -url $dbUrl -user sa -password "" -sql (Get-Content (Join-Path $PSScriptRoot "db\init.sql") -Raw)
+        & $JavaExe -cp $h2Jar org.h2.tools.Shell -url $dbUrl -user sa -password "" -sql (Get-Content (Join-Path $PSScriptRoot "db\init.sql") -Raw)
         Write-Host "User created. username: 'nidam', password: 'gF2mshbI819AV2L3'"
         Write-Host "DB setup completed."
     }
@@ -246,15 +241,13 @@ function Start-Nidam {
     # Phase 2
     # -------------------------------
     $jobRegistration = Start-ServiceAsync 4000 "Registration" "registration" "registration-2.0.0.jar" "$logs\registration.log" "Started RegistrationApplication" "--spring.profiles.active=prod"
-    # To remove
-    Wait-And-PrintJobs @($jobRegistration)
-    # To remove END
 
-    #$jobSpa = Start-ServiceAsync 4001 "SPA Server" "spa" "spa-server-1.0.0.jar" "$logs\spa.log" "Started SpaServerApplication"
+    $jobSpa = Start-ServiceAsync 4001 "SPA Server" "spa" "spa-server-1.0.0.jar" "$logs\spa.log" "Started SpaServerApplication"
 
-    #if ($jobRegistration) {
-    #    Wait-And-PrintJobs @($jobRegistration, $jobSpa)
-    #}
+    $jobsPhase1 = @($jobRegistration, $jobSpa) | Where-Object { $_ -ne $null }
+    if ($jobsPhase1.Count -gt 0) {
+        Wait-And-PrintJobs @($jobRegistration, $jobSpa)
+    }
 
     ## -------------------------------
     ## Phase 3
@@ -282,12 +275,14 @@ function Start-Nidam {
         Wait-And-PrintJobs $jobsPhase3
     }
 
+    # Find all PowerShell jobs and delete them from the current PowerShell session.
+    Get-Job | Remove-Job -Force -ErrorAction SilentlyContinue
+
     Write-Output "✅ Nidam started."
-    #Get-Job | Remove-Job -Force -ErrorAction SilentlyContinue
-    #
-    #$url = Get-ResolvedReactProxyUri
-    #Write-Output "Opening $url ..."
-    #Start-Process $url
+
+    $url = Get-ResolvedReactProxyUri
+    Write-Output "Opening $url ..."
+    Start-Process $url
 
 }
 
@@ -299,8 +294,7 @@ function Stop-Nidam {
 
     Write-Output "Stopping Nidam services..."
 
-    #"spa",
-    "bff", "nidam", "token-generator", "reverse-proxy", "registration", "h2" | ForEach-Object { Stop-ServiceByPid $_ }
+    "spa", "bff", "nidam", "token-generator", "reverse-proxy", "registration", "h2" | ForEach-Object { Stop-ServiceByPid $_ }
 
     Write-Output "✅ Nidam stopped."
 }
@@ -312,7 +306,7 @@ function Stop-Nidam {
 
 function Restart-Nidam {
     Stop-Nidam
-    Start-Sleep 2
+    Start-Sleep 1
     Start-Nidam
 }
 
