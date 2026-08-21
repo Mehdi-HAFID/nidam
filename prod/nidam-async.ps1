@@ -6,7 +6,7 @@ param(
 Set-Location $PSScriptRoot
 
 $Root = $PSScriptRoot
-$JavaExe = Join-Path $Root "jdk\bin\java.exe"
+$JavaExe = Join-Path $Root "runtime\bin\java.exe"
 $logs = "logs"
 $pids = "pids"
 
