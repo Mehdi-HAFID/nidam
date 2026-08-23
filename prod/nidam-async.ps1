@@ -14,20 +14,10 @@ New-Item -ItemType Directory -Force -Path $logs | Out-Null
 New-Item -ItemType Directory -Force -Path $pids | Out-Null
 
 
-# $started = @{
-#     registration = $false
-#     token = $false
-#     proxy = $false
-#     bff   = $false
-#     nidam = $false
-#     spa   = $false
-# }
-
 # -----------------------------------
 # Helpers
 # -----------------------------------
 
-# TODO test
 function Start-H2Database {
 
     $h2Jar = Join-Path $Root "db\h2-2.4.240.jar"
@@ -177,25 +167,53 @@ function Get-YamlValue {
     return $null
 }
 
+function Get-ResolvedPort {
+    param (
+        [string]$ConfigPath,
+        [string]$Key,
+        [int]$DefaultPort
+    )
+
+    # No configuration.yml → use script default
+    if (!(Test-Path $ConfigPath)) {
+        return $DefaultPort
+    }
+
+    $configuredPort = Get-YamlValue $ConfigPath $Key
+
+    # Missing or invalid value → use script default
+    if (-not $configuredPort -or $configuredPort -notmatch '^\d+$') {
+        return $DefaultPort
+    }
+
+    return [int]$configuredPort
+}
+
 function Get-ResolvedReactProxyUri {
-    $defaultUrl = "http://localhost:7080/react-ui"
+    $defaultHost = "http://localhost"
+    $defaultReverseProxyPort = 7080
+    $defaultReactPrefix = "/react-ui"
 
     $configPath = Join-Path $PSScriptRoot "configuration.yml"
 
     # 1. File does not exist → fallback
     if (!(Test-Path $configPath)) {
-        Write-Host "configuration.yml not found. Using default URL: $defaultUrl"
-        return $defaultUrl
-    }
+        $hostUri = $defaultHost
+        $reverseProxyPort = $defaultReverseProxyPort
+        $reactPrefix = $defaultReactPrefix
+    } else {
+        # Each property independently overrides its default
+        $hostUri = Get-YamlValue $configPath "host"
+        if (-not $hostUri) {
+            $hostUri = $defaultHost
+        }
 
-    $hostUri = Get-YamlValue $configPath "host"
-    $reverseProxyPort = Get-YamlValue $configPath "reverse-proxy-port"
-    $reactPrefix = Get-YamlValue $configPath "react-prefix"
+        $reverseProxyPort = Get-ResolvedPort $configPath "reverse-proxy-port" $defaultReverseProxyPort
 
-    # 3. Missing values → fallback
-    if (-not $hostUri -or -not $reverseProxyPort -or -not $reactPrefix) {
-        Write-Host "configuration.yml incomplete. Using default URL: $defaultUrl"
-        return $defaultUrl
+        $reactPrefix = Get-YamlValue $configPath "react-prefix"
+        if (-not $reactPrefix) {
+            $reactPrefix = $defaultReactPrefix
+        }
     }
 
     return "${hostUri}:$reverseProxyPort$reactPrefix"
@@ -230,6 +248,24 @@ function Start-Nidam {
 
     Write-Output "🚀 Starting Nidam (parallel mode)..."
 
+    $configPath = Join-Path $PSScriptRoot "configuration.yml"
+
+    # Resolve ports: configuration.yml overrides script defaults
+    $registrationPort           = Get-ResolvedPort $configPath "registration-port" 4000
+    $spaPort                    = Get-ResolvedPort $configPath "react-port" 4001
+    $tokenGeneratorPort         = Get-ResolvedPort $configPath "authorization-server-port" 4002
+    $nidamPort                  = Get-ResolvedPort $configPath "resource-server-port" 4003
+    $reverseProxyPort           = Get-ResolvedPort $configPath "reverse-proxy-port" 7080
+    $bffPort                    = Get-ResolvedPort $configPath "bff-port" 7081
+
+    Write-Output "Ports:"
+    Write-Output "  Registration:       $registrationPort"
+    Write-Output "  SPA:                $spaPort"
+    Write-Output "  Token Generator:    $tokenGeneratorPort"
+    Write-Output "  Nidam:              $nidamPort"
+    Write-Output "  Reverse Proxy:      $reverseProxyPort"
+    Write-Output "  BFF:                $bffPort"
+
     # -------------------------------
     # Phase 1
     # -------------------------------
@@ -240,9 +276,9 @@ function Start-Nidam {
     # -------------------------------
     # Phase 2
     # -------------------------------
-    $jobRegistration = Start-ServiceAsync 4000 "Registration" "registration" "registration-2.0.0.jar" "$logs\registration.log" "Started RegistrationApplication" "--spring.profiles.active=prod"
+    $jobRegistration = Start-ServiceAsync $registrationPort "Registration" "registration" "registration-2.0.0.jar" "$logs\registration.log" "Started RegistrationApplication" "--spring.profiles.active=prod"
 
-    $jobSpa = Start-ServiceAsync 4001 "SPA Server" "spa" "spa-server-1.0.0.jar" "$logs\spa.log" "Started SpaServerApplication"
+    $jobSpa = Start-ServiceAsync $spaPort "SPA Server" "spa" "spa-server-1.0.0.jar" "$logs\spa.log" "Started SpaServerApplication"
 
     $jobsPhase1 = @($jobRegistration, $jobSpa) | Where-Object { $_ -ne $null }
     if ($jobsPhase1.Count -gt 0) {
@@ -252,9 +288,9 @@ function Start-Nidam {
     ## -------------------------------
     ## Phase 3
     ## -------------------------------
-    $jobProxy = Start-ServiceAsync 7080 "Reverse Proxy" "reverse-proxy" "reverse-proxy-2.0.0.jar" "$logs\proxy.log" "Started ReverseProxyApplication" "--spring.profiles.active=prod"
+    $jobProxy = Start-ServiceAsync $reverseProxyPort "Reverse Proxy" "reverse-proxy" "reverse-proxy-2.0.0.jar" "$logs\proxy.log" "Started ReverseProxyApplication" "--spring.profiles.active=prod"
 
-    $jobToken = Start-ServiceAsync 4002 "Token Generator" "token-generator" "token-generator-2.0.0.jar" "$logs\token.log" "Started TokenGeneratorApplication" "--spring.profiles.active=prod"
+    $jobToken = Start-ServiceAsync $tokenGeneratorPort "Token Generator" "token-generator" "token-generator-2.0.0.jar" "$logs\token.log" "Started TokenGeneratorApplication" "--spring.profiles.active=prod"
 
     $jobsPhase2 = @($jobProxy, $jobToken) | Where-Object { $_ -ne $null }
 
@@ -265,9 +301,9 @@ function Start-Nidam {
     ## -------------------------------
     ## Phase 4
     ## -------------------------------
-    $jobNidam = Start-ServiceAsync 4003 "Nidam" "nidam" "nidam-2.0.0.jar" "$logs\nidam.log" "Started NidamApplication" "--spring.profiles.active=prod"
+    $jobNidam = Start-ServiceAsync $nidamPort "Nidam" "nidam" "nidam-2.0.0.jar" "$logs\nidam.log" "Started NidamApplication" "--spring.profiles.active=prod"
 
-    $jobBff = Start-ServiceAsync 7081 "BFF" "bff" "bff-2.0.0.jar" "$logs\bff.log" "Started BffApplication" "--spring.profiles.active=prod"
+    $jobBff = Start-ServiceAsync $bffPort "BFF" "bff" "bff-2.0.0.jar" "$logs\bff.log" "Started BffApplication" "--spring.profiles.active=prod"
 
     $jobsPhase3 = @($jobNidam, $jobBff) | Where-Object { $_ -ne $null }
 
