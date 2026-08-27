@@ -50,7 +50,7 @@ management:
 bff-redirect-call-to-resource-server-predicate: /api/**
 
 redis-url: redis://localhost:6379
-redis-namespace: nidam:bff
+redis-bff-namespace: nidam:bff
 
 spring:
   config:
@@ -101,7 +101,7 @@ spring:
   session:
     timeout: 7d     # same as token generator refresh token TTL
     redis:
-      namespace: ${redis-namespace}
+      namespace: ${redis-bff-namespace}
 
 nidam:
   session-mode: "tomcat"    # options: tomcat, redis

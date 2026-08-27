@@ -56,7 +56,7 @@ custom:
     idless: ${token-generator.password-idless:${password-idless}}    # encoder for hashes without {id}
 
 redis-url: redis://localhost:6379
-redis-namespace: nidam:token-generator
+redis-token-generator-namespace: nidam:token-generator
 
 spring:
   config:
@@ -70,7 +70,7 @@ spring:
         enabled: false
   session:
     redis:
-      namespace: ${redis-namespace}
+      namespace: ${redis-token-generator-namespace}
 
 rate-limiter:
   enabled: true

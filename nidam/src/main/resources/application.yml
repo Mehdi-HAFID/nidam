@@ -19,6 +19,8 @@ server:
   forward-headers-strategy: framework
 
 spring:
+  config:
+    import: optional:file:./configuration.yml
   security:
     oauth2:
       resourceserver:
