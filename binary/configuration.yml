@@ -17,7 +17,7 @@ client:
   secret: secret
   internal-identifier: nidam-bff-internal-id
   # TODO must decide if I should expose these urls or keep them internal, for I will expose them
-  login-uri: ${reverse-proxy-uri}${bff-prefix}/login/oauth2/code/${authorization-server-name}
+  login-uri: ${reverse-proxy-uri}${bff-prefix}/login/oauth2/code/token-generator
   logout-uri: ${reverse-proxy-uri}${react-prefix}
   bff-post-logout-uri: ${reverse-proxy-uri}${bff-prefix}${bff-post-logout-endpoint}
 
@@ -33,7 +33,6 @@ password-idless: scrypt
 
 host: http://localhost
 
-authorization-server-name: token-generator
 authorization-server-port: 4002
 authorization-server-prefix: /auth
 authorization-server-uri: ${host}:${authorization-server-port}${authorization-server-prefix}
@@ -112,7 +111,7 @@ registration-uri: ${host}:${registration-port}
 
 resource-server-through-bff-proxy-uri: ${reverse-proxy-uri}${bff-prefix}${bff-redirect-call-to-resource-server-prefix}
 
-react-login-url: ${bff-proxy-uri}/oauth2/authorization/${authorization-server-name}
+react-login-url: ${bff-proxy-uri}/oauth2/authorization/token-generator
 
 react-logout-url: ${bff-proxy-uri}/logout
 
