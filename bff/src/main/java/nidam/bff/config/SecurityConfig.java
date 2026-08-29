@@ -80,7 +80,10 @@ public class SecurityConfig {
 	public static final String COOKIE_XSRF_TOKEN = "XSRF-TOKEN";
 	public static final String BFF_LOGOUT_ENDPOINT = "/logout";
 
-	private static final String[] UNAUTHENTICATED_PATHS = {"/api/me", "/login/**", "/oauth2/**", "/error", "/post-logout"};
+	private static final String[] UNAUTHENTICATED_PATHS = {"/api/me", "/login/**", "/oauth2/**", "/error"};
+
+	@Value("${bff-post-logout-endpoint}")
+	private String postLogoutEndpoint;
 
 	private static final String ACTUATOR_MATCHER = "/actuator/**";
 
@@ -170,6 +173,7 @@ public class SecurityConfig {
 		http
 				.authorizeExchange(exchanges -> exchanges
 						.pathMatchers(UNAUTHENTICATED_PATHS).permitAll()
+						.pathMatchers(postLogoutEndpoint).permitAll()
 						.pathMatchers(HttpMethod.POST, BFF_LOGOUT_ENDPOINT).permitAll()
 						.anyExchange().authenticated()
 				)
