@@ -13,7 +13,7 @@ authorization-server-uri-no-context-path: ${host}:${authorization-server-port}
 authorization-server-uri: ${host}:${authorization-server-port}${authorization-server-prefix}
 
 authorization-server-load-balancer-uri: lb://token-generator
-authorization-server-health-check-path: /auth/actuator/health
+authorization-server-health-check-path: ${authorization-server-prefix}/actuator/health
 
 bff-port: 7081
 bff-prefix: /bff
