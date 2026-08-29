@@ -12,7 +12,8 @@ security:
     - /me
 
 resource-server-port: 4003
-audience: client
+client:
+  id: client
 
 server:
   port: ${resource-server-port}

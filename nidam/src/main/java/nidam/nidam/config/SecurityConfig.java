@@ -53,7 +53,7 @@ public class SecurityConfig {
      * Expected audience value in the JWT token.
      * Defaults to "client" if not explicitly configured.
      */
-    @Value("${audience:client}")
+    @Value("${client.id:client}")
     private String expectedAudience;
 
     private static final String ACTUATOR_MATCHER = "/actuator/**";
