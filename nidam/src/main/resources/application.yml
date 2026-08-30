@@ -7,9 +7,7 @@ reverse-proxy-uri: ${host}:${reverse-proxy-port}
 authorization-server-prefix: /auth
 issuer: ${reverse-proxy-uri}${authorization-server-prefix}
 
-security:
-  permit-all:
-    - /me
+profile-public-endpoint: /me
 
 resource-server-port: 4003
 client:

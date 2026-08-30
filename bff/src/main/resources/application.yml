@@ -51,6 +51,8 @@ bff-redirect-call-to-resource-server-predicate: /api/**
 redis-url: redis://localhost:6379
 redis-bff-namespace: nidam:bff
 
+profile-public-endpoint: /me
+
 spring:
   config:
     import: optional:file:./configuration.yml

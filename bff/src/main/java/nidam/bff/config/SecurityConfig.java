@@ -80,7 +80,7 @@ public class SecurityConfig {
 	public static final String COOKIE_XSRF_TOKEN = "XSRF-TOKEN";
 	public static final String BFF_LOGOUT_ENDPOINT = "/logout";
 
-	private static final String[] UNAUTHENTICATED_PATHS = {"/api/me", "/login/**", "/oauth2/**", "/error"};
+	private static final String[] UNAUTHENTICATED_PATHS = {"/login/**", "/oauth2/**", "/error"};
 
 	@Value("${bff-post-logout-endpoint}")
 	private String postLogoutEndpoint;
@@ -169,10 +169,12 @@ public class SecurityConfig {
 	 */
 	@Bean
 	@Order(1)
-	public SecurityWebFilterChain securityFilterChain(ServerHttpSecurity http, ReactiveClientRegistrationRepository clients) {
+	public SecurityWebFilterChain securityFilterChain(ServerHttpSecurity http, ReactiveClientRegistrationRepository clients,
+													  @Value("${profile-public-endpoint:/me}") String meEndpoint) {
 		http
 				.authorizeExchange(exchanges -> exchanges
 						.pathMatchers(UNAUTHENTICATED_PATHS).permitAll()
+						.pathMatchers("/api" + meEndpoint).permitAll()
 						.pathMatchers(postLogoutEndpoint).permitAll()
 						.pathMatchers(HttpMethod.POST, BFF_LOGOUT_ENDPOINT).permitAll()
 						.anyExchange().authenticated()
