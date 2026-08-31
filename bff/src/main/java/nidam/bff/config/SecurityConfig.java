@@ -170,11 +170,12 @@ public class SecurityConfig {
 	@Bean
 	@Order(1)
 	public SecurityWebFilterChain securityFilterChain(ServerHttpSecurity http, ReactiveClientRegistrationRepository clients,
-													  @Value("${profile-public-endpoint:/me}") String meEndpoint) {
+													  @Value("${profile-public-endpoint}") String meEndpoint,
+													  @Value("${bff-resource-server-route-prefix}") String bffResourceServerRoutePrefix) {
 		http
 				.authorizeExchange(exchanges -> exchanges
 						.pathMatchers(UNAUTHENTICATED_PATHS).permitAll()
-						.pathMatchers("/api" + meEndpoint).permitAll()
+						.pathMatchers(bffResourceServerRoutePrefix + meEndpoint).permitAll()
 						.pathMatchers(postLogoutEndpoint).permitAll()
 						.pathMatchers(HttpMethod.POST, BFF_LOGOUT_ENDPOINT).permitAll()
 						.anyExchange().authenticated()

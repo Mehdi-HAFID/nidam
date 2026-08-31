@@ -46,7 +46,10 @@ management:
     access:
       default: none
 
-bff-redirect-call-to-resource-server-predicate: /api/**
+# calls made to nidam from the spa are directed by the bff when this prefix is used, example: localhost:7080/bff/api/me
+# reverse proxy stipe /bff then BFF stripe /api then resource server /me endpoint is called
+bff-resource-server-route-prefix: /api
+bff-resource-server-route-predicate: ${bff-resource-server-route-prefix}/**
 
 redis-url: redis://localhost:6379
 redis-bff-namespace: nidam:bff
@@ -64,7 +67,7 @@ spring:
             - id: bff
               uri: ${resource-server-uri}
               predicates:
-                - Path=${bff-redirect-call-to-resource-server-predicate}
+                - Path=${bff-resource-server-route-predicate}
               filters:
                 - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
                 - TokenRelay=
