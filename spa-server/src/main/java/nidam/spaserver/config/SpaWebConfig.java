@@ -50,14 +50,16 @@ public class SpaWebConfig {
                 	RESOURCE_SERVER_URI: "%s",
                 	LOGIN_URL: "%s",
                 	LOGOUT_URL: "%s",
-                	PROFILE_PUBLIC_ENDPOINT: "%s"
+                	PROFILE_PUBLIC_ENDPOINT: "%s",
+                	BASE_PATH: "%s"
                 };
             """.formatted(registrationUri,
 							reactProxyUri,
 							resourceServerProxyUri,
 							reactLoginUrl,
 							reactLogoutUrl,
-							meEndpoint);
+							meEndpoint,
+							reactPrefix);
 //					log.info("computed react config: " + js);
 
 					return ServerResponse.ok()

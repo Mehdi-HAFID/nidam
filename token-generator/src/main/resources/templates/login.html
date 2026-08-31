@@ -72,7 +72,7 @@ Website: https://nidam.derbyware.com
                             <span class="text-sm text-secondary-foreground me-1.5">
                                 Need an account?
                             </span>
-                            <a class="text-sm link" href="/react-ui/signup">
+                            <a class="text-sm link" th:href="${@environment.getProperty('react-prefix') + '/signup'}">
                                 Sign up
                             </a>
                         </div>
