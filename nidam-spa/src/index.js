@@ -17,12 +17,13 @@ import Private from "./container/Private";
 import AuthenticationStartup from "./authentication/AuthenticationStartup";
 import AppRoutes from "./routing/AppRoutes";
 import {css, Global} from "@emotion/react";
+import {CONFIG} from "./config";
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
       <Provider store={store}>
-          <BrowserRouter basename="/react-ui" >
+          <BrowserRouter basename={CONFIG.BASE_PATH} >
               <AuthenticationStartup>
                   {/* emotion: this must be added to get rid of the top margin that won't go away when everything is set to margin: 0*/}
                   <Global

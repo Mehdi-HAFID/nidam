@@ -26,6 +26,14 @@ export const CONFIG = {
 	LOGOUT_URL:
 		runtimeConfig.LOGOUT_URL ||
 		process.env.REACT_APP_LOGOUT_URL,
+
+	PROFILE_PUBLIC_ENDPOINT:
+		runtimeConfig.PROFILE_PUBLIC_ENDPOINT ||
+		process.env.REACT_APP_PROFILE_PUBLIC_ENDPOINT,
+
+	BASE_PATH:
+		runtimeConfig.BASE_PATH ||
+		process.env.REACT_APP_BASE_PATH,
 };
 
 
