@@ -42,7 +42,7 @@ function Initialize-Exclusions {
         Write-Host "║   users-db-url    users-db-user   users-db-password                                                   ║" -ForegroundColor Yellow
         Write-Host "║                                                                                                       ║" -ForegroundColor Yellow
         Write-Host "║ Read the documentation for more information                                                           ║" -ForegroundColor Yellow
-        Write-Host "║ To Remove this message from appearing again remove lines from 33 to 47 in nidam-dev.ps1               ║" -ForegroundColor Yellow
+        Write-Host "║ To Remove this message from appearing again remove lines from 33 to 47 in nidam.ps1                   ║" -ForegroundColor Yellow
         Write-Host "╚═══════════════════════════════════════════════════════════════════════════════════════════════════════╝" -ForegroundColor Yellow
         Write-Host ""
     }
