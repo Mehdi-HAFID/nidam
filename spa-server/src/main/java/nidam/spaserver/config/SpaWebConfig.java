@@ -34,6 +34,9 @@ public class SpaWebConfig {
 	@Value("${react-prefix}")
 	private String reactPrefix;
 
+	@Value("${profile-public-endpoint}")
+	private String meEndpoint;
+
 	@Bean
 	public RouterFunction<ServerResponse> spaRouter() {
 		FileSystemResource index = new FileSystemResource(SPA_ROOT + "/index.html");
@@ -47,12 +50,16 @@ public class SpaWebConfig {
                 	RESOURCE_SERVER_URI: "%s",
                 	LOGIN_URL: "%s",
                 	LOGOUT_URL: "%s",
+                	PROFILE_PUBLIC_ENDPOINT: "%s",
+                	BASE_PATH: "%s"
                 };
             """.formatted(registrationUri,
 							reactProxyUri,
 							resourceServerProxyUri,
 							reactLoginUrl,
-							reactLogoutUrl);
+							reactLogoutUrl,
+							meEndpoint,
+							reactPrefix);
 //					log.info("computed react config: " + js);
 
 					return ServerResponse.ok()

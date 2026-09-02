@@ -1,5 +1,3 @@
-authorization-server-name: token-generator
-
 host: http://localhost
 browser-facing-domain: http://localhost
 # for docker purposes, this must stay whatever the domain name is. in development it is localhost, wheareas the internal is the container name TODO test
@@ -36,7 +34,7 @@ client:
   id: client
   secret-hash: '{bcrypt}$2a$10$.ld6BfZescPDfVVduvu.6O9.7FLMI64l4PfvnBZJQEBhTLFFbeKei'  #value is 'secret', must use hash because of password encoders
   internal-identifier: nidam-bff-internal-id
-  login-uri: ${reverse-proxy-uri}${bff-prefix}/login/oauth2/code/${authorization-server-name}   # Explanation below
+  login-uri: ${reverse-proxy-uri}${bff-prefix}/login/oauth2/code/token-generator   # Explanation below
 #  localhost here because this is the same as bff\src\main\resources\application.yml, for docker purposes.
   bff-post-logout-uri: ${reverse-proxy-uri}${bff-prefix}${bff-post-logout-endpoint}     # TODO this change will break docker-compose.yml: update file
 

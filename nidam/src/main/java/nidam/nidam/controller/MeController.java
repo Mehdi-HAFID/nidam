@@ -19,7 +19,7 @@ public class MeController {
 	private static final Logger log = Logger.getLogger(MeController.class.getName());
 
 	// I can use auth.getName() for email, but since I will populate the token payload with standard OpenID Connect Claims may as well
-	@GetMapping("/me")
+	@GetMapping("${profile-public-endpoint:/me}")
 	public UserInfoDto getMe(Authentication auth) {
 		if (auth instanceof JwtAuthenticationToken jwtAuth) {
 			log.info("Name: '" + jwtAuth.getName() + "' getAuthorities: '" + jwtAuth.getAuthorities() + "' Claims: " + jwtAuth.getToken().getClaims());

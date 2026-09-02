@@ -4,7 +4,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import nidam.nidam.config.validator.AudienceValidator;
 import nidam.nidam.controller.error.NidamAccessDeniedHandler;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -33,7 +32,6 @@ import java.util.logging.Logger;
  */
 @Configuration
 @EnableMethodSecurity
-@EnableConfigurationProperties(SecurityProps.class)
 public class SecurityConfig {
 
     /**
@@ -53,7 +51,7 @@ public class SecurityConfig {
      * Expected audience value in the JWT token.
      * Defaults to "client" if not explicitly configured.
      */
-    @Value("${audience:client}")
+    @Value("${client.id:client}")
     private String expectedAudience;
 
     private static final String ACTUATOR_MATCHER = "/actuator/**";
@@ -86,7 +84,7 @@ public class SecurityConfig {
      *
      * <p>This method:
      * <ul>
-     *   <li>Applies permit-all access to paths defined in {@link SecurityProps}.</li>
+     *   <li>Applies permit-all access to path defined in {@code profile-public-endpoint}.</li>
      *   <li>Requires authentication for all other paths.</li>
      *   <li>Sets up the application as an OAuth2 resource server using JWTs.</li>
      * </ul>
@@ -99,18 +97,17 @@ public class SecurityConfig {
      * </ul>
      *
      * @param http the {@link HttpSecurity} object provided by Spring Security
-     * @param securityProps the custom configuration properties that define permit-all paths
      * @param nidamAccessDeniedHandler custom handler for 403 responses
      * @return the configured {@link SecurityFilterChain}
      * @throws Exception in case of configuration errors
      */
     @Bean
     @Order(1)
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, SecurityProps securityProps,
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, @Value("${profile-public-endpoint:/me}") String meEndpoint,
                                                    NidamAccessDeniedHandler nidamAccessDeniedHandler) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(securityProps.getPermitAll().toArray(new String[0])).permitAll()
+                        .requestMatchers(meEndpoint).permitAll()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(
                         configurer -> configurer
