@@ -12,7 +12,7 @@ export function* isLoggedIn(action) {
 	yield put(actions.isLoggedInStart());
 
 	try {
-		const response = yield axios.get("me");
+		const response = yield axios.get(CONFIG.PROFILE_PUBLIC_ENDPOINT);
 		console.log("isLoggedIn userInfo: ", response.data);
 
 		yield put(actions.isLoggedInSuccess({userInfo: response.data}));

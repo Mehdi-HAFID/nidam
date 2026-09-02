@@ -2,7 +2,6 @@ host: http://localhost
 reverse-proxy-port: 7080
 reverse-proxy-uri: ${host}:${reverse-proxy-port}      # because of docker logout, do not override in compose
 
-authorization-server-name: token-generator
 authorization-server-prefix: /auth
 issuer: ${reverse-proxy-uri}${authorization-server-prefix}
 
@@ -47,10 +46,15 @@ management:
     access:
       default: none
 
-bff-redirect-call-to-resource-server-predicate: /api/**
+# calls made to nidam from the spa are directed by the bff when this prefix is used, example: localhost:7080/bff/api/me
+# reverse proxy stipe /bff then BFF stripe /api then resource server /me endpoint is called
+bff-resource-server-route-prefix: /api
+bff-resource-server-route-predicate: ${bff-resource-server-route-prefix}/**
 
 redis-url: redis://localhost:6379
 redis-bff-namespace: nidam:bff
+
+profile-public-endpoint: /me
 
 spring:
   config:
@@ -63,7 +67,7 @@ spring:
             - id: bff
               uri: ${resource-server-uri}
               predicates:
-                - Path=${bff-redirect-call-to-resource-server-predicate}
+                - Path=${bff-resource-server-route-predicate}
               filters:
                 - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
                 - TokenRelay=
@@ -83,7 +87,7 @@ spring:
             client-id: ${client.id}
             client-secret: ${client.secret}
             scope: openid
-            redirect-uri: ${bff-proxy-uri}/login/oauth2/code/${authorization-server-name}
+            redirect-uri: ${bff-proxy-uri}/login/oauth2/code/{registrationId}
 
               #            Spring Security’s issuer-uri is used for both:
               # Discovery at startup (server-to-server call from BFF → Auth Server)
