@@ -1,0 +1,14 @@
+{
+  "name": "my-backend",
+  "version": "3.0.0",
+  "description": "Node.js/Express equivalent of Nidam's Spring Boot OAuth2 Resource Server. Variant 2",
+  "scripts": {
+    "start": "node src/server.js"
+  },
+  "author": "Nidam",
+  "type": "module",
+  "dependencies": {
+    "express": "5.2.1",
+    "jose": "6.2.10"
+  }
+}
