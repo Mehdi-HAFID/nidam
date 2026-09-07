@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<server description="new server">
+
+    <!-- Enable features -->
+    <featureManager>
+        <feature>jsonb-3.0</feature>
+        <feature>cdi-4.1</feature>
+        <feature>restfulWS-4.0</feature>
+        <feature>mpJwt-2.1</feature>
+    </featureManager>
+
+    <webApplication
+            location="my-backend.war"
+            contextRoot="${context.root}"/>
+
+    <!-- To access this server from a remote client add a host attribute to the following element, e.g. host="*" -->
+    <httpEndpoint id="defaultHttpEndpoint"
+                  httpPort="4003"
+                  httpsPort="-1" />
+
+    <mpJwt
+            id="nidamJwt"
+            issuer="http://localhost:7080/auth"
+            jwksUri="http://localhost:7080/auth/oauth2/jwks"
+            audiences="client"
+            signatureAlgorithm="RS256"
+            groupNameAttribute="authorities"
+            userNameAttribute="sub"
+            clockSkew="60s"/>
+
+</server>
