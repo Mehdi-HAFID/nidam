@@ -1,4 +1,5 @@
 param(
+    [Parameter(Position = 0)]
     [ValidateSet("start", "stop", "restart")]
     [string]$Command = "start",
 
@@ -6,7 +7,11 @@ param(
     [string]$Mode,
 
     [ValidateSet("h2", "registration", "token-generator", "reverse-proxy", "bff", "nidam", "spa")]
-    [string[]]$Exclude = @()
+    [string[]]$Exclude = @(),
+
+    [Parameter(Position = 1)]
+    [ValidateSet("h2", "registration", "token-generator", "reverse-proxy", "bff", "nidam", "spa")]
+    [string]$Only
 )
 
 Set-Location $PSScriptRoot
@@ -42,7 +47,7 @@ function Initialize-Exclusions {
         Write-Host "║   users-db-url    users-db-user   users-db-password                                                   ║" -ForegroundColor Yellow
         Write-Host "║                                                                                                       ║" -ForegroundColor Yellow
         Write-Host "║ Read the documentation for more information                                                           ║" -ForegroundColor Yellow
-        Write-Host "║ To Remove this message from appearing again remove lines from 33 to 47 in nidam.ps1                   ║" -ForegroundColor Yellow
+        Write-Host "║ To Remove this message from appearing again remove lines from 38 to 52 in nidam.ps1                   ║" -ForegroundColor Yellow
         Write-Host "╚═══════════════════════════════════════════════════════════════════════════════════════════════════════╝" -ForegroundColor Yellow
         Write-Host ""
     }
@@ -450,6 +455,13 @@ function Start-Nidam {
 # -----------------------------------
 
 function Stop-Nidam {
+
+    if ($Only) {
+        Write-Host "Stopping only: $Only..."
+        Stop-ServiceByPid $Only
+        Write-Host "✅ $Only stopped."
+        return
+    }
 
     Write-Host "Stopping Nidam services..."
 
