@@ -4,16 +4,13 @@ import {BrowserRouter, Navigate, Route, Routes} from "react-router-dom";
 import {Provider} from "react-redux";
 
 import reportWebVitals from './reportWebVitals';
-import SignUp from "./container/SignUp";
 import {store} from "./redux/store";
 // import './index.css';
-import ErrorPage from "./pages/ErrorPage";
 
 import '@fontsource/roboto/300.css';
 import '@fontsource/roboto/400.css';
 import '@fontsource/roboto/500.css';
 import '@fontsource/roboto/700.css';
-import Private from "./container/Private";
 import AuthenticationStartup from "./authentication/AuthenticationStartup";
 import AppRoutes from "./routing/AppRoutes";
 import {css, Global} from "@emotion/react";
@@ -33,7 +30,6 @@ root.render(
               </AuthenticationStartup>
           </BrowserRouter>
       </Provider>
-    {/*<App />*/}
   </React.StrictMode>
 );
 
