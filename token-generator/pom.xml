@@ -102,12 +102,12 @@
 
 		<!-- SQL Server 2025-->
 		<!-- Source: https://mvnrepository.com/artifact/com.microsoft.sqlserver/mssql-jdbc -->
-<!--		<dependency>-->
-<!--			<groupId>com.microsoft.sqlserver</groupId>-->
-<!--			<artifactId>mssql-jdbc</artifactId>-->
-<!--			<version>13.4.0.jre11</version>-->
-<!--			<scope>runtime</scope>-->
-<!--		</dependency>-->
+		<dependency>
+			<groupId>com.microsoft.sqlserver</groupId>
+			<artifactId>mssql-jdbc</artifactId>
+			<version>13.4.0.jre11</version>
+			<scope>runtime</scope>
+		</dependency>
 
 		<!-- IBM Db2 12-->
 		<!-- Source: https://mvnrepository.com/artifact/com.ibm.db2/jcc -->

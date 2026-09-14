@@ -44,6 +44,9 @@ function Initialize-Exclusions {
         Write-Host "╚═══════════════════════════════════════════════════════════════════════════════════════════════════════╝" -ForegroundColor Yellow
         Write-Host ""
     }
+    if ($EffectiveExclude.Count -gt 0) {
+        Write-Host "Excluded: [$($EffectiveExclude -join ', ')]"
+    }
     return $EffectiveExclude
 }
 
