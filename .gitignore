@@ -31,3 +31,6 @@ dev/pids/
 # OS
 .DS_Store
 Thumbs.db
+
+# Intellij Junie
+.junie/
