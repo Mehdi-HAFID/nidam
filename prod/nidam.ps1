@@ -63,6 +63,89 @@ function Test-Excluded {
     return $EffectiveExclude -contains $Name
 }
 
+# Download JDBC Drivers for Oracle and IBM Databases
+$JdbcDrivers = @{
+    oracle = @{
+        GroupId    = "com.oracle.database.jdbc"
+        ArtifactId = "ojdbc11"
+        Version    = "23.26.1.0.0"
+    }
+
+    db2 = @{
+        GroupId    = "com.ibm.db2"
+        ArtifactId = "jcc"
+        Version    = "12.1.4.0"
+    }
+}
+
+function Get-MavenCentralUrl {
+    param(
+        [hashtable]$Driver
+    )
+
+    $groupPath = $Driver.GroupId.Replace(".", "/")
+
+    #return "https://repo1.maven.org/maven2/$groupPath/$ArtifactId/$Version/$ArtifactId-$Version.jar"
+    return "https://repo1.maven.org/maven2/$groupPath/$($Driver.ArtifactId)/$($Driver.Version)/$($Driver.ArtifactId)-$($Driver.Version).jar"
+}
+
+function Get-DatabaseType {
+    param([string]$JdbcUrl)
+
+    if ($JdbcUrl -match '^jdbc:oracle:') {
+        return "oracle"
+    }
+
+    if ($JdbcUrl -match '^jdbc:db2:') {
+        return "db2"
+    }
+
+    return $null
+}
+
+function Ensure-JdbcDriver {
+    param([string]$DatabaseType)
+
+    if (-not $JdbcDrivers.ContainsKey($DatabaseType)) {
+        return $null
+    }
+
+    $driver = $JdbcDrivers[$DatabaseType]
+
+    $driversRoot = Join-Path $Root "jdbc"
+    $driverDir = Join-Path $driversRoot $DatabaseType
+    $driverJar = Join-Path $driverDir "$($driver.ArtifactId)-$($driver.Version).jar"
+
+    if (!(Test-Path $driverJar)) {
+        New-Item -ItemType Directory -Force -Path $driverDir | Out-Null
+
+        #$url = Get-MavenCentralUrl "com.oracle.database.jdbc" "ojdbc11" "23.26.1.0.0"
+        $url = Get-MavenCentralUrl $driver
+
+        Write-Host "$($DatabaseType.ToUpper()) JDBC driver not found."
+        Write-Host "Downloading $($driver.ArtifactId) $($driver.Version)..."
+
+        #Invoke-WebRequest `
+        #    -Uri  Get-MavenCentralUrl"https://repo1.maven.org/maven2/com/oracle/database/jdbc/ojdbc11/23.26.1.0.0/ojdbc11-23.26.1.0.0.jar" `
+        #    -OutFile $driverJar
+        try {
+            Invoke-WebRequest -Uri $url -OutFile $driverJar -UseBasicParsing
+
+            Write-Host "$($driver.ArtifactId) JDBC driver downloaded."
+        }
+        catch {
+            Write-Host "❌ Failed to download $($driver.ArtifactId) JDBC driver." -ForegroundColor Red
+            Write-Host $_.Exception.Message -ForegroundColor Red
+            return $null
+        }
+    }
+    else {
+        Write-Host "$($driver.ArtifactId) JDBC driver already installed."
+    }
+
+    return $driverDir
+}
+
 function Start-H2Database {
 
     $h2Jar = Join-Path $Root "db\h2-2.4.240.jar"
@@ -161,7 +244,8 @@ function Start-ServiceAsync {
         [string]$Jar,
         [string]$LogFile,
         [string]$ReadyPattern,
-        [string]$Arguments = ""
+        [string]$Arguments = "",
+        [string]$DriverPath = $null
     )
 
     if (Test-PortListening $Port) {
@@ -170,10 +254,18 @@ function Start-ServiceAsync {
     }
 
     return Start-Job -ScriptBlock {
-        param($JavaExe, $Name, $PidName, $Jar, $LogFile, $ReadyPattern, $pids, $Arguments)
+        param($JavaExe, $Name, $PidName, $Jar, $LogFile, $ReadyPattern, $pids, $Arguments, $DriverPath)
 
         # Write-Host "Starting $Name..."
-        $process = Start-Process $JavaExe -ArgumentList "-jar `"$Jar`" $Arguments" -RedirectStandardOutput $LogFile -PassThru -WindowStyle Hidden
+        $javaArguments = ""
+
+        if ($DriverPath) {
+            $javaArguments += "-Dloader.path=`"$DriverPath`" "
+        }
+
+        $javaArguments += "-jar `"$Jar`" $Arguments"
+
+        $process = Start-Process $JavaExe -ArgumentList $javaArguments -RedirectStandardOutput $LogFile -PassThru -WindowStyle Hidden
 
         $process.Id | Out-File "$pids\$PidName.pid"
 
@@ -203,7 +295,7 @@ function Start-ServiceAsync {
 
         Write-Host "❌ $Name failed to become ready within $TimeoutSeconds seconds."
         return $false
-    } -ArgumentList $JavaExe, $Name, $PidName, $Jar, $LogFile, $ReadyPattern, $pids, $Arguments
+    } -ArgumentList $JavaExe, $Name, $PidName, $Jar, $LogFile, $ReadyPattern, $pids, $Arguments, $DriverPath
 }
 
 # $GraceSeconds = 5
@@ -369,6 +461,21 @@ function Start-Nidam {
         SetupH2
     }
 
+    # JDBC Drivers
+    $dbUrl = Get-YamlValue $configPath "users-db-url"
+    $dbType = Get-DatabaseType $dbUrl
+
+    $driverPath = $null
+
+    if ($dbType) {
+        Write-Host "Database: $($dbType.ToUpper())"
+        $driverPath = Ensure-JdbcDriver $dbType
+        if (-not $driverPath) {
+            Write-Host "❌ Required JDBC driver could not be installed." -ForegroundColor Red
+            return
+        }
+    }
+
 
     # -------------------------------
     # Phase 2
@@ -377,7 +484,7 @@ function Start-Nidam {
     $jobSpa = $null
 
     if (-not (Test-Excluded "registration")) {
-        $jobRegistration = Start-ServiceAsync $registrationPort "Registration" "registration" "registration-2.0.0.jar" "$logs\registration.log" "Started RegistrationApplication" "--spring.profiles.active=prod"
+        $jobRegistration = Start-ServiceAsync $registrationPort "Registration" "registration" "registration-2.0.0.jar" "$logs\registration.log" "Started RegistrationApplication" "--spring.profiles.active=prod" $driverPath
     }
     if (-not (Test-Excluded "spa")) {
         $jobSpa = Start-ServiceAsync $spaPort "SPA Server" "spa" "spa-server-1.0.0.jar" "$logs\spa.log" "Started SpaServerApplication"
@@ -402,7 +509,7 @@ function Start-Nidam {
     }
 
     if (-not (Test-Excluded "token-generator")) {
-        $jobToken = Start-ServiceAsync $tokenGeneratorPort "Token Generator" "token-generator" "token-generator-2.0.0.jar" "$logs\token.log" "Started TokenGeneratorApplication" "--spring.profiles.active=prod"
+        $jobToken = Start-ServiceAsync $tokenGeneratorPort "Token Generator" "token-generator" "token-generator-2.0.0.jar" "$logs\token.log" "Started TokenGeneratorApplication" "--spring.profiles.active=prod" $driverPath
     }
 
     $jobsPhase2 = @($jobProxy, $jobToken) | Where-Object { $_ -ne $null }
