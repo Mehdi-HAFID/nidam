@@ -9,7 +9,8 @@ browser-facing-domain: http://localhost
 #users-db-password: "CcmN*`6@3T9H%P#yg^V<7v"
 
 # Dev and Binary Scripts: Embedded H2
-users-db-url: jdbc:h2:tcp://localhost:9092/identity_hub
+h2-embedded-port: 9092
+users-db-url: jdbc:h2:tcp://localhost:${h2-embedded-port}/identity_hub
 users-db-user: nidam
 users-db-password: "gF2mshbI819AV2L3"
 

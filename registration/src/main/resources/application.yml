@@ -12,7 +12,8 @@ registration-port: 4000
 
 
 # Dev and Binary Scripts: embedded H2
-users-db-url: jdbc:h2:tcp://localhost:9092/identity_hub
+h2-embedded-port: 9092
+users-db-url: jdbc:h2:tcp://localhost:${h2-embedded-port}/identity_hub
 users-db-user: nidam
 users-db-password: "gF2mshbI819AV2L3"
 

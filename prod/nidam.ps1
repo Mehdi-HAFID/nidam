@@ -147,6 +147,9 @@ function Ensure-JdbcDriver {
 }
 
 function Start-H2Database {
+    param(
+        [int]$Port
+    )
 
     $h2Jar = Join-Path $Root "db\h2-2.4.240.jar"
 
@@ -155,19 +158,19 @@ function Start-H2Database {
         return
     }
 
-    if (Test-PortListening 9092) {
+    if (Test-PortListening $Port) {
         Write-Host "H2 database already running."
         return
     }
 
     #Write-Host "Starting H2 database..."
 
-    $process = Start-Process $JavaExe -ArgumentList "-cp `"$h2Jar`" org.h2.tools.Server -tcp -tcpAllowOthers -ifNotExists -baseDir ./db" -RedirectStandardOutput "$logs\h2.log" -PassThru -WindowStyle Hidden
+    $process = Start-Process $JavaExe -ArgumentList "-cp `"$h2Jar`" org.h2.tools.Server -tcp -tcpAllowOthers -ifNotExists -tcpPort $Port -baseDir ./db" -RedirectStandardOutput "$logs\h2.log" -PassThru -WindowStyle Hidden
 
     $process.Id | Out-File "$pids\h2.pid"
 
     # Wait until port is open
-    while (-not (Test-PortListening 9092)) {
+    while (-not (Test-PortListening $Port)) {
         Start-Sleep -Milliseconds 100
     }
 
@@ -406,9 +409,12 @@ function Get-ResolvedReactProxyUri {
 }
 
 function SetupH2 {
+    param(
+        [int]$Port
+    )
     #$h2Jar = Join-Path $PSScriptRoot "h2-2.4.240.jar" dev
     $h2Jar = Join-Path $Root "db\h2-2.4.240.jar"
-    $dbUrl = "jdbc:h2:tcp://localhost:9092/identity_hub"
+    $dbUrl = "jdbc:h2:tcp://localhost:$Port/identity_hub"
 
     $result = & $JavaExe -cp $h2Jar org.h2.tools.Shell -url $dbUrl -user sa -password "" -sql "SELECT COUNT(*) FROM INFORMATION_SCHEMA.USERS WHERE USER_NAME = 'NIDAM';" 2>&1
     #Write-Host $result
@@ -437,6 +443,7 @@ function Start-Nidam {
     $configPath = Join-Path $PSScriptRoot "configuration.yml"
 
     # Resolve ports: configuration.yml overrides script defaults
+    $h2Port           			= Get-ResolvedPort $configPath "h2-embedded-port" 9092
     $registrationPort           = Get-ResolvedPort $configPath "registration-port" 4000
     $spaPort                    = Get-ResolvedPort $configPath "react-port" 4001
     $tokenGeneratorPort         = Get-ResolvedPort $configPath "authorization-server-port" 4002
@@ -445,7 +452,7 @@ function Start-Nidam {
     $bffPort                    = Get-ResolvedPort $configPath "bff-port" 7081
 
     Write-Host "Ports:"
-    if (-not (Test-Excluded "h2")) {Write-Host "  H2:                 9092" }
+    if (-not (Test-Excluded "h2")) {Write-Host "  H2:                 $h2Port" }
     if (-not (Test-Excluded "registration")) {Write-Host "  Registration:       $registrationPort"}
     if (-not (Test-Excluded "spa")) {Write-Host "  SPA:                $spaPort"}
     if (-not (Test-Excluded "token-generator")) {Write-Host "  Token Generator:    $tokenGeneratorPort"}
@@ -457,8 +464,8 @@ function Start-Nidam {
     # Phase 1
     # -------------------------------
     if (-not (Test-Excluded "h2")) {
-        Start-H2Database
-        SetupH2
+        Start-H2Database $h2Port
+        SetupH2 $h2Port
     }
 
     # JDBC Drivers
