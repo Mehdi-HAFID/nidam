@@ -44,6 +44,8 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.web.filter.ForwardedHeaderFilter;
+import org.thymeleaf.spring6.templateresolver.SpringResourceTemplateResolver;
+import org.thymeleaf.templatemode.TemplateMode;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -122,7 +124,7 @@ public class SecurityConfig {
 
 	private final ClientProperties clientProperties;
 
-	private static final String[] ALLOWED_PATHS = {"/css/**", "/media/**", "/vendors/**", "/error"};
+	private static final String[] ALLOWED_PATHS = {"/css/**", "/media/**", "/vendors/**", "/error", "/js/**", "/images/**"};
 	private static final String ACTUATOR_MATCHER = "/actuator/**";
 
 	public SecurityConfig(ClientProperties clientProperties) {
@@ -397,6 +399,44 @@ public class SecurityConfig {
 		FilterRegistrationBean<ForwardedHeaderFilter> filter = new FilterRegistrationBean<>();
 		filter.setFilter(new ForwardedHeaderFilter());
 		return filter;
+	}
+
+	/**
+	 * Resolves Thymeleaf templates from the external
+	 * {@code ./token-generator-ui/templates/} directory, allowing the hosted OAuth 2.0
+	 * login UI to be customized without modifying or recompiling the {@code token-generator}
+	 * JAR.
+	 *
+	 * <p>This works in the same way as the external {@code configuration.yml}: files placed
+	 * under the external directory can override the templates bundled with Nidam. The
+	 * resolver is given order {@code 1}, while the default Spring Boot Thymeleaf resolver
+	 * is configured with order {@code 2}, so an external template is preferred whenever it
+	 * exists.</p>
+	 *
+	 * <p>{@code checkExistence} is enabled to allow resolution to fall back to the bundled
+	 * classpath template when no external template is present.</p>
+	 *
+	 * <p>Template caching is disabled so that changes to external templates are picked up
+	 * without restarting the application.</p>
+	 *
+	 * <p>External static resources such as CSS, JavaScript, images, and fonts are configured
+	 * separately through the {@code spring.web.resources.static-locations} property.</p>
+	 *
+	 * @return the template resolver used to load externally provided Thymeleaf templates
+	 */
+	@Bean
+	public SpringResourceTemplateResolver externalTemplateResolver() {
+		SpringResourceTemplateResolver resolver = new SpringResourceTemplateResolver();
+
+		resolver.setPrefix("file:./token-generator-ui/templates/");
+		resolver.setSuffix(".html");
+		resolver.setTemplateMode(TemplateMode.HTML);
+		resolver.setCharacterEncoding("UTF-8");
+
+		resolver.setOrder(1);
+		resolver.setCheckExistence(true);
+
+		return resolver;
 	}
 
 }

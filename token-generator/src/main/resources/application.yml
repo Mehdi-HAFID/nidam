@@ -70,6 +70,13 @@ spring:
   session:
     redis:
       namespace: ${redis-token-generator-namespace}
+  web:
+    resources:
+      static-locations:
+        - file:./token-generator-ui/static/
+        - classpath:/static/
+  thymeleaf:
+    template-resolver-order: 2
 
 rate-limiter:
   enabled: true
