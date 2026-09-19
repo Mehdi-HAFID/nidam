@@ -1,0 +1,3 @@
+the variants are example for overriding the default Nidam Login page. read the docs at https://nidam.derbyware.com to see how
+
+this is folder for nidam-dev.ps1 to work with overriding. for production the /token-generator-ui is in the same level as the JAR files

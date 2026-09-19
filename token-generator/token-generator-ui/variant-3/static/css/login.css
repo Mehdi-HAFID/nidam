@@ -1,0 +1,267 @@
+
+:root {
+    --brand-color: #4f46e5; /* Indigo */
+    --brand-hover: #4338ca;
+    --surface: #ffffff;
+    --surface-hover: #f8fafc;
+    --text-main: #0f172a;
+    --text-secondary: #64748b;
+    --border-light: #e2e8f0;
+    --border-focus: #818cf8;
+    --ring-focus: rgba(99, 102, 241, 0.15);
+    --error-bg: #fef2f2;
+    --error-text: #b91c1c;
+    --error-border: #fecaca;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Inter', sans-serif;
+}
+
+/* Animated Mesh Gradient Background */
+body {
+    background-color: #f1f5f9;
+    background-image: radial-gradient(at 0% 0%, hsla(253, 16%, 7%, 0.03) 0, transparent 50%),
+    radial-gradient(at 50% 0%, hsla(225, 39%, 30%, 0.03) 0, transparent 50%),
+    radial-gradient(at 100% 0%, hsla(339, 49%, 30%, 0.03) 0, transparent 50%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 1.5rem;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Ambient background shapes */
+body::before, body::after {
+    content: "";
+    position: absolute;
+    width: 600px;
+    height: 600px;
+    border-radius: 50%;
+    filter: blur(80px);
+    z-index: -1;
+    animation: float 20s infinite alternate ease-in-out;
+}
+
+body::before {
+    background: rgba(79, 70, 229, 0.08);
+    top: -100px;
+    left: -100px;
+}
+
+body::after {
+    background: rgba(236, 72, 153, 0.08);
+    bottom: -100px;
+    right: -100px;
+    animation-delay: -10s;
+}
+
+@keyframes float {
+    0% {
+        transform: translate(0, 0) scale(1);
+    }
+    100% {
+        transform: translate(50px, 50px) scale(1.1);
+    }
+}
+
+/* Card Styling */
+.auth-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    width: 100%;
+    max-width: 420px;
+    padding: 3rem 2.5rem;
+    border-radius: 24px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05),
+    0 20px 40px -10px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 1);
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    position: relative;
+    z-index: 10;
+}
+
+.auth-header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+}
+
+/* Generic aesthetic logo placeholder */
+.logo-placeholder {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, var(--brand-color), #ec4899);
+    border-radius: 14px;
+    margin: 0 auto 1.25rem auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    box-shadow: 0 8px 16px rgba(79, 70, 229, 0.2);
+}
+
+.auth-header h1 {
+    font-size: 1.75rem;
+    font-weight: 600;
+    color: var(--text-main);
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.025em;
+}
+
+.auth-header p {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+}
+
+/* Error Banner */
+.error-alert {
+    background-color: var(--error-bg);
+    border: 1px solid var(--error-border);
+    color: var(--error-text);
+    padding: 1rem;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Floating Labels Inputs */
+.input-group {
+    position: relative;
+    margin-bottom: 1.25rem;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 1.25rem 1rem 0.5rem 1rem;
+    font-size: 1rem;
+    color: var(--text-main);
+    background-color: var(--surface);
+    border: 1.5px solid var(--border-light);
+    border-radius: 12px;
+    outline: none;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.input-group label {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-secondary);
+    font-size: 1rem;
+    pointer-events: none;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Floating Label Magic */
+.input-group input:focus,
+.input-group input:not(:placeholder-shown) {
+    border-color: var(--border-focus);
+    box-shadow: 0 0 0 4px var(--ring-focus);
+}
+
+.input-group input:focus + label,
+.input-group input:not(:placeholder-shown) + label,
+.input-group input:-webkit-autofill + label,
+.input-group input:autofill + label {
+    top: 0.35rem;
+    transform: translateY(0);
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--brand-color);
+}
+
+/* Smoothly handle Chrome autofill background override */
+.input-group input:-webkit-autofill,
+.input-group input:-webkit-autofill:hover,
+.input-group input:-webkit-autofill:focus {
+    -webkit-text-fill-color: var(--text-main);
+    -webkit-box-shadow: 0 0 0px 1000px var(--surface) inset;
+    transition: background-color 5000s ease-in-out 0s;
+}
+
+/* Password Toggle */
+.password-toggle {
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 0.25rem;
+    display: flex;
+    transition: color 0.2s;
+    z-index: 2;
+}
+
+.password-toggle:hover, .input-group input:focus ~ .password-toggle {
+    color: var(--brand-color);
+}
+
+/* Button */
+.btn-submit {
+    width: 100%;
+    padding: 0.875rem;
+    background-color: var(--text-main); /* Deep dark button for premium feel */
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-top: 0.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.btn-submit:hover {
+    background-color: #000000;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.btn-submit:active {
+    transform: translateY(0);
+}
+
+/* Footer */
+.auth-footer {
+    margin-top: 2rem;
+    text-align: center;
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+}
+
+.auth-footer a {
+    color: var(--brand-color);
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.2s;
+}
+
+.auth-footer a:hover {
+    color: var(--brand-hover);
+}
