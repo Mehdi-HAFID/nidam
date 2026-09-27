@@ -30,11 +30,12 @@ host: http://localhost
 reverse-proxy-port: 7080
 react-port: 4001
 
-react-host: ${host}:${react-port}
+react-origin: ${host}
+react-host: ${react-origin}:${react-port}
 react-ip: ${ip-address}:${react-port}
-reverse-host: ${host}:${reverse-proxy-port}
+reverse-proxy-uri: ${host}:${reverse-proxy-port}
 reverse-ip: ${ip-address}:${reverse-proxy-port}
-allowed-cors-uri: ${react-host},${react-ip},${reverse-host},${reverse-ip}
+allowed-cors-uri: ${react-host},${react-ip},${reverse-proxy-uri},${reverse-ip}
 # CORS END
 
 server:
