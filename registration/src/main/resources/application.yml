@@ -12,7 +12,8 @@ registration-port: 4000
 
 
 # Dev and Binary Scripts: embedded H2
-users-db-url: jdbc:h2:tcp://localhost:9092/identity_hub
+h2-embedded-port: 9092
+users-db-url: jdbc:h2:tcp://localhost:${h2-embedded-port}/identity_hub
 users-db-user: nidam
 users-db-password: "gF2mshbI819AV2L3"
 
@@ -29,11 +30,12 @@ host: http://localhost
 reverse-proxy-port: 7080
 react-port: 4001
 
-react-host: ${host}:${react-port}
+react-origin: ${host}
+react-host: ${react-origin}:${react-port}
 react-ip: ${ip-address}:${react-port}
-reverse-host: ${host}:${reverse-proxy-port}
+reverse-proxy-uri: ${host}:${reverse-proxy-port}
 reverse-ip: ${ip-address}:${reverse-proxy-port}
-allowed-cors-uri: ${react-host},${react-ip},${reverse-host},${reverse-ip}
+allowed-cors-uri: ${react-host},${react-ip},${reverse-proxy-uri},${reverse-ip}
 # CORS END
 
 server:
@@ -71,5 +73,4 @@ custom:
 # options: sql, mongo . default: sql . When changing don't forget to update ${users-db-url/username/password}
 nidam:
   persistence-mode: "sql"
-
-
+  protocol: http    # protocol: http|https
