@@ -18,8 +18,9 @@ bff-post-logout-endpoint: /post-logout
 react-prefix: /react-ui
 react-proxy-uri: ${reverse-proxy-uri}${react-prefix}   # also changed because of docker
 
+resource-server-origin: ${host}
 resource-server-port: 4003
-resource-server-uri: ${host}:${resource-server-port}
+resource-server-uri: ${resource-server-origin}:${resource-server-port}
 
 logout:
   auth-server-uri: ${issuer}/connect/logout
