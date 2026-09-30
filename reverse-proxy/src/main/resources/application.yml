@@ -1,6 +1,7 @@
 ## Custom properties to ease configuration overrides
 ## on command-line or IDE launch configurations
 host: http://localhost
+internal-host: http://localhost
 reverse-proxy-port: 7080
 
 react-origin: ${host}
@@ -11,21 +12,24 @@ react-uri: ${react-host}${react-prefix}
 
 authorization-server-port: 4002
 authorization-server-prefix: /auth
-authorization-server-uri-no-context-path: ${host}:${authorization-server-port}
-authorization-server-uri: ${host}:${authorization-server-port}${authorization-server-prefix}
+authorization-server-uri-no-context-path: ${internal-host}:${authorization-server-port}
+authorization-server-uri: ${internal-host}:${authorization-server-port}${authorization-server-prefix}
 
 authorization-server-load-balancer-uri: lb://token-generator
 authorization-server-health-check-path: ${authorization-server-prefix}/actuator/health
 
 bff-port: 7081
 bff-prefix: /bff
-bff-uri: ${host}:${bff-port}
+bff-uri: ${internal-host}:${bff-port}
 bff-load-balancer-uri: lb://bff
 bff-health-check-path: /actuator/health
 
 server:
   port: ${reverse-proxy-port}
   forward-headers-strategy: framework
+#  ssl:       Replaced by ServerSslConfig
+#    certificate: file:./https/host.pem
+#    certificate-private-key: file:./https/host-key.pem
 management:
   endpoints:
     access:
@@ -52,7 +56,7 @@ spring:
               filters:
                 - PreserveHostHeader    #  must explicitly enable forwarded header handling
                 # next: tells the downstream application (like your authorization server or BFF) what the original scheme of the client request was — usually either http or https
-                - AddRequestHeader=X-Forwarded-Proto, http
+                - SetRequestHeader=X-Forwarded-Proto, ${nidam.protocol}
             # Authorization-server
             - id: authorization-server
 #              uri: ${authorization-server-uri}
@@ -61,7 +65,8 @@ spring:
                 - Path=${authorization-server-prefix}/**
               filters:
                 - PreserveHostHeader            # Without PreserveHostHeader, the forwarded Host becomes localhost:4002
-                - AddRequestHeader=X-Forwarded-Proto, http
+                - SetRequestHeader=X-Forwarded-Proto, ${nidam.protocol}
+                - SetRequestHeader=X-Forwarded-Port, ${reverse-proxy-port}
             # BFF
             - id: bff
 #              uri: ${bff-uri}
@@ -71,7 +76,7 @@ spring:
               filters:
                 - StripPrefix=1
                 - PreserveHostHeader
-                - AddRequestHeader=X-Forwarded-Proto, http
+                - SetRequestHeader=X-Forwarded-Proto, ${nidam.protocol}
     discovery:
       client:
         simple:
@@ -89,5 +94,9 @@ spring:
         path:
           token-generator: ${authorization-server-health-check-path}
           bff: ${bff-health-check-path}
+
+# protocol: http|https
+nidam:
+  protocol: http
 
 #trace: true

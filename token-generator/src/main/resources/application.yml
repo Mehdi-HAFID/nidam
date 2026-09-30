@@ -46,7 +46,9 @@ server:
     contextPath: ${authorization-server-prefix}
     session:
       timeout: 12h
-  forward-headers-strategy: framework
+  forward-headers-strategy: native
+  tomcat:
+    redirect-context-root: false
 
 # first in the list is the default encoder
 custom:

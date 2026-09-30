@@ -73,5 +73,4 @@ custom:
 # options: sql, mongo . default: sql . When changing don't forget to update ${users-db-url/username/password}
 nidam:
   persistence-mode: "sql"
-
-
+  protocol: http    # protocol: http|https
