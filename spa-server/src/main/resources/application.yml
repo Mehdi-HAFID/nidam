@@ -28,3 +28,6 @@ react-login-url: ${bff-proxy-uri}/oauth2/authorization/token-generator
 react-logout-url: ${bff-proxy-uri}/logout
 
 profile-public-endpoint: /me
+
+nidam:
+  protocol: http

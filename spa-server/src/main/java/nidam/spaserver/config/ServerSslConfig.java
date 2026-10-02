@@ -1,4 +1,4 @@
-package nidam.reverseproxy.config;
+package nidam.spaserver.config;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.web.reactive.server.ConfigurableReactiveWebServerFactory;
@@ -8,11 +8,11 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * Configures HTTPS for the Nidam reverse proxy when HTTPS is enabled.
+ * Configures HTTPS for the Nidam spa server when HTTPS is enabled.
  * <p>
  * HTTPS is controlled by the {@code nidam.protocol} configuration property,
  * which defaults to {@code http}. When set to {@code https}, this configuration
- * enables SSL on the reverse proxy using the certificate and private key
+ * enables SSL on the spa server using the certificate and private key
  * provided in the {@code ./https} directory.
  * </p>
  *
@@ -23,7 +23,7 @@ import org.springframework.context.annotation.Configuration;
  *
  * <p>
  * SSL is configured programmatically so that {@code nidam.protocol} remains
- * the single switch used to enable or disable HTTPS for the reverse proxy.
+ * the single switch used to enable or disable HTTPS for the spa server.
  * </p>
  */
 @Configuration
@@ -40,7 +40,6 @@ public class ServerSslConfig {
 	public WebServerFactoryCustomizer<ConfigurableReactiveWebServerFactory> sslCustomizer() {
 
 		return factory -> {
-
 			Ssl ssl = new Ssl();
 			ssl.setEnabled(true);
 			ssl.setCertificate("file:./https/host.pem");
