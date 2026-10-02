@@ -24,6 +24,10 @@ bff-uri: ${internal-host}:${bff-port}
 bff-load-balancer-uri: lb://bff
 bff-health-check-path: /actuator/health
 
+registration-port: 4000
+registration-prefix: /registration
+registration-uri: ${internal-host}:${registration-port}
+
 server:
   port: ${reverse-proxy-port}
   forward-headers-strategy: framework
@@ -73,6 +77,15 @@ spring:
               uri: ${bff-load-balancer-uri} # Load balancer URI, for multiple instances of the BFF
               predicates:
                 - Path=${bff-prefix}/**
+              filters:
+                - StripPrefix=1
+                - PreserveHostHeader
+                - SetRequestHeader=X-Forwarded-Proto, ${nidam.protocol}
+            # Registration
+            - id: registration
+              uri: ${registration-uri}
+              predicates:
+                - Path=${registration-prefix}/**
               filters:
                 - StripPrefix=1
                 - PreserveHostHeader

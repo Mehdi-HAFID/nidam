@@ -9,9 +9,9 @@ server:
 
 
 # for spa config
-registration-port: 4000
 host: http://localhost
-registration-uri: ${host}:${registration-port}
+registration-prefix: /registration
+registration-uri: ${reverse-proxy-uri}${registration-prefix}
 
 react-port: 4001
 react-prefix: /react-ui

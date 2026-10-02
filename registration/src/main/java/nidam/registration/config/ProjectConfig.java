@@ -1,7 +1,6 @@
 package nidam.registration.config;
 
 import jakarta.servlet.DispatcherType;
-import nidam.registration.config.properties.AllowedCorsUriProperties;
 import nidam.registration.config.properties.PasswordProperties;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.annotation.Bean;
@@ -10,7 +9,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.crypto.argon2.Argon2PasswordEncoder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.DelegatingPasswordEncoder;
@@ -18,9 +16,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.crypto.password.Pbkdf2PasswordEncoder;
 import org.springframework.security.crypto.scrypt.SCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.server.SecurityWebFilterChain;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,8 +44,9 @@ public class ProjectConfig {
 	 * such as CSRF enforcement, session handling, or custom filters interfering with
 	 * operational endpoints.</p>
 	 *
-	 * @param http the {@link ServerHttpSecurity} to configure
-	 * @return a {@link SecurityWebFilterChain} that secures Actuator endpoints
+	 * @param http the {@link HttpSecurity} to configure
+	 * @return a {@link SecurityFilterChain} that secures Actuator endpoints
+	 * @throws Exception if the security configuration cannot be built
 	 */
 	@Bean
 	@Order(0)
@@ -64,56 +60,43 @@ public class ProjectConfig {
 	}
 
 	/**
-	 * Configures the Spring Security filter chain for the registration microservice.
-	 * <p>
-	 * This configuration is tailored for a service that exposes public registration endpoints
-	 * which are called directly from a frontend Single Page Application (SPA) running in the browser.
-	 * Since the SPA is served on a different origin (e.g. <code>http://localhost:4001</code>),
-	 * CORS rules must be explicitly configured here.
-	 * </p>
+	 * Configures the Spring Security filter chain for the registration service.
+	 *
+	 * <p>The registration service exposes only the endpoints required to create
+	 * a new user account. Browser-facing requests are served through the Nidam
+	 * reverse proxy, so cross-origin access is handled at the proxy level rather
+	 * than by this service. This security configuration therefore contains no
+	 * CORS rules.</p>
 	 *
 	 * <h2>Authorization rules</h2>
 	 * <ul>
-	 *   <li><b>Permit all</b> requests dispatched with {@link jakarta.servlet.DispatcherType#ERROR} –
-	 *       allows Spring's error handling to work without security restrictions.</li>
-	 *   <li><b>Permit all</b> for {@code POST /register} and {@code POST /registerCaptcha} –
-	 *       these endpoints must be publicly accessible for new users to sign up.</li>
-	 *   <li><b>Deny all</b> other requests – this microservice is not meant to serve
-	 *       authenticated or arbitrary endpoints.</li>
+	 *   <li><b>Permit all</b> requests dispatched with
+	 *       {@link DispatcherType#ERROR} so that Spring's error handling can
+	 *       complete without additional security restrictions.</li>
+	 *   <li><b>Permit all</b> {@code POST /register} and
+	 *       {@code POST /registerCaptcha}, which are the public endpoints used
+	 *       for user registration.</li>
+	 *   <li><b>Deny all</b> other requests. The registration service is not
+	 *       intended to expose any additional endpoints.</li>
 	 * </ul>
 	 *
 	 * <h2>CSRF protection</h2>
-	 * <ul>
-	 *   <li>CSRF protection is <b>disabled</b> using {@link org.springframework.security.config.annotation.web.configurers.CsrfConfigurer#disable()}.</li>
-	 *   <li>Reason: requests come from a public SPA with no session-based authentication,
-	 *       so CSRF protection is unnecessary here.</li>
-	 * </ul>
+	 * <p>CSRF protection is disabled because the registration endpoints are
+	 * public and do not rely on an authenticated session or other browser
+	 * authentication state.</p>
 	 *
 	 * <h2>HTTP Basic authentication</h2>
-	 * <ul>
-	 *   <li>Explicitly <b>disabled</b> via {@link org.springframework.security.config.annotation.web.configurers.HttpBasicConfigurer#disable()}.</li>
-	 *   <li>Reason: the registration API is not protected by username/password authentication,
-	 *       only by the allowed endpoints and CORS restrictions.</li>
-	 * </ul>
+	 * <p>HTTP Basic authentication is disabled because the registration
+	 * endpoints are intentionally public and are restricted by the authorization
+	 * rules above.</p>
 	 *
-	 * <h2>CORS configuration</h2>
-	 * <ul>
-	 *   <li>Enables CORS support with a custom {@link org.springframework.web.cors.CorsConfigurationSource}.</li>
-	 *   <li>Allowed origins: <code>http://localhost:4001</code>, <code>http://127.0.0.1:4001</code>,
-	 *       <code>http://localhost:7080</code>, <code>http://127.0.0.1:7080</code>.</li>
-	 *   <li>Allowed methods: all (<code>*</code>).</li>
-	 *   <li>Allowed headers: all (<code>*</code>).</li>
-	 *   <li>This ensures that the SPA, even when hosted on a different port, can send requests
-	 *       to the registration service without being blocked by the browser's same-origin policy.</li>
-	 * </ul>
-	 *
-	 * @param http the {@link HttpSecurity} to modify
+	 * @param http the {@link HttpSecurity} to configure
 	 * @return a configured {@link SecurityFilterChain} bean
 	 * @throws Exception if an error occurs while building the security configuration
 	 */
 	@Bean
 	@Order(1)
-	public SecurityFilterChain filterChain(HttpSecurity http, AllowedCorsUriProperties corsUris) throws Exception {
+	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 		http.authorizeHttpRequests((authorizeHttpRequests) ->
 						authorizeHttpRequests.dispatcherTypeMatchers(DispatcherType.ERROR).permitAll().
 								requestMatchers(HttpMethod.POST, REGISTER_ENDPOINT, REGISTER_RECAPTCHA_ENDPOINT).permitAll().
@@ -122,16 +105,7 @@ public class ProjectConfig {
 				);
 		http.csrf((csrf) -> csrf.disable());
 		http.httpBasic(httpSecurityHttpBasicConfigurer -> httpSecurityHttpBasicConfigurer.disable());
-		http.cors(c -> {
-			CorsConfigurationSource source = request -> {
-				CorsConfiguration config = new CorsConfiguration();
-				config.setAllowedOrigins(corsUris.getAllowedCorsUri());
-				config.setAllowedMethods(List.of("*"));
-				config.setAllowedHeaders(List.of("*"));
-				return config;
-			};
-			c.configurationSource(source);
-		});
+
 		return http.build();
 	}
 
