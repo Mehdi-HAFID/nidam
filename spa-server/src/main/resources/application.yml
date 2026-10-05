@@ -14,7 +14,7 @@ registration-prefix: /registration
 registration-uri: ${reverse-proxy-uri}${registration-prefix}
 
 react-port: 4001
-react-prefix: /react-ui
+react-prefix: /spa
 reverse-proxy-port: 7080
 reverse-proxy-uri: ${host}:${reverse-proxy-port}
 react-proxy-uri: ${reverse-proxy-uri}${react-prefix}

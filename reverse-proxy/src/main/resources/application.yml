@@ -7,7 +7,7 @@ reverse-proxy-port: 7080
 react-origin: ${host}
 react-port: 4001
 react-host: ${react-origin}:${react-port}
-react-prefix: /react-ui
+react-prefix: /spa
 react-uri: ${react-host}${react-prefix}
 
 authorization-server-port: 4002
@@ -53,7 +53,7 @@ spring:
             - AddResponseHeader=Referrer-Policy, no-referrer
           routes:
             # SPAs assets
-            - id: react-ui
+            - id: spa
               uri: ${react-uri}
               predicates:
                 - Path=${react-prefix}/**       # Changed because of docker: last chance

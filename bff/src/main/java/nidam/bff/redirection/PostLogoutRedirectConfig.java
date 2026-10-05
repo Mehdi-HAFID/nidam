@@ -40,7 +40,7 @@ import java.util.logging.Logger;
  *   <li>Authorization Server redirects back to
  *       {@code http://localhost:7080/bff/post-logout?state=<encodedUri>}.</li>
  *   <li>The filter validates the {@code state} and redirects to
- *       {@code http://localhost:7080/react-ui} or another trusted URI.</li>
+ *       {@code http://localhost:7080/spa} or another trusted URI.</li>
  * </ol>
  *
  * @see LogoutProperties for configuration of allowed redirect URI prefixes

@@ -28,7 +28,7 @@ authorization-server-prefix: /auth
 issuer: ${reverse-proxy-uri}${authorization-server-prefix}
 
 bff-prefix: /bff
-react-prefix: /react-ui
+react-prefix: /spa
 bff-post-logout-endpoint: /post-logout
 
 client:

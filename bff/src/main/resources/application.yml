@@ -15,7 +15,7 @@ bff-prefix: /bff
 bff-proxy-uri: ${reverse-proxy-uri}${bff-prefix}
 bff-post-logout-endpoint: /post-logout
 
-react-prefix: /react-ui
+react-prefix: /spa
 react-proxy-uri: ${reverse-proxy-uri}${react-prefix}   # also changed because of docker
 
 resource-server-origin: ${host}
