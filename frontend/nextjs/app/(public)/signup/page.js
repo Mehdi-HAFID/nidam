@@ -23,6 +23,7 @@ import * as registerSagas from "../../../redux/register/saga";
 import {registerResetError} from "../../../redux/register/registerSlice";
 import Login from "../../components/Login";
 import {isLoggedInResetError} from "../../../redux/authentication/authenticationSlice";
+import {CONFIG} from "../../../config";
 
 // import Link as LL from 'react'
 
@@ -57,27 +58,51 @@ const SignUp = (props) => {
 	const registrationError = useSelector((state) => state.register.registrationError)
 
 	const isLoggedInError = useSelector((state) => state.authentication.isLoggedInError);
+	const [showRecaptchaError, setShowRecaptchaError] = useState(false);
 
 	useEffect(() => {
 		document.title = "Sign up - Nidam By Mehdi Hafid";
 		// ReCaptcha
-		const script = document.createElement('script');
-		script.src = 'https://www.google.com/recaptcha/api.js?render=6LcyyEMpAAAAAMztnW6xVq1HFD0b-mlyk2t6NZa-';
-		script.class = "external-script"
-		script.async = true;
-		script.defer = true;
-		document.body.appendChild(script);
-		return () => {
-			document.body.removeChild(script);
-		};
+
+		if (CONFIG.RECAPTCHA_ENABLED === 'true'){
+			const script = document.createElement('script');
+			script.src = `https://www.google.com/recaptcha/api.js?render=${CONFIG.RECAPTCHA_KEY}`;
+			script.class = "external-script"
+			script.async = true;
+			script.defer = true;
+			script.onerror = () => {
+				console.error("Failed to load reCaptcha");
+				setShowRecaptchaError(true);
+			};
+			document.body.appendChild(script);
+			return () => {
+				document.body.removeChild(script);
+			};
+		}
 	}, []);
+
+	const initiateRegister = (e) => {
+		console.log("process.env.REACT_APP_RECAPTCHA: ", CONFIG.RECAPTCHA_ENABLED);
+		if (CONFIG.RECAPTCHA_ENABLED === 'true'){
+			console.log("registering using recaptcha");
+			executeReCaptcha(e);
+		}
+		else {
+			console.log("registering without recaptcha");
+			register(null);
+		}
+	}
 
 	const executeReCaptcha = (e) => {
 		e.preventDefault();
-		// TODO window.grecaptcha is null when offline: fix by showing an error to do the user
-		//  second add feature to skip recaptcha system wide: spa and backend
+
+		if(window.grecaptcha === undefined ){
+			// console.log("grecaptcha is undefined", window.grecaptcha);
+			setShowRecaptchaError(true);
+			return;
+		}
 		window.grecaptcha.ready(function() {
-			window.grecaptcha.execute('6LcyyEMpAAAAAMztnW6xVq1HFD0b-mlyk2t6NZa-', {action: 'submit'})
+			window.grecaptcha.execute(CONFIG.RECAPTCHA_KEY, {action: 'submit'})
 				// .then(token => verifyReCaptcha(token))
 				.then(token => register(token))
 		});
@@ -93,11 +118,15 @@ const SignUp = (props) => {
 		}
 		const user = {
 			email: email.value,
-			password: password.value,
-			recaptchaKey: token
+			password: password.value
+			// recaptchaKey: token
+		}
+
+		if(token != null){
+			user.recaptchaKey = token;
 		}
 		console.log("user: ", user);
-		dispatch(registerSagas.register(user));
+		dispatch(registerSagas.register(token != null, user));
 	}
 
 	const [email, setEmail] = useState({
@@ -239,7 +268,7 @@ const SignUp = (props) => {
 
 				{
 					( registrationError !== null) ?
-						<Alert severity="error" onClose={() => dispatch(registerResetError())}>{registrationError}</Alert> : null
+						<Alert severity="error" sx={{mt: 2}} onClose={() => dispatch(registerResetError())}>{registrationError}</Alert> : null
 				}
 
 				{/* /me error TODO add Try Again Button */}
@@ -248,119 +277,165 @@ const SignUp = (props) => {
 						<Alert severity="error" sx={{mt: 2}} onClose={() => dispatch(isLoggedInResetError())}>{isLoggedInError}</Alert> : null
 				}
 
+				{
+					(showRecaptchaError === true) ?
+						<Alert severity="error" sx={{mt: 2}} onClose={() => setShowRecaptchaError(false)}>
+							Cannot Connect to Google Recaptcha, Check if you're online!
+							When you're back online refresh the page.
+						</Alert> :
+						null
+				}
+
 				<Box sx={{mt: 1}}>
-					<TextField
-						margin="normal"
-						required
-						fullWidth
-						id="email"
-						label="Email Address"
-						name="email"
-						autoComplete="email"
-						autoFocus
-						value={email.value}
-						onChange={emailChangeHandler}
-						helperText={!email.valid ? email.validationMessage : ""}
-						error={!email.valid}
-					/>
-					<FormControl
-						// sx={{ m: 1, width: '25ch' }}
-						variant="outlined"
-						fullWidth
-						margin="normal"
-						error={touchedPassword && !password.valid}
-					>
-						<InputLabel htmlFor="password" >Password</InputLabel>
-						<OutlinedInput
-							// id="outlined-adornment-password"
-							endAdornment={
-								<InputAdornment position="end">
-									<IconButton
-										aria-label="toggle password visibility"
-										onClick={handleClickShowPassword}
-										// onMouseDown={handleMouseDownPassword}
-										edge="end"
-									>
-										{showPassword ? <VisibilityOff /> : <Visibility />}
-									</IconButton>
-								</InputAdornment>
-							}
-							// margin="normal"
-							required
-							name="password"
-							label="Password"
-							type={showPassword ? 'text' : 'password'}
-							id="password"
-							autoComplete="new-password"
-							value={password.value}
-							onChange={passwordChangeHandler}
+					<form>
+						<TextField
+							margin="normal"
+
+							fullWidth
+							id="email"
+							label="Email Address"
+							name="email"
+							autoComplete="email"
+							autoFocus
+							value={email.value}
+							onChange={emailChangeHandler}
+							helperText={!email.valid ? email.validationMessage : ""}
+							error={!email.valid}
 						/>
-						<FormHelperText>
-							{(touchedPassword && !password.valid) ? password.validationMessage : ""}
-						</FormHelperText>
-					</FormControl>
-					<FormControl
-						// sx={{ m: 1, width: '25ch' }}
-						variant="outlined"
-						fullWidth
-						margin="normal"
-						error={touchedPassword && !confirmPassword.valid}
-					>
-						<InputLabel htmlFor="password-confirmation" >Confirm Password</InputLabel>
-						<OutlinedInput
-							// id="outlined-adornment-password"
-							endAdornment={
-								<InputAdornment position="end">
-									<IconButton
-										aria-label="toggle password visibility"
-										onClick={handleClickShowPassword}
-										// onMouseDown={handleMouseDownPassword}
-										edge="end"
-									>
-										{showPassword ? <VisibilityOff /> : <Visibility />}
-									</IconButton>
-								</InputAdornment>
-							}
-							// margin="normal"
-							required
-							name="password-confirmation"
-							label="Confirm Password"
-							type={showPassword ? 'text' : 'password'}
-							id="password-confirmation"
-							autoComplete="new-password"
-							value={confirmPassword.value}
-							onChange={confirmPasswordChangeHandler}
-						/>
-						<FormHelperText>
-							{(touchedPassword && !confirmPassword.valid) ? confirmPassword.validationMessage : ""}
-						</FormHelperText>
-					</FormControl>
+						<FormControl
+							// sx={{ m: 1, width: '25ch' }}
+							variant="outlined"
+							fullWidth
+							margin="normal"
+							error={touchedPassword && !password.valid}
+						>
+							<InputLabel htmlFor="password" >Password</InputLabel>
+							<OutlinedInput
+								// id="outlined-adornment-password"
+								endAdornment={
+									<InputAdornment position="end">
+										<IconButton
+											aria-label="toggle password visibility"
+											onClick={handleClickShowPassword}
+											// onMouseDown={handleMouseDownPassword}
+											edge="end"
+										>
+											{showPassword ? <VisibilityOff /> : <Visibility />}
+										</IconButton>
+									</InputAdornment>
+								}
+								// margin="normal"
 
-					<FormControl error={true}>
-						<FormGroup >
-							<FormControlLabel control={<Checkbox value="remember" color="primary" name="terms"
-																 onChange={(event) => {
-																	 setTermsAccepted(event.target.checked);
-																 }}
-							/>}
-											  label={<>I agree to <a href="https://nidam.derbyware.com/" target="_blank">the
-												  Terms &amp; Conditions</a></>}
-							>
+								name="password"
+								label="Password"
+								type={showPassword ? 'text' : 'password'}
+								id="password"
+								autoComplete="new-password"
+								value={password.value}
+								onChange={passwordChangeHandler}
+							/>
+							<FormHelperText>
+								{(touchedPassword && !password.valid) ? password.validationMessage : ""}
+							</FormHelperText>
+						</FormControl>
+						{/*<TextField*/}
+						{/*	margin="normal"*/}
+						{/*	required*/}
+						{/*	fullWidth*/}
+						{/*	name="password"*/}
+						{/*	label="Password"*/}
+						{/*	type="password"*/}
+						{/*	id="password"*/}
+						{/*	autoComplete="new-password"*/}
+						{/*	value={password.value}*/}
+						{/*	onChange={passwordChangeHandler}*/}
+						{/*	helperText={(touchedPassword && !password.valid) ? password.validationMessage : ""}*/}
+						{/*	error={touchedPassword && !password.valid}*/}
+						{/*/>*/}
+						<FormControl
+							// sx={{ m: 1, width: '25ch' }}
+							variant="outlined"
+							fullWidth
+							margin="normal"
+							error={touchedPassword && !confirmPassword.valid}
+						>
+							<InputLabel htmlFor="password-confirmation" >Confirm Password</InputLabel>
+							<OutlinedInput
+								// id="outlined-adornment-password"
+								endAdornment={
+									<InputAdornment position="end">
+										<IconButton
+											aria-label="toggle password visibility"
+											onClick={handleClickShowPassword}
+											// onMouseDown={handleMouseDownPassword}
+											edge="end"
+										>
+											{showPassword ? <VisibilityOff /> : <Visibility />}
+										</IconButton>
+									</InputAdornment>
+								}
+								// margin="normal"
 
-							</FormControlLabel>
-						</FormGroup>
-						{showTermsError && <FormHelperText>You must accept terms</FormHelperText>}
-					</FormControl>
+								name="password-confirmation"
+								label="Confirm Password"
+								type={showPassword ? 'text' : 'password'}
+								id="password-confirmation"
+								autoComplete="new-password"
+								value={confirmPassword.value}
+								onChange={confirmPasswordChangeHandler}
+							/>
+							<FormHelperText>
+								{(touchedPassword && !confirmPassword.valid) ? confirmPassword.validationMessage : ""}
+							</FormHelperText>
+						</FormControl>
 
-					<Button fullWidth variant="contained" sx={{mt: 3, mb: 2}} onClick={executeReCaptcha} disabled={registrationLoading}>
-						Sign Up
-					</Button>
+						{/*<TextField*/}
+						{/*	margin="normal"*/}
+						{/*	required*/}
+						{/*	fullWidth*/}
+						{/*	name="password-confirmation"*/}
+						{/*	label="Confirm Password"*/}
+						{/*	type="password"*/}
+						{/*	id="password-confirmation"*/}
+						{/*	autoComplete="new-password"*/}
+						{/*	value={confirmPassword.value}*/}
+						{/*	onChange={confirmPasswordChangeHandler}*/}
+						{/*	helperText={(touchedPassword && !confirmPassword.valid) ? confirmPassword.validationMessage : ""}*/}
+						{/*	error={touchedPassword && !confirmPassword.valid}*/}
+						{/*/>*/}
+						{/*<FormControlLabel*/}
+						{/*	control={<Checkbox value="remember" color="primary"/>}*/}
+						{/*	label="Remember me"*/}
+						{/*/>*/}
+						<FormControl error={true}>
+							<FormGroup >
+								<FormControlLabel control={<Checkbox value="remember" color="primary" name="terms"
+								                                     onChange={(event) => {
+									                                     setTermsAccepted(event.target.checked);
+								                                     }}
+								/>}
+								                  label={<>I agree to <a href="https://nidam.derbyware.com/" target="_blank">the
+									                  Terms &amp; Conditions</a></>}
+								>
 
-					<Grid container direction="column" justifyContent="center" alignItems="flex-end">
-						<Grid item>
-							<Login/>
+								</FormControlLabel>
+							</FormGroup>
+							{showTermsError && <FormHelperText>You must accept terms</FormHelperText>}
+						</FormControl>
+
+						<Button fullWidth variant="contained" sx={{mt: 3, mb: 2}} onClick={initiateRegister} disabled={registrationLoading}>
+							Sign Up
+						</Button>
+
+						<Grid container direction="column" justifyContent="center" alignItems="flex-end">
+							<Grid item>
+								<Login/>
+							</Grid>
+							{/*<Grid item>*/}
+							{/*	<NavLink to="/secret">Secret Page</NavLink>*/}
+							{/*</Grid>*/}
 						</Grid>
-					</Grid>
+					</form>
 				</Box>
 			</Box>
 			<Copyright sx={{mt: 8, mb: 4}}/>

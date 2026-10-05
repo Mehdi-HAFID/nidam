@@ -28,6 +28,8 @@ react-login-url: ${bff-proxy-uri}/oauth2/authorization/token-generator
 react-logout-url: ${bff-proxy-uri}/logout
 
 profile-public-endpoint: /me
+recaptcha-enabled: 'false'
+recaptcha-key: 6LcyyEMpAAAAAMztnW6xVq1HFD0b-mlyk2t6NZa-
 
 nidam:
   protocol: http
