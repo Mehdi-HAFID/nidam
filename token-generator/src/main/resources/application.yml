@@ -98,6 +98,10 @@ nidam:
   persistence-mode: "sql"
   session-mode: "tomcat"    # options: tomcat, redis
 
+ha:
+  token-generator:
+    https: false
+
 management:
   endpoints:
     access:
