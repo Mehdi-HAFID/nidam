@@ -8,7 +8,13 @@ export function* registerReCaptcha(action) {
 	yield put(registerStart());
 
 	try {
-		const response = yield registerAxios.post("registerCaptcha", action.user);
+		let response;
+		if (action.useRecaptcha === true) {
+			response = yield registerAxios.post("registerCaptcha", action.user);
+		} else {
+			response = yield registerAxios.post("register", action.user);
+		}
+
 		// console.log("register response: ", response.data);
 
 		yield put(registerSuccess({user: response.data}));

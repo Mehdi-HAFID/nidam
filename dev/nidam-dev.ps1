@@ -339,7 +339,7 @@ function Start-Nidam {
     Write-Host "✅ Nidam started."
 
     if (-not (Test-Excluded "spa") -and -not (Test-Excluded "reverse-proxy")) {
-        Start-Process "http://localhost:7080/react-ui"
+        Start-Process "http://localhost:7080/spa"
     }
 }
 
