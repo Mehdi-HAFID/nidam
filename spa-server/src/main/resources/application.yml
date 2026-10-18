@@ -9,12 +9,12 @@ server:
 
 
 # for spa config
-registration-port: 4000
 host: http://localhost
-registration-uri: ${host}:${registration-port}
+registration-prefix: /registration
+registration-uri: ${reverse-proxy-uri}${registration-prefix}
 
 react-port: 4001
-react-prefix: /react-ui
+react-prefix: /spa
 reverse-proxy-port: 7080
 reverse-proxy-uri: ${host}:${reverse-proxy-port}
 react-proxy-uri: ${reverse-proxy-uri}${react-prefix}
@@ -28,3 +28,8 @@ react-login-url: ${bff-proxy-uri}/oauth2/authorization/token-generator
 react-logout-url: ${bff-proxy-uri}/logout
 
 profile-public-endpoint: /me
+recaptcha-enabled: 'false'
+recaptcha-key: 6LcyyEMpAAAAAMztnW6xVq1HFD0b-mlyk2t6NZa-
+
+nidam:
+  protocol: http

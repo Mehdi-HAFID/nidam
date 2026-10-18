@@ -381,7 +381,7 @@ function Get-ResolvedPort {
 function Get-ResolvedReactProxyUri {
     $defaultHost = "http://localhost"
     $defaultReverseProxyPort = 7080
-    $defaultReactPrefix = "/react-ui"
+    $defaultReactPrefix = "/spa"
 
     $configPath = Join-Path $PSScriptRoot "configuration.yml"
 

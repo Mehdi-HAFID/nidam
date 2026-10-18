@@ -1,4 +1,7 @@
 host: http://localhost
+# host-origin: introduced so HA instances don't have to set users-db-url and redis-url when localhost is replaced with a local ip
+# currently this affects token generator and bff
+host-origin: localhost
 reverse-proxy-port: 7080
 reverse-proxy-uri: ${host}:${reverse-proxy-port}      # because of docker logout, do not override in compose
 
@@ -15,7 +18,7 @@ bff-prefix: /bff
 bff-proxy-uri: ${reverse-proxy-uri}${bff-prefix}
 bff-post-logout-endpoint: /post-logout
 
-react-prefix: /react-ui
+react-prefix: /spa
 react-proxy-uri: ${reverse-proxy-uri}${react-prefix}   # also changed because of docker
 
 resource-server-origin: ${host}
@@ -52,7 +55,7 @@ management:
 bff-resource-server-route-prefix: /api
 bff-resource-server-route-predicate: ${bff-resource-server-route-prefix}/**
 
-redis-url: redis://localhost:6379
+redis-url: redis://:mehdi@${host-origin}:6379
 redis-bff-namespace: nidam:bff
 
 profile-public-endpoint: /me
@@ -110,4 +113,8 @@ spring:
 
 nidam:
   session-mode: "tomcat"    # options: tomcat, redis
-#trace: true
+
+
+ha:
+  bff:
+    https: false

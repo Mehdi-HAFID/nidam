@@ -29,5 +29,13 @@ export const CONFIG = {
 	BASE_PATH:
 		runtimeConfig.BASE_PATH ||
 		process.env.NEXT_PUBLIC_BASE_PATH,
+
+	RECAPTCHA_ENABLED:
+		runtimeConfig.RECAPTCHA_ENABLED ||
+		process.env.NEXT_PUBLIC_RECAPTCHA_ENABLED,
+
+	RECAPTCHA_KEY:
+		runtimeConfig.RECAPTCHA_KEY ||
+		process.env.NEXT_PUBLIC_RECAPTCHA_KEY
 };
 

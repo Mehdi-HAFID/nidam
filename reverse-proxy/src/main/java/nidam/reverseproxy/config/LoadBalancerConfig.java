@@ -28,7 +28,8 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @LoadBalancerClients({
 		@LoadBalancerClient( name = "token-generator", configuration = DefaultHealthCheckLoadBalancerConfig.class),
-		@LoadBalancerClient( name = "bff", configuration = DefaultHealthCheckLoadBalancerConfig.class)
+		@LoadBalancerClient( name = "bff", configuration = DefaultHealthCheckLoadBalancerConfig.class),
+		@LoadBalancerClient( name = "registration", configuration = DefaultHealthCheckLoadBalancerConfig.class),
 })
 public class LoadBalancerConfig {
 }

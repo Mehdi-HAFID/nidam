@@ -34,6 +34,14 @@ export const CONFIG = {
 	BASE_PATH:
 		runtimeConfig.BASE_PATH ||
 		process.env.REACT_APP_BASE_PATH,
+
+	RECAPTCHA_ENABLED:
+		runtimeConfig.RECAPTCHA_ENABLED ||
+		process.env.REACT_APP_RECAPTCHA_ENABLED,
+
+	RECAPTCHA_KEY:
+		runtimeConfig.RECAPTCHA_KEY ||
+		process.env.REACT_APP_RECAPTCHA_KEY
 };
 
 
