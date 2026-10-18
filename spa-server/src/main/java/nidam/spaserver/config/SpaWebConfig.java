@@ -37,6 +37,12 @@ public class SpaWebConfig {
 	@Value("${profile-public-endpoint}")
 	private String meEndpoint;
 
+	@Value("${recaptcha-enabled}")
+	private String recaptchaEnabled;
+
+	@Value("${recaptcha-key}")
+	private String recaptchaKey;
+
 	@Bean
 	public RouterFunction<ServerResponse> spaRouter() {
 		FileSystemResource index = new FileSystemResource(SPA_ROOT + "/index.html");
@@ -51,7 +57,9 @@ public class SpaWebConfig {
                 	LOGIN_URL: "%s",
                 	LOGOUT_URL: "%s",
                 	PROFILE_PUBLIC_ENDPOINT: "%s",
-                	BASE_PATH: "%s"
+                	BASE_PATH: "%s",
+                	RECAPTCHA_ENABLED: "%s",
+                	RECAPTCHA_KEY: "%s"
                 };
             """.formatted(registrationUri,
 							reactProxyUri,
@@ -59,7 +67,9 @@ public class SpaWebConfig {
 							reactLoginUrl,
 							reactLogoutUrl,
 							meEndpoint,
-							reactPrefix);
+							reactPrefix,
+							recaptchaEnabled,
+							recaptchaKey);
 //					log.info("computed react config: " + js);
 
 					return ServerResponse.ok()

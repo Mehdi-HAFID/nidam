@@ -21,6 +21,7 @@ import * as registerSagas from "../redux/register/saga";
 import {registerResetError} from "../redux/register/registerSlice";
 import Login from "./Login";
 import {isLoggedInResetError} from "../redux/authentication/authenticationSlice";
+import {CONFIG} from "../config";
 
 // import Link as LL from 'react'
 
@@ -55,27 +56,51 @@ const SignUp = (props) => {
 	const registrationError = useSelector((state) => state.register.registrationError)
 
 	const isLoggedInError = useSelector((state) => state.authentication.isLoggedInError);
+	const [showRecaptchaError, setShowRecaptchaError] = useState(false);
 
 	useEffect(() => {
 		document.title = "Sign up - Nidam By Mehdi Hafid";
 		// ReCaptcha
-		const script = document.createElement('script');
-		script.src = 'https://www.google.com/recaptcha/api.js?render=6LcyyEMpAAAAAMztnW6xVq1HFD0b-mlyk2t6NZa-';
-		script.class = "external-script"
-		script.async = true;
-		script.defer = true;
-		document.body.appendChild(script);
-		return () => {
-			document.body.removeChild(script);
-		};
+
+		if (CONFIG.RECAPTCHA_ENABLED === 'true'){
+			const script = document.createElement('script');
+			script.src = `https://www.google.com/recaptcha/api.js?render=${CONFIG.RECAPTCHA_KEY}`;
+			script.class = "external-script"
+			script.async = true;
+			script.defer = true;
+			script.onerror = () => {
+				console.error("Failed to load reCaptcha");
+				setShowRecaptchaError(true);
+			};
+			document.body.appendChild(script);
+			return () => {
+				document.body.removeChild(script);
+			};
+		}
 	}, []);
+
+	const initiateRegister = (e) => {
+		console.log("process.env.REACT_APP_RECAPTCHA: ", CONFIG.RECAPTCHA_ENABLED);
+		if (CONFIG.RECAPTCHA_ENABLED === 'true'){
+			console.log("registering using recaptcha");
+			executeReCaptcha(e);
+		}
+		else {
+			console.log("registering without recaptcha");
+			register(null);
+		}
+	}
 
 	const executeReCaptcha = (e) => {
 		e.preventDefault();
-		// TODO window.grecaptcha is null when offline: fix by showing an error to do the user
-		//  second add feature to skip recaptcha system wide: spa and backend
+
+		if(window.grecaptcha === undefined ){
+			// console.log("grecaptcha is undefined", window.grecaptcha);
+			setShowRecaptchaError(true);
+			return;
+		}
 		window.grecaptcha.ready(function() {
-			window.grecaptcha.execute('6LcyyEMpAAAAAMztnW6xVq1HFD0b-mlyk2t6NZa-', {action: 'submit'})
+			window.grecaptcha.execute(CONFIG.RECAPTCHA_KEY, {action: 'submit'})
 				// .then(token => verifyReCaptcha(token))
 				.then(token => register(token))
 		});
@@ -91,11 +116,15 @@ const SignUp = (props) => {
 		}
 		const user = {
 			email: email.value,
-			password: password.value,
-			recaptchaKey: token
+			password: password.value
+			// recaptchaKey: token
+		}
+
+		if(token != null){
+			user.recaptchaKey = token;
 		}
 		console.log("user: ", user);
-		dispatch(registerSagas.register(user));
+		dispatch(registerSagas.register(token != null, user));
 	}
 
 	const [email, setEmail] = useState({
@@ -237,7 +266,7 @@ const SignUp = (props) => {
 
 				{
 					( registrationError !== null) ?
-						<Alert severity="error" onClose={() => dispatch(registerResetError())}>{registrationError}</Alert> : null
+						<Alert severity="error" sx={{mt: 2}} onClose={() => dispatch(registerResetError())}>{registrationError}</Alert> : null
 				}
 
 				{/* /me error TODO add Try Again Button */}
@@ -246,10 +275,20 @@ const SignUp = (props) => {
 						<Alert severity="error" sx={{mt: 2}} onClose={() => dispatch(isLoggedInResetError())}>{isLoggedInError}</Alert> : null
 				}
 
+				{
+					(showRecaptchaError === true) ?
+						<Alert severity="error" sx={{mt: 2}} onClose={() => setShowRecaptchaError(false)}>
+							Cannot Connect to Google Recaptcha, Check if you're online!
+							When you're back online refresh the page.
+						</Alert> :
+						null
+				}
+
 				<Box sx={{mt: 1}}>
+					<form>
 					<TextField
 						margin="normal"
-						required
+
 						fullWidth
 						id="email"
 						label="Email Address"
@@ -284,7 +323,7 @@ const SignUp = (props) => {
 								</InputAdornment>
 							}
 							// margin="normal"
-							required
+
 							name="password"
 							label="Password"
 							type={showPassword ? 'text' : 'password'}
@@ -334,7 +373,7 @@ const SignUp = (props) => {
 								</InputAdornment>
 							}
 							// margin="normal"
-							required
+
 							name="password-confirmation"
 							label="Confirm Password"
 							type={showPassword ? 'text' : 'password'}
@@ -382,7 +421,7 @@ const SignUp = (props) => {
 						{showTermsError && <FormHelperText>You must accept terms</FormHelperText>}
 					</FormControl>
 
-					<Button fullWidth variant="contained" sx={{mt: 3, mb: 2}} onClick={executeReCaptcha} disabled={registrationLoading}>
+					<Button fullWidth variant="contained" sx={{mt: 3, mb: 2}} onClick={initiateRegister} disabled={registrationLoading}>
 						Sign Up
 					</Button>
 
@@ -394,6 +433,7 @@ const SignUp = (props) => {
 						{/*	<NavLink to="/secret">Secret Page</NavLink>*/}
 						{/*</Grid>*/}
 					</Grid>
+					</form>
 				</Box>
 			</Box>
 			<Copyright sx={{mt: 8, mb: 4}}/>

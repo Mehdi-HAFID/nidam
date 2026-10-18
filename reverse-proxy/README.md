@@ -2,7 +2,7 @@
 
 ## Purpose
 Gateway that fronts the platform. Acts as a reverse proxy and gateway for:
-- `/react-ui` → React SPA
+- `/spa` → React SPA
 - `/auth` → Authorization Server
 - `/bff` → BFF
 
