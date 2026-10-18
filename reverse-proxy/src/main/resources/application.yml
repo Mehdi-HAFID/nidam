@@ -27,6 +27,8 @@ bff-health-check-path: /actuator/health
 registration-port: 4000
 registration-prefix: /registration
 registration-uri: ${internal-host}:${registration-port}
+registration-load-balancer-uri: lb://registration
+registration-health-check-path: /actuator/health
 
 server:
   port: ${reverse-proxy-port}
@@ -83,7 +85,7 @@ spring:
                 - SetRequestHeader=X-Forwarded-Proto, ${nidam.protocol}
             # Registration
             - id: registration
-              uri: ${registration-uri}
+              uri: ${registration-load-balancer-uri}
               predicates:
                 - Path=${registration-prefix}/**
               filters:
@@ -100,6 +102,8 @@ spring:
             bff:
               - uri: ${bff-uri}
 #              - uri: http://localhost:7082
+            registration:
+              - uri: ${registration-uri}
     loadbalancer:
       health-check:
         initial-delay: 0
@@ -107,6 +111,7 @@ spring:
         path:
           token-generator: ${authorization-server-health-check-path}
           bff: ${bff-health-check-path}
+          registration: ${registration-health-check-path}
 
 # protocol: http|https
 nidam:

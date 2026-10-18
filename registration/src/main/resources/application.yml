@@ -1,3 +1,4 @@
+host-origin: localhost
 registration-port: 4000
 
 # MySQL
@@ -13,7 +14,7 @@ registration-port: 4000
 
 # Dev and Binary Scripts: embedded H2
 h2-embedded-port: 9092
-users-db-url: jdbc:h2:tcp://localhost:${h2-embedded-port}/identity_hub
+users-db-url: jdbc:h2:tcp://${host-origin}:${h2-embedded-port}/identity_hub
 users-db-user: nidam
 users-db-password: "gF2mshbI819AV2L3"
 
@@ -61,4 +62,7 @@ custom:
 # options: sql, mongo . default: sql . When changing don't forget to update ${users-db-url/username/password}
 nidam:
   persistence-mode: "sql"
-  protocol: http    # protocol: http|https
+
+ha:
+  registration:
+    https: false

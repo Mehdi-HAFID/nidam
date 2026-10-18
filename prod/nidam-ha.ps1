@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param (
     [Parameter(Mandatory = $true, Position = 0)]
-    [ValidateSet('token-generator', 'bff')]
+    [ValidateSet('token-generator', 'bff', 'registration')]
     [string]$Target
 )
 
@@ -29,6 +29,15 @@ if ($Target -eq 'bff') {
         "runtime",
         "configuration.yml",
         "bff-2.0.0.jar"
+    )
+}
+if ($Target -eq 'registration') {
+    $zipName = "nidam-registration-ha.zip"
+    $itemsToInclude = @(
+        "jdbc",
+        "runtime",
+        "configuration.yml",
+        "registration-2.0.0.jar"
     )
 }
 
