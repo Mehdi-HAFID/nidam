@@ -1,4 +1,7 @@
 host: http://localhost
+# host-origin: introduced so HA instances don't have to set users-db-url and redis-url when localhost is replaced with a local ip
+# currently this affects token generator and bff
+host-origin: localhost
 browser-facing-domain: http://localhost
 # for docker purposes, this must stay whatever the domain name is. in development it is localhost, wheareas the internal is the container name TODO test
 # for now always use internal.
@@ -10,7 +13,7 @@ browser-facing-domain: http://localhost
 
 # Dev and Binary Scripts: Embedded H2
 h2-embedded-port: 9092
-users-db-url: jdbc:h2:tcp://localhost:${h2-embedded-port}/identity_hub
+users-db-url: jdbc:h2:tcp://${host-origin}:${h2-embedded-port}/identity_hub
 users-db-user: nidam
 users-db-password: "gF2mshbI819AV2L3"
 
@@ -56,7 +59,7 @@ custom:
     encoders: ${token-generator.password-encoders:${password-encoders}}
     idless: ${token-generator.password-idless:${password-idless}}    # encoder for hashes without {id}
 
-redis-url: redis://localhost:6379
+redis-url: redis://:mehdi@${host-origin}:6379
 redis-token-generator-namespace: nidam:token-generator
 
 spring:
