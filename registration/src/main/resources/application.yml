@@ -29,20 +29,19 @@ recaptcha-secret: "6LcyyEMpAAAAANm0qZB6kzDQRT5Li4FSGCTe8ESf"
 
 server:
   port: ${registration-port}
-  error:
-    include-message: always
 management:
   endpoints:
     access:
       default: none
 
 spring:
-  autoconfigure:
-    exclude: org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration
   config:
     import: optional:file:./configuration.yml
   profiles:
     include: ${nidam.persistence-mode}
+  web:
+    error:
+      include-message: always
 
 custom:
   authorization:
