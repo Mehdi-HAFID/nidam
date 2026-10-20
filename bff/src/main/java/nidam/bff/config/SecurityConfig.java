@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpCookie;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.config.Customizer;
@@ -212,12 +213,11 @@ public class SecurityConfig {
 								exchange.getAttributeOrDefault(CsrfToken.class.getName(), Mono.empty()).cast(CsrfToken.class)
 						))
 				)
-				.flatMap(token -> {
+				.doOnNext(token -> {
 
 					// Only set the cookie if it's not already present or changed
-					String currentCookie = exchange.getRequest().getCookies().getFirst(COOKIE_XSRF_TOKEN) != null
-							? exchange.getRequest().getCookies().getFirst(COOKIE_XSRF_TOKEN).getValue()
-							: null;
+					HttpCookie existingCookie = exchange.getRequest().getCookies().getFirst(COOKIE_XSRF_TOKEN);
+					String currentCookie = existingCookie != null ? existingCookie.getValue() : null;
 //					log.info("csrfTokenWebFilter() currentCookie: " + currentCookie);
 
 					if (!token.getToken().equals(currentCookie)) {
@@ -230,9 +230,8 @@ public class SecurityConfig {
 //						log.info("csrfTokenWebFilter()  Setting new XSRF-TOKEN cookie: {} " + cookie);
 						exchange.getResponse().addCookie(cookie);
 					}
-					return chain.filter(exchange);
 				})
-				.switchIfEmpty(chain.filter(exchange));
+				.then(Mono.defer(() -> chain.filter(exchange)));
 	}
 
 
@@ -388,7 +387,7 @@ public class SecurityConfig {
 	 */
 	@Bean
 	public ReactiveOAuth2AuthorizedClientManager authorizedClientManager(ReactiveClientRegistrationRepository clientRegistrationRepository,
-			ServerOAuth2AuthorizedClientRepository authorizedClientRepository) {
+																		 ServerOAuth2AuthorizedClientRepository authorizedClientRepository) {
 
 		// Freshly instantiated rather than autowired - see Javadoc above for why that's safe here.
 		ServerSecurityContextRepository securityContextRepository = new WebSessionServerSecurityContextRepository();

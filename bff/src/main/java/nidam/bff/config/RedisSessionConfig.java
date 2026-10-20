@@ -1,21 +1,20 @@
 package nidam.bff.config;
 
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.actuate.data.redis.RedisReactiveHealthIndicator;
-import org.springframework.boot.actuate.health.ReactiveHealthIndicator;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.data.redis.health.DataRedisReactiveHealthIndicator;
+import org.springframework.boot.health.contributor.ReactiveHealthIndicator;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.ReactiveRedisConnectionFactory;
-import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.GenericJacksonJsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializer;
-import org.springframework.security.jackson2.SecurityJackson2Modules;
+import org.springframework.security.jackson.SecurityJacksonModules;
 import org.springframework.session.config.ReactiveSessionRepositoryCustomizer;
 import org.springframework.session.data.redis.ReactiveRedisSessionRepository;
 import org.springframework.session.data.redis.config.annotation.web.server.EnableRedisWebSession;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
 
 import java.time.Duration;
 
@@ -49,7 +48,7 @@ public class RedisSessionConfig {
 	private static final String ORG_SPRINGFRAMEWORK_SECURITY_PACKAGE = "org.springframework.security";
 	private static final String JAVA_NET_PACKAGE = "java.net";
 
-	@Value("${spring.session.redis.namespace:nidam:token-generator}")
+	@Value("${spring.session.data.redis.namespace:nidam:token-generator}")
 	private String redisNamespace;
 
 	@Value("${spring.session.timeout:7d}")
@@ -65,30 +64,29 @@ public class RedisSessionConfig {
 	 * client's {@code java.net} URIs, and Spring Security types). Anything outside this list
 	 * fails closed rather than deserializing arbitrary classes from Redis.
 	 * <p>
-	 * {@link SecurityJackson2Modules#getModules} registers the mixins Spring Security ships for
+	 * {@link SecurityJacksonModules#getModules} registers the mixins Spring Security ships for
 	 * its own types (including {@code OAuth2ClientJackson2Module} for
 	 * {@code OAuth2AuthorizedClient}), which is what lets the polymorphic types above actually
 	 * round-trip correctly rather than just being permitted by the type validator.
 	 */
 	@Bean
 	public RedisSerializer<Object> springSessionDefaultRedisSerializer() {
-		ObjectMapper mapper = new ObjectMapper();
-
-		BasicPolymorphicTypeValidator ptv = BasicPolymorphicTypeValidator.builder()
+		BasicPolymorphicTypeValidator.Builder ptv = BasicPolymorphicTypeValidator.builder()
 				.allowIfSubType(java.util.Collection.class)
 				.allowIfSubType(JAVA_UTIL_PACKAGE)
 				.allowIfSubType(JAVA_TIME_PACKAGE)
 				.allowIfSubType(JAVA_LANG_PACKAGE)
 				.allowIfSubType(JAVA_NET_PACKAGE)
 				.allowIfSubType(ORG_SPRINGFRAMEWORK_SECURITY_PACKAGE)
-				.allowIfSubType(java.util.Map.class)
+				.allowIfSubType(java.util.Map.class);
+
+		JsonMapper mapper = JsonMapper.builder()
+//				.activateDefaultTyping(ptv, DefaultTyping.NON_FINAL, JsonTypeInfo.As.PROPERTY)
+				.addModules(SecurityJacksonModules.getModules(getClass().getClassLoader(), ptv))
 				.build();
 
-		mapper.activateDefaultTyping(ptv, ObjectMapper.DefaultTyping.NON_FINAL, JsonTypeInfo.As.PROPERTY);
+		return new GenericJacksonJsonRedisSerializer(mapper);
 
-		mapper.registerModules(SecurityJackson2Modules.getModules(getClass().getClassLoader()));
-
-		return new GenericJackson2JsonRedisSerializer(mapper);
 	}
 
 	/**
@@ -130,7 +128,7 @@ public class RedisSessionConfig {
 	 */
 	@Bean
 	public ReactiveHealthIndicator redisHealthIndicator(ReactiveRedisConnectionFactory connectionFactory) {
-		return new RedisReactiveHealthIndicator(connectionFactory);
+		return new DataRedisReactiveHealthIndicator(connectionFactory);
 	}
 
 }

@@ -28,8 +28,12 @@ import reactor.core.publisher.Mono;
 
 import java.time.Clock;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
 import java.util.logging.Logger;
+
+// TODO reactive. Spring 7.1 now offers a reactive equivalent for this. after I make sure everything works after the migration.
+//  then try to integrate that one with this
 
 /**
  * Refresh-token {@link ReactiveOAuth2AuthorizedClientProvider} that keeps the BFF's
@@ -266,7 +270,7 @@ public class IdTokenSyncingRefreshTokenAuthorizedClientProvider implements React
 	 */
 	private Mono<Void> syncIdTokenIfPresent(OAuth2AuthorizationContext context, ClientRegistration clientRegistration,
 	                                        OAuth2AccessTokenResponse tokenResponse, ServerWebExchange exchange) {
-		log.info("tokenResponse: " + tokenResponse);
+//		log.info("tokenResponse: " + tokenResponse);
 
 		// Spring's token-response parsing only maps well-known fields (access_token, expires_in,
 		// refresh_token, scope) into typed properties; anything else the AS returns - including
@@ -349,7 +353,8 @@ public class IdTokenSyncingRefreshTokenAuthorizedClientProvider implements React
 	private boolean hasTokenExpired(OAuth2Token token) {
 		// Subtract the configured skew before comparing, so a token expiring a few seconds
 		// from "now" is refreshed proactively rather than used right up to the wire.
-		return this.clock.instant().isAfter(token.getExpiresAt().minus(this.clockSkew));
+		Instant expiresAt = token.getExpiresAt();
+		return expiresAt != null && clock.instant().isAfter(expiresAt.minus(clockSkew));
 	}
 
 	/**
