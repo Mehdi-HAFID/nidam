@@ -32,11 +32,11 @@ import java.util.Collection;
  * <p>Jackson annotations ({@link com.fasterxml.jackson.annotation.JsonCreator},
  * {@link com.fasterxml.jackson.annotation.JsonProperty}) allow this class to be
  * reconstructed from JSON without a no-argument constructor, which is required
- * by both Spring Session's {@link org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer}
+ * by both Spring Session's {@link org.springframework.data.redis.serializer.GenericJacksonJsonRedisSerializer}
  * and the custom Redis byte converters used for OAuth2 authorization persistence.</p>
  *
  * <p>A {@link NidamUserDetailsMixin} is registered
- * on the converter-level {@link com.fasterxml.jackson.databind.ObjectMapper} to allowlist
+ * on the converter-level {@link tools.jackson.databind.ObjectMapper} to allowlist
  * this class for polymorphic deserialization by Spring Security's Jackson infrastructure.
  * Without it, deserializing a {@code UsernamePasswordAuthenticationToken} whose principal
  * is a {@code NidamUserDetails} from Redis would fail with an

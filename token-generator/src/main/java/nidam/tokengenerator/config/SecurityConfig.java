@@ -34,8 +34,8 @@ import org.springframework.security.oauth2.server.authorization.OAuth2TokenType;
 import org.springframework.security.oauth2.server.authorization.client.InMemoryRegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
-import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
-import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
+import org.springframework.security.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
+import org.springframework.security.config.annotation.web.configurers.oauth2.server.authorization.OAuth2AuthorizationServerConfigurer;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.settings.TokenSettings;
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
@@ -47,6 +47,7 @@ import org.springframework.web.filter.ForwardedHeaderFilter;
 import org.thymeleaf.spring6.templateresolver.SpringResourceTemplateResolver;
 import org.thymeleaf.templatemode.TemplateMode;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
@@ -170,7 +171,7 @@ public class SecurityConfig {
 	@Order(1)
 	@ConditionalOnProperty(name = "nidam.session-mode", havingValue = "tomcat", matchIfMissing = true)
 	public SecurityFilterChain asFilterChainDefault(HttpSecurity http) throws Exception {
-		OAuth2AuthorizationServerConfigurer authorizationServerConfigurer = OAuth2AuthorizationServerConfigurer.authorizationServer();
+		OAuth2AuthorizationServerConfigurer authorizationServerConfigurer = new OAuth2AuthorizationServerConfigurer();
 
 		http
 				.securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
@@ -207,7 +208,7 @@ public class SecurityConfig {
 	@ConditionalOnProperty(name = "nidam.session-mode", havingValue = "redis")
 	public SecurityFilterChain asFilterChainRedis(HttpSecurity http,
 	                                              RedisOIDCLogoutResponseHandler redisOIDCLogoutResponseHandler) throws Exception {
-		OAuth2AuthorizationServerConfigurer authorizationServerConfigurer = OAuth2AuthorizationServerConfigurer.authorizationServer();
+		OAuth2AuthorizationServerConfigurer authorizationServerConfigurer = new OAuth2AuthorizationServerConfigurer();
 
 		http
 				.securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
@@ -374,7 +375,12 @@ public class SecurityConfig {
 
 			// change default 30 minutes to use the same value of ttl id token
 			if ("id_token".equals(context.getTokenType().getValue())) {
-				context.getClaims().expiresAt(context.getClaims().build().getIssuedAt().plus(ttlProperties.getIdToken()));
+				Instant issuedAt = context.getClaims().build().getIssuedAt();
+				if (issuedAt == null) {
+					throw new IllegalStateException("Cannot set ID token expiration: issued-at claim is missing");
+				}
+
+				context.getClaims().expiresAt(issuedAt.plus(ttlProperties.getIdToken()));
 			}
 		};
 	}

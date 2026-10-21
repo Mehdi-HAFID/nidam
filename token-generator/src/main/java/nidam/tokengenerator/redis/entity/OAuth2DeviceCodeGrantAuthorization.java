@@ -1,10 +1,10 @@
 package nidam.tokengenerator.redis.entity;
 
+import org.springframework.data.redis.core.index.Indexed;
+
 import java.security.Principal;
 import java.time.Instant;
 import java.util.Set;
-
-import org.springframework.data.redis.core.index.Indexed;
 
 public class OAuth2DeviceCodeGrantAuthorization extends OAuth2AuthorizationGrantAuthorization {
 

@@ -1,6 +1,5 @@
 package nidam.tokengenerator.redis.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import nidam.tokengenerator.model.NidamUserDetails;
 import nidam.tokengenerator.redis.convert.*;
 import nidam.tokengenerator.redis.entity.OAuth2AuthorizationGrantAuthorization;
@@ -8,8 +7,8 @@ import nidam.tokengenerator.redis.repository.OAuth2AuthorizationGrantAuthorizati
 import nidam.tokengenerator.redis.repository.OAuth2UserConsentRepository;
 import nidam.tokengenerator.redis.service.RedisOAuth2AuthorizationConsentService;
 import nidam.tokengenerator.redis.service.RedisOAuth2AuthorizationService;
-import org.springframework.boot.actuate.data.redis.RedisHealthIndicator;
-import org.springframework.boot.actuate.health.HealthIndicator;
+import org.springframework.boot.data.redis.health.DataRedisHealthIndicator;
+import org.springframework.boot.health.contributor.HealthIndicator;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,9 +17,9 @@ import org.springframework.data.redis.core.RedisKeyValueAdapter;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.convert.RedisCustomConversions;
 import org.springframework.data.redis.repository.configuration.EnableRedisRepositories;
-import org.springframework.security.jackson2.SecurityJackson2Modules;
+import org.springframework.security.jackson.SecurityJacksonModules;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
-import org.springframework.security.oauth2.server.authorization.jackson2.OAuth2AuthorizationServerJackson2Module;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.util.Arrays;
 
@@ -49,7 +48,7 @@ import java.util.Arrays;
  *     </tr>
  *     <tr>
  *         <td><b>Serialization</b></td>
- *         <td>{@link org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer}
+ *
  *         with default typing</td>
  *         <td>Spring Data Redis {@link org.springframework.data.redis.core.RedisHash}
  *         flattening + custom byte converters for complex types</td>
@@ -72,7 +71,7 @@ import java.util.Arrays;
  *
  * <h3>What this class configures</h3>
  * <ul>
- *     <li>A dedicated {@link com.fasterxml.jackson.databind.ObjectMapper} for the
+ *     <li>A dedicated {@link JsonMapper} for the
  *     {@link org.springframework.data.redis.core.RedisHash} byte converters, separate
  *     from the session serializer's mapper</li>
  *     <li>Custom {@link org.springframework.data.redis.core.convert.RedisCustomConversions}
@@ -94,13 +93,13 @@ import java.util.Arrays;
 public class RedisOAuth2Config {
 
 	/**
-	 * Creates an {@link ObjectMapper} dedicated exclusively to the custom Redis
+	 * Creates an {@link JsonMapper} dedicated exclusively to the custom Redis
 	 * byte converters used by Spring Data Redis {@link org.springframework.data.redis.core.RedisHash}
 	 * repositories.
 	 * <p>
 	 * This mapper is intentionally separate from the Spring Session serializer's
-	 * {@link ObjectMapper}. While the session serializer uses
-	 * {@link com.fasterxml.jackson.databind.ObjectMapper#activateDefaultTyping default typing}
+	 * {@link JsonMapper}. While the session serializer uses
+	 * {@link JsonMapper default typing}
 	 * to embed {@code @class} metadata into every JSON value, this mapper relies on
 	 * Spring Security's built-in Jackson modules and explicit mixins to handle polymorphic
 	 * types. The two mappers operate on completely independent Redis key namespaces and
@@ -108,23 +107,28 @@ public class RedisOAuth2Config {
 	 * <p>
 	 * Registers the following:
 	 * <ul>
-	 *     <li>Standard Spring Security Jackson modules via {@link SecurityJackson2Modules}</li>
-	 *     <li>{@link OAuth2AuthorizationServerJackson2Module} for Authorization Server types</li>
+	 *     <li>Standard Spring Security Jackson modules via {@link SecurityJacksonModules}</li>
 	 *     <li>{@link NidamUserDetailsMixin} to control serialization of the custom principal,
 	 *     most notably to prevent the password hash from being written to Redis</li>
 	 * </ul>
 	 *
-	 * @return a configured {@link ObjectMapper} for use by the Redis byte converters
+	 * @return a configured {@link JsonMapper} for use by the Redis byte converters
 	 */
 	@Bean
-	public ObjectMapper redisConverterObjectMapper() {
-		ObjectMapper mapper = new ObjectMapper();
-		mapper.registerModules(SecurityJackson2Modules.getModules(getClass().getClassLoader()));
-		mapper.registerModule(new OAuth2AuthorizationServerJackson2Module());
-		mapper.addMixIn(NidamUserDetails.class, NidamUserDetailsMixin.class);
-		mapper.addMixIn(OAuth2AuthorizationGrantAuthorization.ClaimsHolder.class, ClaimsHolderMixin.class);
+	public JsonMapper redisConverterObjectMapper() {
+//		ObjectMapper mapper = new ObjectMapper();
+//		mapper.registerModules(SecurityJackson2Modules.getModules(getClass().getClassLoader()));
+//		mapper.registerModule(new OAuth2AuthorizationServerJackson2Module());
+//		mapper.addMixIn(NidamUserDetails.class, NidamUserDetailsMixin.class);
+//		mapper.addMixIn(OAuth2AuthorizationGrantAuthorization.ClaimsHolder.class, ClaimsHolderMixin.class);
+//
+//		return mapper;
 
-		return mapper;
+		return JsonMapper.builder()
+				.addModules(SecurityJacksonModules.getModules(getClass().getClassLoader()))
+				.addMixIn(NidamUserDetails.class, NidamUserDetailsMixin.class)
+				.addMixIn(OAuth2AuthorizationGrantAuthorization.ClaimsHolder.class, ClaimsHolderMixin.class)
+				.build();
 	}
 
 	/**
@@ -143,12 +147,12 @@ public class RedisOAuth2Config {
 	 * consistent type handling, including the {@link NidamUserDetailsMixin} that prevents
 	 * the password hash from being persisted.
 	 *
-	 * @param redisConverterObjectMapper the shared {@link ObjectMapper} injected into converters
+	 * @param redisConverterObjectMapper the shared {@link JsonMapper} injected into converters
 	 *                                   that require custom type handling
 	 * @return a {@link RedisCustomConversions} instance registered with all required converters
 	 */
 	@Bean
-	public RedisCustomConversions redisCustomConversions(ObjectMapper redisConverterObjectMapper) {
+	public RedisCustomConversions redisCustomConversions(JsonMapper redisConverterObjectMapper) {
 		return new RedisCustomConversions(Arrays.asList(
 				new UsernamePasswordAuthenticationTokenToBytesConverter(redisConverterObjectMapper),
 				new BytesToUsernamePasswordAuthenticationTokenConverter(redisConverterObjectMapper),
@@ -234,7 +238,7 @@ public class RedisOAuth2Config {
 	 */
 	@Bean
 	public HealthIndicator redisHealthIndicator(RedisConnectionFactory connectionFactory) {
-		return new RedisHealthIndicator(connectionFactory);
+		return new DataRedisHealthIndicator(connectionFactory);
 	}
 
 }

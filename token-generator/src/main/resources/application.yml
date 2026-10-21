@@ -73,8 +73,9 @@ spring:
       repositories:
         enabled: false
   session:
-    redis:
-      namespace: ${redis-token-generator-namespace}
+    data:
+      redis:
+        namespace: ${redis-token-generator-namespace}
   web:
     resources:
       static-locations:

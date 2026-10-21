@@ -81,7 +81,6 @@ public class RedisSessionConfig {
 				.allowIfSubType(java.util.Map.class);
 
 		JsonMapper mapper = JsonMapper.builder()
-//				.activateDefaultTyping(ptv, DefaultTyping.NON_FINAL, JsonTypeInfo.As.PROPERTY)
 				.addModules(SecurityJacksonModules.getModules(getClass().getClassLoader(), ptv))
 				.build();
 

@@ -365,7 +365,7 @@ public class SecurityConfig {
 	 *   bean: the class is stateless, reading/writing the same well-known
 	 *   {@code "SPRING_SECURITY_CONTEXT"} WebSession attribute regardless of which
 	 *   instance touches it — including the one {@code ServerHttpSecurity} builds
-	 *   internally by default when {@link org.springframework.security.config.web.server.ServerHttpSecurity#securityContextRepository}
+	 *   internally by default when {@link org.springframework.security.config.web.server.ServerHttpSecurity}
 	 *   is never explicitly called, which is the case in this app's security config.</li>
 	 *   <li>{@code authorizedClientRepository} is expected to resolve to this app's
 	 *   backed {@code WebSessionServerOAuth2AuthorizedClientRepository} bean (see

@@ -1,10 +1,10 @@
 package nidam.tokengenerator.redis.convert;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.WritingConverter;
-import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.JacksonJsonRedisSerializer;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Spring Data Redis {@link WritingConverter} that serializes a
@@ -30,7 +30,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 @WritingConverter
 public class UsernamePasswordAuthenticationTokenToBytesConverter implements Converter<UsernamePasswordAuthenticationToken, byte[]> {
 
-	private final Jackson2JsonRedisSerializer<UsernamePasswordAuthenticationToken> serializer;
+	private final JacksonJsonRedisSerializer<UsernamePasswordAuthenticationToken> serializer;
 
 	/**
 	 * Constructs the converter with the provided {@link ObjectMapper}.
@@ -42,7 +42,7 @@ public class UsernamePasswordAuthenticationTokenToBytesConverter implements Conv
 	 * @param objectMapper the pre-configured mapper to use for serialization
 	 */
 	public UsernamePasswordAuthenticationTokenToBytesConverter(ObjectMapper objectMapper) {
-		this.serializer = new Jackson2JsonRedisSerializer<>(objectMapper, UsernamePasswordAuthenticationToken.class);
+		this.serializer = new JacksonJsonRedisSerializer<>(objectMapper, UsernamePasswordAuthenticationToken.class);
 	}
 
 	@Override
