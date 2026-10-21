@@ -7,9 +7,9 @@ import nidam.tokengenerator.redis.repository.OAuth2AuthorizationGrantAuthorizati
 import nidam.tokengenerator.redis.repository.OAuth2UserConsentRepository;
 import nidam.tokengenerator.redis.service.RedisOAuth2AuthorizationConsentService;
 import nidam.tokengenerator.redis.service.RedisOAuth2AuthorizationService;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.data.redis.health.DataRedisHealthIndicator;
 import org.springframework.boot.health.contributor.HealthIndicator;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -20,6 +20,7 @@ import org.springframework.data.redis.repository.configuration.EnableRedisReposi
 import org.springframework.security.jackson.SecurityJacksonModules;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
 
 import java.util.Arrays;
 
@@ -48,7 +49,7 @@ import java.util.Arrays;
  *     </tr>
  *     <tr>
  *         <td><b>Serialization</b></td>
- *
+ * <p>
  *         with default typing</td>
  *         <td>Spring Data Redis {@link org.springframework.data.redis.core.RedisHash}
  *         flattening + custom byte converters for complex types</td>
@@ -116,16 +117,11 @@ public class RedisOAuth2Config {
 	 */
 	@Bean
 	public JsonMapper redisConverterObjectMapper() {
-//		ObjectMapper mapper = new ObjectMapper();
-//		mapper.registerModules(SecurityJackson2Modules.getModules(getClass().getClassLoader()));
-//		mapper.registerModule(new OAuth2AuthorizationServerJackson2Module());
-//		mapper.addMixIn(NidamUserDetails.class, NidamUserDetailsMixin.class);
-//		mapper.addMixIn(OAuth2AuthorizationGrantAuthorization.ClaimsHolder.class, ClaimsHolderMixin.class);
-//
-//		return mapper;
+		BasicPolymorphicTypeValidator.Builder typeValidator = BasicPolymorphicTypeValidator.builder()
+				.allowIfSubType(NidamUserDetails.class);
 
 		return JsonMapper.builder()
-				.addModules(SecurityJacksonModules.getModules(getClass().getClassLoader()))
+				.addModules(SecurityJacksonModules.getModules(getClass().getClassLoader(), typeValidator))
 				.addMixIn(NidamUserDetails.class, NidamUserDetailsMixin.class)
 				.addMixIn(OAuth2AuthorizationGrantAuthorization.ClaimsHolder.class, ClaimsHolderMixin.class)
 				.build();
@@ -189,8 +185,8 @@ public class RedisOAuth2Config {
 	 */
 	@Bean
 	public RedisOAuth2AuthorizationService authorizationService(RegisteredClientRepository registeredClientRepository,
-	                                                            OAuth2AuthorizationGrantAuthorizationRepository authorizationGrantAuthorizationRepository,
-	                                                            StringRedisTemplate stringRedisTemplate) {
+																OAuth2AuthorizationGrantAuthorizationRepository authorizationGrantAuthorizationRepository,
+																StringRedisTemplate stringRedisTemplate) {
 		return new RedisOAuth2AuthorizationService(registeredClientRepository, authorizationGrantAuthorizationRepository, stringRedisTemplate);
 	}
 

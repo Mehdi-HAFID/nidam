@@ -1,6 +1,7 @@
 package nidam.tokengenerator.controller;
 
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,6 +15,12 @@ import java.util.logging.Logger;
 public class LoginController {
 
 	private final Logger log = Logger.getLogger(LoginController.class.getName());
+
+	private final String reactPrefix;
+
+	public LoginController(@Value("${react-prefix}") String reactPrefix) {
+		this.reactPrefix = reactPrefix;
+	}
 
 	/**
 	 * Displays the login page.
@@ -33,6 +40,7 @@ public class LoginController {
 			model.addAttribute("LOGIN_ERROR", error);
 			request.getSession().removeAttribute("LOGIN_ERROR");
 		}
+		model.addAttribute("reactPrefix", reactPrefix);
 		return "login";
 	}
 
