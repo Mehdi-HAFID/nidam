@@ -2,7 +2,7 @@ host-origin: localhost
 registration-port: 4000
 
 # MySQL
-#users-db-url: jdbc:mysql://localhost:3306/identity_hub
+#users-db-url: jdbc:mysql://${host-origin}:3306/identity_hub
 #users-db-user: root
 #users-db-password: "CcmN*`6@3T9H%P#yg^V<7v"
 

@@ -70,10 +70,10 @@ public class NidamUserDetails implements UserDetails, CredentialsContainer {
 	 */
 	@JsonCreator
 	public NidamUserDetails(@JsonProperty("username") String email, @JsonProperty("authorities")Collection<? extends GrantedAuthority> authorities,
-	                        @JsonProperty("password") String password, @JsonProperty("enabled") boolean enabled,
-	                        @JsonProperty("accountNonExpired") boolean accountNonExpired,
-	                        @JsonProperty("accountNonLocked") boolean accountNonLocked,
-	                        @JsonProperty("credentialsNonExpired") boolean credentialsNonExpired) {
+							@JsonProperty("password") String password, @JsonProperty("enabled") boolean enabled,
+							@JsonProperty("accountNonExpired") boolean accountNonExpired,
+							@JsonProperty("accountNonLocked") boolean accountNonLocked,
+							@JsonProperty("credentialsNonExpired") boolean credentialsNonExpired) {
 		this.email = email;
 		this.authorities = authorities;
 		this.password = password;

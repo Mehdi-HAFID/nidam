@@ -22,6 +22,7 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.FactorGrantedAuthority;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
@@ -48,8 +49,7 @@ import org.thymeleaf.spring6.templateresolver.SpringResourceTemplateResolver;
 import org.thymeleaf.templatemode.TemplateMode;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.logging.Logger;
 
 /**
@@ -122,6 +122,7 @@ public class SecurityConfig {
 
 	public static final String LOGIN_ENDPOINT = "/login";
 	public static final String JWT_CLAIM_TOKEN = "authorities";
+	public static final String JWT_CLAIM_AMR = "amr";
 
 	private final ClientProperties clientProperties;
 
@@ -207,7 +208,7 @@ public class SecurityConfig {
 	@Order(1)
 	@ConditionalOnProperty(name = "nidam.session-mode", havingValue = "redis")
 	public SecurityFilterChain asFilterChainRedis(HttpSecurity http,
-	                                              RedisOIDCLogoutResponseHandler redisOIDCLogoutResponseHandler) throws Exception {
+												  RedisOIDCLogoutResponseHandler redisOIDCLogoutResponseHandler) throws Exception {
 		OAuth2AuthorizationServerConfigurer authorizationServerConfigurer = new OAuth2AuthorizationServerConfigurer();
 
 		http
@@ -243,7 +244,7 @@ public class SecurityConfig {
 	@Bean
 	@Order(2)
 	public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http, OAuth2AwareSuccessHandler successHandler,
-	                                                      OAuth2AwareFailureHandler failureHandler) throws Exception {
+														  OAuth2AwareFailureHandler failureHandler) throws Exception {
 		http.formLogin(formLogin -> formLogin
 				.loginPage(LOGIN_ENDPOINT)
 				.successHandler(successHandler)
@@ -362,16 +363,26 @@ public class SecurityConfig {
 //			Another during ID token (OIDC) generation.
 //			✅ Solution: Filter by token type:
 
-			if (OAuth2TokenType.ACCESS_TOKEN.equals(context.getTokenType())) {
-				log.info("Principal: " + context.getPrincipal().getAuthorities());
-				List<String> auths = new ArrayList<>();
-				for (GrantedAuthority auth : context.getPrincipal().getAuthorities()) {
-					auths.add(auth.getAuthority());
+			List<String> authorities = new ArrayList<>();
+			Set<String> amr = new LinkedHashSet<>();
+
+			for (GrantedAuthority auth : context.getPrincipal().getAuthorities()) {
+				if (auth instanceof FactorGrantedAuthority factor) {
+					if (FactorGrantedAuthority.PASSWORD_AUTHORITY.equals(factor.getAuthority())) {
+						amr.add("pwd");
+					}
+					// Add explicit mappings for other supported factors
+					// when Nidam implements them.
+				} else if (auth.getAuthority() != null) {
+					authorities.add(auth.getAuthority());
 				}
-				JwtClaimsSet.Builder claims = context.getClaims();
-				claims.claim(JWT_CLAIM_TOKEN, auths);
-				claims.claim(StandardClaimNames.EMAIL, context.getPrincipal().getName());
 			}
+			JwtClaimsSet.Builder claims = context.getClaims();
+			claims.claim(JWT_CLAIM_TOKEN, authorities);
+			if (!amr.isEmpty()) {
+				claims.claim(JWT_CLAIM_AMR, new ArrayList<>(amr));
+			}
+			claims.claim(StandardClaimNames.EMAIL, context.getPrincipal().getName());
 
 			// change default 30 minutes to use the same value of ttl id token
 			if ("id_token".equals(context.getTokenType().getValue())) {
