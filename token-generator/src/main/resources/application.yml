@@ -7,7 +7,7 @@ browser-facing-domain: http://localhost
 # for now always use internal.
 
 # MySQL
-#users-db-url: jdbc:mysql://localhost:3306/identity_hub
+#users-db-url: jdbc:mysql://${host-origin}:3306/identity_hub
 #users-db-user: root
 #users-db-password: "CcmN*`6@3T9H%P#yg^V<7v"
 
@@ -73,8 +73,9 @@ spring:
       repositories:
         enabled: false
   session:
-    redis:
-      namespace: ${redis-token-generator-namespace}
+    data:
+      redis:
+        namespace: ${redis-token-generator-namespace}
   web:
     resources:
       static-locations:

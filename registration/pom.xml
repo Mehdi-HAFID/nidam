@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>3.5.6</version>
+		<version>4.1.1</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>nidam</groupId>
@@ -14,7 +14,8 @@
 	<name>registration</name>
 	<description>registration</description>
 	<properties>
-		<java.version>21</java.version>
+		<java.version>25</java.version>
+		<spring-cloud.version>2025.1.3</spring-cloud.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -27,35 +28,25 @@
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-web</artifactId>
+			<artifactId>spring-boot-starter-webmvc</artifactId>
 		</dependency>
-        <dependency>
-            <groupId>org.bouncycastle</groupId>
-            <artifactId>bcprov-jdk18on</artifactId>
-            <version>1.81</version>
-        </dependency>
+		<dependency>
+			<groupId>org.bouncycastle</groupId>
+			<artifactId>bcprov-jdk18on</artifactId>
+			<version>1.86</version>
+		</dependency>
 		<dependency>
 			<groupId>org.mapstruct</groupId>
 			<artifactId>mapstruct</artifactId>
 			<version>1.6.3</version>
 		</dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-validation</artifactId>
-        </dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-validation</artifactId>
+		</dependency>
 		<dependency>
 			<groupId>org.springframework.cloud</groupId>
 			<artifactId>spring-cloud-starter-openfeign</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-test</artifactId>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.security</groupId>
-			<artifactId>spring-security-test</artifactId>
-			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -73,7 +64,7 @@
 		<dependency>
 			<groupId>com.mysql</groupId>
 			<artifactId>mysql-connector-j</artifactId>
-			<version>9.4.0</version>
+			<version>26.10.0</version>
 			<scope>runtime</scope>
 		</dependency>
 
@@ -81,7 +72,7 @@
 		<dependency>
 			<groupId>com.h2database</groupId>
 			<artifactId>h2</artifactId>
-			<version>2.4.240</version>
+			<version>2.5.252</version>
 			<scope>runtime</scope>
 		</dependency>
 
@@ -90,7 +81,7 @@
 		<dependency>
 			<groupId>org.postgresql</groupId>
 			<artifactId>postgresql</artifactId>
-			<version>42.7.11</version>
+			<version>42.7.14</version>
 			<scope>compile</scope>
 		</dependency>
 
@@ -99,7 +90,7 @@
 		<dependency>
 			<groupId>org.mariadb.jdbc</groupId>
 			<artifactId>mariadb-java-client</artifactId>
-			<version>3.5.8</version>
+			<version>3.5.10</version>
 			<scope>runtime</scope>
 		</dependency>
 
@@ -110,7 +101,7 @@
 <!--		<dependency>-->
 <!--			<groupId>com.oracle.database.jdbc</groupId>-->
 <!--			<artifactId>ojdbc11</artifactId>-->
-<!--			<version>23.26.1.0.0</version>-->
+<!--			<version>23.26.3.0.0</version>-->
 <!--			<scope>compile</scope>-->
 <!--		</dependency>-->
 
@@ -119,7 +110,7 @@
 		<dependency>
 			<groupId>com.microsoft.sqlserver</groupId>
 			<artifactId>mssql-jdbc</artifactId>
-			<version>13.4.0.jre11</version>
+			<version>13.6.1.jre11</version>
 			<scope>runtime</scope>
 		</dependency>
 
@@ -128,7 +119,7 @@
 <!--		<dependency>-->
 <!--			<groupId>com.ibm.db2</groupId>-->
 <!--			<artifactId>jcc</artifactId>-->
-<!--			<version>12.1.4.0</version>-->
+<!--			<version>12.1.5.0</version>-->
 <!--			<scope>runtime</scope>-->
 <!--		</dependency>-->
 
@@ -139,7 +130,7 @@
 			<dependency>
 				<groupId>org.springframework.cloud</groupId>
 				<artifactId>spring-cloud-dependencies</artifactId>
-				<version>2025.0.0</version>
+				<version>${spring-cloud.version}</version>
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
@@ -151,7 +142,7 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
-                <version>3.5.6</version>
+				<version>4.1.1</version>
 				<configuration>
 					<mainClass>nidam.registration.RegistrationApplication</mainClass>
 					<layout>ZIP</layout>
@@ -160,9 +151,9 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.14.0</version>
+				<version>3.16.0</version>
 				<configuration>
-                    <release>${java.version}</release>
+					<release>${java.version}</release>
 					<annotationProcessorPaths>
 						<path>
 							<groupId>org.mapstruct</groupId>

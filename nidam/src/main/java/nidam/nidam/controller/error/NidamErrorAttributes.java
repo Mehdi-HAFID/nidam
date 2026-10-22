@@ -2,12 +2,14 @@ package nidam.nidam.controller.error;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.boot.web.error.ErrorAttributeOptions;
-import org.springframework.boot.web.servlet.error.DefaultErrorAttributes;
+import org.springframework.boot.webmvc.error.DefaultErrorAttributes;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.context.request.WebRequest;
 
+import java.security.Principal;
 import java.util.Map;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -70,26 +72,28 @@ public class NidamErrorAttributes extends DefaultErrorAttributes {
 		int status = (int) attrs.getOrDefault("status", 500);
 		// Extract request info
 		HttpServletRequest request = (HttpServletRequest) ((ServletWebRequest) webRequest).getNativeRequest();
-		String path    = (String)  attrs.getOrDefault("path", request.getRequestURI());
-		String method  = request.getMethod();
-		String userEmail = request.getUserPrincipal().getName();
+		String path = (String) attrs.getOrDefault("path", request.getRequestURI());
+		String method = request.getMethod();
+//		String userEmail = request.getUserPrincipal().getName();
+		Principal principal = request.getUserPrincipal();
+		String caller = principal != null ? principal.getName() : "anonymous";
 
 		return switch (status) {
 			case 400 -> {
-				log.info(String.format("400 VALIDATION_ERROR | method: %s | path: %s | caller: %s", method, path, userEmail));
+				log.info(String.format("400 VALIDATION_ERROR | method: %s | path: %s | caller: %s", method, path, caller));
 				yield Map.of("status", 400, "code", "VALIDATION_ERROR", "message", "Invalid request data");
 			}
 			case 404 -> {
-				log.info(String.format("404 NOT_FOUND | method: %s | path: %s | caller: %s", method, path, userEmail));
+				log.info(String.format("404 NOT_FOUND | method: %s | path: %s | caller: %s", method, path, caller));
 				yield Map.of("status", 404, "code", "NOT_FOUND", "message", "Resource not found");
 			}
 			case 405 -> {
-				log.info(String.format("405 METHOD_NOT_ALLOWED | method: %s | path: %s | caller: %s", method, path, userEmail));
+				log.info(String.format("405 METHOD_NOT_ALLOWED | method: %s | path: %s | caller: %s", method, path, caller));
 				yield Map.of("status", 405, "code", "METHOD_NOT_ALLOWED", "message", "HTTP method not allowed");
 			}
 			case 401 -> {
 				// this should not be reachable because of the bff
-				log.info(String.format("401 UNAUTHORIZED | method: %s | path: %s | caller: %s", method, path, userEmail));
+				log.info(String.format("401 UNAUTHORIZED | method: %s | path: %s | caller: %s", method, path, caller));
 				yield Map.of("status", 401, "code", "UNAUTHORIZED", "message", "Authentication required");
 			}
 			// this does NOT override NidamAccessDeniedHandler.
@@ -98,8 +102,13 @@ public class NidamErrorAttributes extends DefaultErrorAttributes {
 //				yield Map.of("status", 403, "code", "ACCESS_DENIED", "message", "You do overrrrrride permissions");
 //			}
 			default -> {
-				log.info(String.format("500 INTERNAL_ERROR | method: %s | path: %s | caller: %s", method, path, userEmail));
-				yield Map.of("status", status, "code", "INTERNAL_ERROR", "message", "Unexpected error");
+				boolean serverError = status >= 500 && status <= 599;
+				String code = serverError ? "INTERNAL_ERROR" : "HTTP_ERROR";
+				String message = serverError ? "An unexpected server error occurred" : "The request could not be completed";
+				log.log(serverError ? Level.SEVERE : Level.INFO, "{0} | status: {1} | method: {2} | path: {3} | caller: {4}",
+						new Object[]{code, status, method, path, caller}
+				);
+				yield Map.of("status", status, "code", code, "message", message);
 			}
 		};
 	}

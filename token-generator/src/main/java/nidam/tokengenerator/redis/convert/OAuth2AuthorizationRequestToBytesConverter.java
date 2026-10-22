@@ -1,10 +1,10 @@
 package nidam.tokengenerator.redis.convert;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.WritingConverter;
-import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.JacksonJsonRedisSerializer;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Spring Data Redis {@link WritingConverter} that serializes an
@@ -27,10 +27,10 @@ import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequ
 @WritingConverter
 public class OAuth2AuthorizationRequestToBytesConverter implements Converter<OAuth2AuthorizationRequest, byte[]> {
 
-	private final Jackson2JsonRedisSerializer<OAuth2AuthorizationRequest> serializer;
+	private final JacksonJsonRedisSerializer<OAuth2AuthorizationRequest> serializer;
 
 	public OAuth2AuthorizationRequestToBytesConverter(ObjectMapper objectMapper) {
-		this.serializer = new Jackson2JsonRedisSerializer<>(objectMapper, OAuth2AuthorizationRequest.class);
+		this.serializer = new JacksonJsonRedisSerializer<>(objectMapper, OAuth2AuthorizationRequest.class);
 	}
 
 	@Override

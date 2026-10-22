@@ -7,7 +7,7 @@ import org.springframework.data.redis.core.RedisHash;
 import org.springframework.data.redis.core.index.Indexed;
 import org.springframework.security.core.GrantedAuthority;
 
-@RedisHash("nidam:token-generator:oauth2:consent")
+@RedisHash("${spring.session.data.redis.namespace:nidam:token-generator}:oauth2:consent")
 public class OAuth2UserConsent {
 
 	@Id

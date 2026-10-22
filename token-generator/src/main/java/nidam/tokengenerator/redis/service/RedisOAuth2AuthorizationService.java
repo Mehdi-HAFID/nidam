@@ -1,11 +1,10 @@
 package nidam.tokengenerator.redis.service;
 
-import nidam.tokengenerator.redis.entity.OAuth2AuthorizationGrantAuthorization;
 import nidam.tokengenerator.redis.config.RedisOAuth2Config;
+import nidam.tokengenerator.redis.entity.OAuth2AuthorizationGrantAuthorization;
 import nidam.tokengenerator.redis.repository.OAuth2AuthorizationGrantAuthorizationRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.data.redis.core.convert.MappingRedisConverter;
 import org.springframework.lang.Nullable;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken;
@@ -70,7 +69,7 @@ public class RedisOAuth2AuthorizationService implements OAuth2AuthorizationServi
 
 	private final StringRedisTemplate stringRedisTemplate;
 
-	@Value("${spring.session.redis.namespace:nidam:token-generator}:oauth2:authorization")
+	@Value("${spring.session.data.redis.namespace:nidam:token-generator}:oauth2:authorization")
 	private String OAuth2RedisHash;
 
 	public RedisOAuth2AuthorizationService(RegisteredClientRepository registeredClientRepository,

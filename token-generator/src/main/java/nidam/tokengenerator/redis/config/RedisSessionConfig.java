@@ -1,21 +1,19 @@
 package nidam.tokengenerator.redis.config;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.GenericJacksonJsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializer;
-import org.springframework.security.jackson2.SecurityJackson2Modules;
-import org.springframework.security.oauth2.server.authorization.jackson2.OAuth2AuthorizationServerJackson2Module;
+import org.springframework.security.jackson.SecurityJacksonModules;
+import org.springframework.security.oauth2.server.authorization.jackson.OAuth2AuthorizationServerJacksonModule;
 import org.springframework.session.config.SessionRepositoryCustomizer;
 import org.springframework.session.data.redis.RedisSessionRepository;
 import org.springframework.session.data.redis.config.annotation.web.http.EnableRedisHttpSession;
-
-import java.time.Duration;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
 
 /**
  * Configures Spring Session backed by Redis for HTTP session persistence.
@@ -51,7 +49,7 @@ import java.time.Duration;
 @EnableRedisHttpSession
 public class RedisSessionConfig {
 
-	@Value("${spring.session.redis.namespace:nidam:token-generator}")
+	@Value("${spring.session.data.redis.namespace:nidam:token-generator}")
 	private String redisNamespace;
 
 	// Using spring default of 30 minutes
@@ -78,16 +76,13 @@ public class RedisSessionConfig {
 		};
 	}
 
-	//	TODO when switching to spring boot 4, use GenericJacksonJsonRedisSerializer instead of GenericJackson2JsonRedisSerializer,
-	// 	because the latter is deprecated in favor of the former in spring boot 4.
-
 	/**
 	 * Configures the default Redis serializer for Spring Session to use JSON serialization
 	 * instead of standard Java native serialization.
 	 * <p>
 	 * This custom configuration is specifically tailored to safely serialize and deserialize
 	 * Spring Security and Spring Authorization Server contexts. It utilizes a custom
-	 * {@link ObjectMapper} configured with the following constraints and capabilities:
+	 * {@link JsonMapper} configured with the following constraints and capabilities:
 	 * <ul>
 	 * <li><b>Polymorphic Type Validation:</b> Restricts deserialization to specific, trusted
 	 * types and packages (e.g., standard Java collections/time, Spring Security classes,
@@ -98,36 +93,27 @@ public class RedisSessionConfig {
 	 * property ({@code @class}), which is strictly required by Spring Security's Jackson
 	 * mixins to accurately reconstruct nested security contexts and custom Principals.</li>
 	 * <li><b>Module Registration:</b> Registers both standard Spring Security modules
-	 * and the {@link OAuth2AuthorizationServerJackson2Module} to ensure proper handling
+	 * and the {@link OAuth2AuthorizationServerJacksonModule} to ensure proper handling
 	 * of complex OAuth2 objects, such as saved OIDC requests and authorization consents.</li>
 	 * </ul>
 	 *
-	 * @return a {@link GenericJackson2JsonRedisSerializer} equipped with a highly customized,
-	 * security-aware {@link ObjectMapper}.
+	 * @return a {@link GenericJacksonJsonRedisSerializer} equipped with a highly customized,
+	 * security-aware {@link JsonMapper}.
 	 */
 	@Bean
 	public RedisSerializer<Object> springSessionDefaultRedisSerializer() {
-		ObjectMapper mapper = new ObjectMapper();
-
-		BasicPolymorphicTypeValidator ptv = BasicPolymorphicTypeValidator.builder()
+		BasicPolymorphicTypeValidator.Builder ptv = BasicPolymorphicTypeValidator.builder()
 				.allowIfSubType(java.util.Collection.class)
 				.allowIfSubType(JAVA_TIME_PACKAGE)
 				.allowIfSubType(JAVA_LANG_PACKAGE)
 				.allowIfSubType(ORG_SPRINGFRAMEWORK_SECURITY_PACKAGE)
 				.allowIfSubType(NIDAM_TOKENGENERATOR_PACKAGE)
-				.allowIfSubType(java.util.Map.class)
+				.allowIfSubType(java.util.Map.class);
+
+		JsonMapper mapper = JsonMapper.builder()
+				.addModules(SecurityJacksonModules.getModules(getClass().getClassLoader(), ptv))
 				.build();
 
-		// MUST use JsonTypeInfo.As.PROPERTY for Spring Security compatibility
-		mapper.activateDefaultTyping(ptv, ObjectMapper.DefaultTyping.NON_FINAL, JsonTypeInfo.As.PROPERTY);
-
-		// Register standard Security modules
-		mapper.registerModules(SecurityJackson2Modules.getModules(getClass().getClassLoader()));
-
-		// Register Authorization Server specific module
-		mapper.registerModule(new OAuth2AuthorizationServerJackson2Module());
-//		mapper.registerModules(SecurityJackson2Modules.getModules(getClass().getClassLoader()));
-
-		return new GenericJackson2JsonRedisSerializer(mapper);
+		return new GenericJacksonJsonRedisSerializer(mapper);
 	}
 }

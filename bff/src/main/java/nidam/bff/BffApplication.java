@@ -1,10 +1,11 @@
 package nidam.bff;
 
 import org.springframework.boot.SpringApplication;
-import org.springframework.boot.actuate.autoconfigure.data.redis.RedisHealthContributorAutoConfiguration;
-import org.springframework.boot.actuate.autoconfigure.data.redis.RedisReactiveHealthContributorAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.autoconfigure.session.SessionAutoConfiguration;
+import org.springframework.boot.data.redis.autoconfigure.health.DataRedisHealthContributorAutoConfiguration;
+import org.springframework.boot.data.redis.autoconfigure.health.DataRedisReactiveHealthContributorAutoConfiguration;
+import org.springframework.boot.session.autoconfigure.SessionAutoConfiguration;
+import org.springframework.boot.session.data.redis.autoconfigure.SessionDataRedisAutoConfiguration;
 
 /**
  * Entry point for the BFF (Backend-for-Frontend) application.
@@ -40,8 +41,8 @@ import org.springframework.boot.autoconfigure.session.SessionAutoConfiguration;
  *
  * @see nidam.bff.config.RedisSessionConfig
  */
-@SpringBootApplication(exclude = { SessionAutoConfiguration.class,
-		RedisHealthContributorAutoConfiguration.class, RedisReactiveHealthContributorAutoConfiguration.class})
+@SpringBootApplication(exclude = { SessionAutoConfiguration.class, SessionDataRedisAutoConfiguration.class,
+		DataRedisHealthContributorAutoConfiguration.class, DataRedisReactiveHealthContributorAutoConfiguration.class})
 public class BffApplication {
 
 	public static void main(String[] args) {

@@ -2,7 +2,7 @@ host-origin: localhost
 registration-port: 4000
 
 # MySQL
-#users-db-url: jdbc:mysql://localhost:3306/identity_hub
+#users-db-url: jdbc:mysql://${host-origin}:3306/identity_hub
 #users-db-user: root
 #users-db-password: "CcmN*`6@3T9H%P#yg^V<7v"
 
@@ -29,20 +29,19 @@ recaptcha-secret: "6LcyyEMpAAAAANm0qZB6kzDQRT5Li4FSGCTe8ESf"
 
 server:
   port: ${registration-port}
-  error:
-    include-message: always
 management:
   endpoints:
     access:
       default: none
 
 spring:
-  autoconfigure:
-    exclude: org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration
   config:
     import: optional:file:./configuration.yml
   profiles:
     include: ${nidam.persistence-mode}
+  web:
+    error:
+      include-message: always
 
 custom:
   authorization:

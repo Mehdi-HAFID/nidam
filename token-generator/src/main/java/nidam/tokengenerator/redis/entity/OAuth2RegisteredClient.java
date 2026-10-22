@@ -13,7 +13,7 @@ import org.springframework.security.oauth2.jose.jws.JwsAlgorithm;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.security.oauth2.server.authorization.settings.OAuth2TokenFormat;
 
-@RedisHash("nidam:token-generator:oauth2:registered_client")
+@RedisHash("${spring.session.data.redis.namespace:nidam:token-generator}:oauth2:registered_client")
 public class OAuth2RegisteredClient {
 
 	@Id

@@ -26,7 +26,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
  * {@code principal} field of the stored
  * {@link org.springframework.security.authentication.UsernamePasswordAuthenticationToken}.</p>
  *
- * <p>Registered on the converter-level {@link com.fasterxml.jackson.databind.ObjectMapper}
+ * <p>Registered on the converter-level {@link tools.jackson.databind.ObjectMapper}
  * in {@link nidam.tokengenerator.redis.config.RedisOAuth2Config#redisConverterObjectMapper()}.
  * Password exclusion from Redis is handled separately by
  * {@link nidam.tokengenerator.model.NidamUserDetails} implementing

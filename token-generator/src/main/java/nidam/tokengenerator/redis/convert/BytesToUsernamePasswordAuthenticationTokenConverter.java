@@ -1,10 +1,10 @@
 package nidam.tokengenerator.redis.convert;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.ReadingConverter;
-import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.JacksonJsonRedisSerializer;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Spring Data Redis {@link ReadingConverter} that deserializes a {@code byte[]} into a
@@ -22,7 +22,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 @ReadingConverter
 public class BytesToUsernamePasswordAuthenticationTokenConverter implements Converter<byte[], UsernamePasswordAuthenticationToken> {
 
-	private final Jackson2JsonRedisSerializer<UsernamePasswordAuthenticationToken> serializer;
+	private final JacksonJsonRedisSerializer<UsernamePasswordAuthenticationToken> serializer;
 
 	/**
 	 * Constructs the converter with the provided {@link ObjectMapper}.
@@ -36,7 +36,7 @@ public class BytesToUsernamePasswordAuthenticationTokenConverter implements Conv
 	 * @param objectMapper the pre-configured mapper to use for deserialization
 	 */
 	public BytesToUsernamePasswordAuthenticationTokenConverter(ObjectMapper objectMapper) {
-		this.serializer = new Jackson2JsonRedisSerializer<>(objectMapper, UsernamePasswordAuthenticationToken.class);
+		this.serializer = new JacksonJsonRedisSerializer<>(objectMapper, UsernamePasswordAuthenticationToken.class);
 	}
 
 	@Override

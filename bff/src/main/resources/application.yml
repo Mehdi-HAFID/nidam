@@ -108,8 +108,9 @@ spring:
         enabled: false
   session:
     timeout: 7d     # same as token generator refresh token TTL
-    redis:
-      namespace: ${redis-bff-namespace}
+    data:
+      redis:
+        namespace: ${redis-bff-namespace}
 
 nidam:
   session-mode: "tomcat"    # options: tomcat, redis

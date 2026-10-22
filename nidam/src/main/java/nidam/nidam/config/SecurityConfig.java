@@ -19,7 +19,6 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.logging.Logger;
@@ -34,144 +33,142 @@ import java.util.logging.Logger;
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    /**
-     * Claim name in the JWT token that contains granted authorities.
-     */
-    public static final String CLAIM_AUTHORITIES = "authorities";
+	/**
+	 * Claim name in the JWT token that contains granted authorities.
+	 */
+	public static final String CLAIM_AUTHORITIES = "authorities";
 
-    private static final Logger log = Logger.getLogger(SecurityConfig.class.getName());
+	private static final Logger log = Logger.getLogger(SecurityConfig.class.getName());
 
-    /**
-     * Expected issuer URL from the Authorization Server.
-     */
-    @Value("${issuer}")
-    private String issuer;
+	/**
+	 * Expected issuer URL from the Authorization Server.
+	 */
+	@Value("${issuer}")
+	private String issuer;
 
-    /**
-     * Expected audience value in the JWT token.
-     * Defaults to "client" if not explicitly configured.
-     */
-    @Value("${client.id:client}")
-    private String expectedAudience;
+	/**
+	 * Expected audience value in the JWT token.
+	 * Defaults to "client" if not explicitly configured.
+	 */
+	@Value("${client.id:client}")
+	private String expectedAudience;
 
-    private static final String ACTUATOR_MATCHER = "/actuator/**";
+	private static final String ACTUATOR_MATCHER = "/actuator/**";
 
-   /**
-    * Security configuration dedicated exclusively to Actuator endpoints. Actuator is only available with {@code dev adn prod profile}.
-    *
-    * <p>This filter chain is evaluated with the highest precedence ({@code @Order(0)})
-    * and applies only to requests matching {@code /actuator/**}. It isolates Actuator
-    * from the main application security configuration to avoid unintended side effects
-    * such as CSRF enforcement, session handling, or custom filters interfering with
-    * operational endpoints.</p>
-    *
-    * @param http the {@link ServerHttpSecurity} to configure
-    * @return a {@link SecurityWebFilterChain} that secures Actuator endpoints
-    */
-    @Bean
-    @Order(0)
-    @Profile({"dev", "prod"})
-    public SecurityFilterChain actuatorChain(HttpSecurity http) throws Exception {
-        return http
-                .securityMatcher(ACTUATOR_MATCHER)
-                .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
-                .csrf(csrf -> csrf.disable())
-                .build();
-    }
+	/**
+	 * Security configuration dedicated exclusively to Actuator endpoints. Actuator is only available with {@code dev adn prod profile}.
+	 *
+	 * <p>This filter chain is evaluated with the highest precedence ({@code @Order(0)})
+	 * and applies only to requests matching {@code /actuator/**}. It isolates Actuator
+	 * from the main application security configuration to avoid unintended side effects
+	 * such as CSRF enforcement, session handling, or custom filters interfering with
+	 * operational endpoints.</p>
+	 *
+	 * @param http the {@link ServerHttpSecurity} to configure
+	 * @return a {@link SecurityWebFilterChain} that secures Actuator endpoints
+	 */
+	@Bean
+	@Order(0)
+	@Profile({"dev", "prod"})
+	public SecurityFilterChain actuatorChain(HttpSecurity http) throws Exception {
+		return http
+				.securityMatcher(ACTUATOR_MATCHER)
+				.authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
+				.csrf(csrf -> csrf.disable())
+				.build();
+	}
 
-    /**
-     * Configures the main security filter chain for the application.
-     *
-     * <p>This method:
-     * <ul>
-     *   <li>Applies permit-all access to path defined in {@code profile-public-endpoint}.</li>
-     *   <li>Requires authentication for all other paths.</li>
-     *   <li>Sets up the application as an OAuth2 resource server using JWTs.</li>
-     * </ul>
-     * </p>
-     *
-     * <h3>Error Handling</h3>
-     * <ul>
-     *   <li>401 handled by the authentication entry point (rare due to BFF)</li>
-     *   <li>403 handled by {@link NidamAccessDeniedHandler} (JSON + OAuth2 headers)</li>
-     * </ul>
-     *
-     * @param http the {@link HttpSecurity} object provided by Spring Security
-     * @param nidamAccessDeniedHandler custom handler for 403 responses
-     * @return the configured {@link SecurityFilterChain}
-     * @throws Exception in case of configuration errors
-     */
-    @Bean
-    @Order(1)
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, @Value("${profile-public-endpoint:/me}") String meEndpoint,
-                                                   NidamAccessDeniedHandler nidamAccessDeniedHandler) throws Exception {
-        http
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(meEndpoint).permitAll()
-                        .anyRequest().authenticated())
-                .oauth2ResourceServer(
-                        configurer -> configurer
-                                .jwt(jwt ->
-                                        jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()))
-                                .accessDeniedHandler(nidamAccessDeniedHandler)
-                                .authenticationEntryPoint((request, response, ex) -> {
-                                    response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
-                                }));
+	/**
+	 * Configures the main security filter chain for the application.
+	 *
+	 * <p>This method:
+	 * <ul>
+	 *   <li>Applies permit-all access to path defined in {@code profile-public-endpoint}.</li>
+	 *   <li>Requires authentication for all other paths.</li>
+	 *   <li>Sets up the application as an OAuth2 resource server using JWTs.</li>
+	 * </ul>
+	 * </p>
+	 *
+	 * <h3>Error Handling</h3>
+	 * <ul>
+	 *   <li>401 handled by the authentication entry point (rare due to BFF)</li>
+	 *   <li>403 handled by {@link NidamAccessDeniedHandler} (JSON + OAuth2 headers)</li>
+	 * </ul>
+	 *
+	 * @param http                     the {@link HttpSecurity} object provided by Spring Security
+	 * @param nidamAccessDeniedHandler custom handler for 403 responses
+	 * @return the configured {@link SecurityFilterChain}
+	 * @throws Exception in case of configuration errors
+	 */
+	@Bean
+	@Order(1)
+	public SecurityFilterChain securityFilterChain(HttpSecurity http, @Value("${profile-public-endpoint:/me}") String meEndpoint,
+												   NidamAccessDeniedHandler nidamAccessDeniedHandler) throws Exception {
+		http
+				.authorizeHttpRequests(auth -> auth
+						.requestMatchers(meEndpoint).permitAll()
+						.anyRequest().authenticated())
+				.oauth2ResourceServer(
+						configurer -> configurer
+								.jwt(jwt ->
+										jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()))
+								.accessDeniedHandler(nidamAccessDeniedHandler)
+								.authenticationEntryPoint((request, response, ex) -> {
+									response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+								}));
 
-        return http.build();
-    }
+		return http.build();
+	}
 
-    /**
-     * Creates a {@link JwtAuthenticationConverter} that extracts authorities
-     * from the custom "authorities" claim in the JWT token.
-     *
-     * @return a converter that maps string-based authorities to {@link SimpleGrantedAuthority}
-     */
-    private JwtAuthenticationConverter jwtAuthenticationConverter() {
-        JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
-        converter.setJwtGrantedAuthoritiesConverter(jwt -> {
+	/**
+	 * Creates a {@link JwtAuthenticationConverter} that extracts authorities
+	 * from the custom "authorities" claim in the JWT token.
+	 *
+	 * @return a converter that maps string-based authorities to {@link SimpleGrantedAuthority}
+	 */
+	private JwtAuthenticationConverter jwtAuthenticationConverter() {
+		JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
+		converter.setJwtGrantedAuthoritiesConverter(jwt -> {
 //            log.info("JWT Claims: " + jwt.getClaims()); causes too many logs
-            Collection<GrantedAuthority> authorities = new ArrayList<>();
-            Object rawAuthorities = jwt.getClaims().get(CLAIM_AUTHORITIES);
-            if (rawAuthorities instanceof Collection<?> list) {
-                for (Object item : list) {
-                    if (item instanceof String authority) {
-                        authorities.add(new SimpleGrantedAuthority(authority));
-                    }
-                }
-            }
-            return authorities;
-        });
-        return converter;
-    }
+			Collection<GrantedAuthority> authorities = new ArrayList<>();
+			Object rawAuthorities = jwt.getClaims().get(CLAIM_AUTHORITIES);
+			if (rawAuthorities instanceof Collection<?> list) {
+				for (Object item : list) {
+					if (item instanceof String authority) {
+						authorities.add(new SimpleGrantedAuthority(authority));
+					}
+				}
+			}
+			return authorities;
+		});
+		return converter;
+	}
 
-    /**
-     * Configures the {@link JwtDecoder} used to validate and decode JWT tokens.
-     *
-     * <p>This decoder:
-     * <ul>
-     *   <li>Leverages Spring Security’s `JwtDecoders.fromIssuerLocation(issuer)` to resolve the JWK Set URI
-     *   (`/.well-known/openid-configuration` → `jwks_uri`) from the issuer and configure a `NimbusJwtDecoder`
-     *   with the retrieved key set for JWT signature validation.</li>
-     *   <li>Validates standard JWT claims including issuer, timestamps, and audience.</li>
-     *   <li>Applies a 60-second clock skew for improved resilience to clock drift.</li>
-     * </ul>
-     * </p>
-     *
-     * @return the configured {@link JwtDecoder}
-     */
-    @Bean
-    public JwtDecoder jwtDecoder() {
-        JwtTimestampValidator timestampValidatorWithSkew  = new JwtTimestampValidator(Duration.ofSeconds(60));
+	/**
+	 * Configures the {@link JwtDecoder} used to validate and decode JWT tokens.
+	 *
+	 * <p>This decoder:
+	 * <ul>
+	 *   <li>Leverages Spring Security’s `JwtDecoders.fromIssuerLocation(issuer)` to resolve the JWK Set URI
+	 *   (`/.well-known/openid-configuration` → `jwks_uri`) from the issuer and configure a `NimbusJwtDecoder`
+	 *   with the retrieved key set for JWT signature validation.</li>
+	 *   <li>Validates standard JWT claims including issuer, timestamps, and audience.</li>
+	 *   <li>Applies a 60-second clock skew for improved resilience to clock drift.</li>
+	 * </ul>
+	 * </p>
+	 *
+	 * @return the configured {@link JwtDecoder}
+	 */
+	@Bean
+	public JwtDecoder jwtDecoder() {
 
-        NimbusJwtDecoder jwtDecoder = JwtDecoders.fromIssuerLocation(issuer);
-        DelegatingOAuth2TokenValidator<Jwt> jwtValidator = new DelegatingOAuth2TokenValidator<>(
-                JwtValidators.createDefaultWithIssuer(issuer),
-                new AudienceValidator(expectedAudience),
-                timestampValidatorWithSkew
-        );
-        jwtDecoder.setJwtValidator(jwtValidator);
-        return jwtDecoder;
-    }
+		NimbusJwtDecoder jwtDecoder = JwtDecoders.fromIssuerLocation(issuer);
+		DelegatingOAuth2TokenValidator<Jwt> jwtValidator = new DelegatingOAuth2TokenValidator<>(
+				JwtValidators.createDefaultWithIssuer(issuer),
+				new AudienceValidator(expectedAudience)
+		);
+		jwtDecoder.setJwtValidator(jwtValidator);
+		return jwtDecoder;
+	}
 
 }
