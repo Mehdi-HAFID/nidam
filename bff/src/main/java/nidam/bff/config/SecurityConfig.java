@@ -1,6 +1,6 @@
 package nidam.bff.config;
 
-import nidam.bff.security.IdTokenSyncingRefreshTokenAuthorizedClientProvider;
+import nidam.bff.security.OidcRefreshSessionRotationSuccessHandler;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -15,13 +15,13 @@ import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.oauth2.client.ReactiveOAuth2AuthorizedClientManager;
 import org.springframework.security.oauth2.client.ReactiveOAuth2AuthorizedClientProvider;
 import org.springframework.security.oauth2.client.ReactiveOAuth2AuthorizedClientProviderBuilder;
+import org.springframework.security.oauth2.client.RefreshTokenReactiveOAuth2AuthorizedClientProvider;
 import org.springframework.security.oauth2.client.registration.ReactiveClientRegistrationRepository;
 import org.springframework.security.oauth2.client.web.DefaultReactiveOAuth2AuthorizedClientManager;
 import org.springframework.security.oauth2.client.web.server.ServerOAuth2AuthorizedClientRepository;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.security.web.server.authentication.ServerAuthenticationSuccessHandler;
 import org.springframework.security.web.server.authentication.logout.ServerLogoutSuccessHandler;
-import org.springframework.security.web.server.context.ServerSecurityContextRepository;
 import org.springframework.security.web.server.context.WebSessionServerSecurityContextRepository;
 import org.springframework.security.web.server.csrf.CookieServerCsrfTokenRepository;
 import org.springframework.security.web.server.csrf.CsrfToken;
@@ -30,7 +30,6 @@ import org.springframework.security.web.server.util.matcher.ServerWebExchangeMat
 import org.springframework.web.filter.reactive.ServerWebExchangeContextFilter;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;
-import org.springframework.web.server.WebSession;
 import org.springframework.web.server.session.DefaultWebSessionManager;
 import org.springframework.web.server.session.InMemoryWebSessionStore;
 import org.springframework.web.server.session.WebSessionManager;
@@ -290,7 +289,7 @@ public class SecurityConfig {
 	 * {@code @ConditionalOnMissingBean(ReactiveOAuth2AuthorizedClientManager.class)}) whose
 	 * provider chain includes the stock {@code RefreshTokenReactiveOAuth2AuthorizedClientProvider}.
 	 * That provider refreshes the access/refresh token pair but never touches the
-	 * {@code SecurityContext} — see {@link IdTokenSyncingRefreshTokenAuthorizedClientProvider}'s
+	 * {@code SecurityContext} — see {@link OidcRefreshSessionRotationSuccessHandler}'s
 	 * class-level Javadoc for the full failure mode this causes at logout. Declaring our
 	 * own bean of this exact type makes the registrar back off entirely (type-based
 	 * conditional, not name-based), handing {@code TokenRelayGatewayFilterFactory} — via
@@ -336,31 +335,29 @@ public class SecurityConfig {
 	public ReactiveOAuth2AuthorizedClientManager authorizedClientManager(ReactiveClientRegistrationRepository clientRegistrationRepository,
 																		 ServerOAuth2AuthorizedClientRepository authorizedClientRepository) {
 
-		// Freshly instantiated rather than autowired - see Javadoc above for why that's safe here.
-		ServerSecurityContextRepository securityContextRepository = new WebSessionServerSecurityContextRepository();
+		// Use Spring's standard refresh-token provider.
+		RefreshTokenReactiveOAuth2AuthorizedClientProvider refreshProvider = new RefreshTokenReactiveOAuth2AuthorizedClientProvider();
 
-		// Compose the provider chain: default authorization_code handling, custom refresh handling.
+		// Compose OIDC ID-token synchronization with Nidam's session-ID rotation.
+		refreshProvider.setAuthorizationSuccessHandler(new OidcRefreshSessionRotationSuccessHandler());
+
+		// Keep the authorization-code flow and replace only the refresh-token provider.
 		ReactiveOAuth2AuthorizedClientProvider authorizedClientProvider = ReactiveOAuth2AuthorizedClientProviderBuilder.builder()
 				.authorizationCode()
-				.provider(new IdTokenSyncingRefreshTokenAuthorizedClientProvider(securityContextRepository))
+				.provider(refreshProvider)
 				.build();
 
-		// The concrete manager type TokenRelay/WebClient's OAuth2 support expects; same class the
-		// framework's own auto-configured bean would have used, just with our provider chain instead.
 		DefaultReactiveOAuth2AuthorizedClientManager manager = new DefaultReactiveOAuth2AuthorizedClientManager(
 				clientRegistrationRepository, authorizedClientRepository);
 
-		// Swap in our chain in place of whatever DefaultReactiveOAuth2AuthorizedClientManager's own
-		// constructor would have defaulted to.
 		manager.setAuthorizedClientProvider(authorizedClientProvider);
 		return manager;
-//		return new SessionCoalescingAuthorizedClientManager(manager); this how SessionCoalescingAuthorizedClientManager is set to be used
 	}
 
 	/**
 	 * Publishes the current {@link ServerWebExchange} into Reactor {@code Context} for
 	 * every request, so reactive code with no direct parameter access to the exchange —
-	 * specifically, {@link IdTokenSyncingRefreshTokenAuthorizedClientProvider}, invoked
+	 * specifically, {@link OidcRefreshSessionRotationSuccessHandler}, invoked
 	 * deep inside {@code TokenRelayGatewayFilterFactory}'s reactive call graph — can still
 	 * retrieve it.
 	 *
