@@ -1,12 +1,13 @@
 package nidam.bff.config;
 
-import nidam.bff.security.IdTokenSyncingRefreshTokenAuthorizedClientProvider;
+import nidam.bff.security.OidcRefreshSessionRotationSuccessHandler;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpCookie;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.config.Customizer;
@@ -14,13 +15,13 @@ import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.oauth2.client.ReactiveOAuth2AuthorizedClientManager;
 import org.springframework.security.oauth2.client.ReactiveOAuth2AuthorizedClientProvider;
 import org.springframework.security.oauth2.client.ReactiveOAuth2AuthorizedClientProviderBuilder;
+import org.springframework.security.oauth2.client.RefreshTokenReactiveOAuth2AuthorizedClientProvider;
 import org.springframework.security.oauth2.client.registration.ReactiveClientRegistrationRepository;
 import org.springframework.security.oauth2.client.web.DefaultReactiveOAuth2AuthorizedClientManager;
 import org.springframework.security.oauth2.client.web.server.ServerOAuth2AuthorizedClientRepository;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.security.web.server.authentication.ServerAuthenticationSuccessHandler;
 import org.springframework.security.web.server.authentication.logout.ServerLogoutSuccessHandler;
-import org.springframework.security.web.server.context.ServerSecurityContextRepository;
 import org.springframework.security.web.server.context.WebSessionServerSecurityContextRepository;
 import org.springframework.security.web.server.csrf.CookieServerCsrfTokenRepository;
 import org.springframework.security.web.server.csrf.CsrfToken;
@@ -29,7 +30,6 @@ import org.springframework.security.web.server.util.matcher.ServerWebExchangeMat
 import org.springframework.web.filter.reactive.ServerWebExchangeContextFilter;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;
-import org.springframework.web.server.WebSession;
 import org.springframework.web.server.session.DefaultWebSessionManager;
 import org.springframework.web.server.session.InMemoryWebSessionStore;
 import org.springframework.web.server.session.WebSessionManager;
@@ -212,12 +212,11 @@ public class SecurityConfig {
 								exchange.getAttributeOrDefault(CsrfToken.class.getName(), Mono.empty()).cast(CsrfToken.class)
 						))
 				)
-				.flatMap(token -> {
+				.doOnNext(token -> {
 
 					// Only set the cookie if it's not already present or changed
-					String currentCookie = exchange.getRequest().getCookies().getFirst(COOKIE_XSRF_TOKEN) != null
-							? exchange.getRequest().getCookies().getFirst(COOKIE_XSRF_TOKEN).getValue()
-							: null;
+					HttpCookie existingCookie = exchange.getRequest().getCookies().getFirst(COOKIE_XSRF_TOKEN);
+					String currentCookie = existingCookie != null ? existingCookie.getValue() : null;
 //					log.info("csrfTokenWebFilter() currentCookie: " + currentCookie);
 
 					if (!token.getToken().equals(currentCookie)) {
@@ -230,63 +229,8 @@ public class SecurityConfig {
 //						log.info("csrfTokenWebFilter()  Setting new XSRF-TOKEN cookie: {} " + cookie);
 						exchange.getResponse().addCookie(cookie);
 					}
-					return chain.filter(exchange);
 				})
-				.switchIfEmpty(chain.filter(exchange));
-	}
-
-
-
-	/*
-	  This code fixes the issue where session held in memory is evicted after 30 minutes of inactivity:
-	  login, token valid for 12 hours, user does not interact with bff for 30 minutes, the bff remove Token <-> SESSION relation from memory,
-
-	  * User returns, SPA sends SESSION cookie, but it's no longer valid → session is gone
-	  * Spring creates a new session, with no token
-	  * TokenRelay sees no token → skips adding Authorization header
-	  * Resource server sees no bearer token → 401
-
-	  After 30 minutes of inactivity, the session is evicted from memory due to the default maxIdleTime = 30m
-	  WebFilter that sets session max idle time to 7 days.
-	  submitted an issue https://github.com/spring-projects/spring-framework/issues/35240
-	 */
-
-	/**
-	 * Configures a {@link WebFilter} that sets a maximum idle timeout of 7 days on each WebFlux session,
-	 * but only once per session lifecycle and only if the session has already started.
-	 * <p>
-	 * This is necessary to keep the session (and therefore the {@code SESSION} cookie and any stored
-	 * {@link org.springframework.security.oauth2.client.OAuth2AuthorizedClient} including the access token)
-	 * alive for as long as the access token is valid. By default, Spring WebFlux sessions have a
-	 * {@code maxIdleTime} of 30 minutes, which would cause token relay to silently fail after inactivity.
-	 * </p>
-	 *
-	 * <p>
-	 * To prevent creating sessions unnecessarily (e.g., for unauthenticated requests like logout),
-	 * this filter only applies to sessions that have already been started using {@code session.isStarted()}.
-	 * Additionally, the timeout is only set once per session by checking a session-scoped attribute flag.
-	 * </p>
-	 *
-	 * @return a {@link WebFilter} that sets session idle timeout to 12 hours, only once per session
-	 */
-	@ConditionalOnProperty(name = "nidam.session-mode", havingValue = "tomcat", matchIfMissing = true)
-	@Bean
-	public WebFilter sessionTimeoutWebFilter(@Value("${spring.session.timeout}") Duration ttlTomcatSession) {
-		return (exchange, chain) -> {
-			Mono<WebSession> sessionMono = exchange.getSession()
-					.filter(WebSession::isStarted)
-					.doOnNext(session -> {
-						if (session.getAttribute("SESSION_TIMEOUT_SET") == null) {
-							session.setMaxIdleTime(ttlTomcatSession);
-							session.getAttributes().put("SESSION_TIMEOUT_SET", true);
-//							log.info("Session timeout set to 12h for session ID:" + session.getId());
-//							log.info("Max idle time: " + session.getMaxIdleTime());
-//							log.info("Creation time: " + session.getCreationTime());
-						}
-
-					});
-			return sessionMono.then(chain.filter(exchange));
-		};
+				.then(Mono.defer(() -> chain.filter(exchange)));
 	}
 
 	/**
@@ -302,9 +246,10 @@ public class SecurityConfig {
 	 */
 	@ConditionalOnProperty(name = "nidam.session-mode", havingValue = "tomcat", matchIfMissing = true)
 	@Bean
-	public InMemoryWebSessionStore inMemoryWebSessionStore() {
+	public InMemoryWebSessionStore inMemoryWebSessionStore(@Value("${spring.session.timeout}") Duration ttlTomcatSession) {
 		InMemoryWebSessionStore store = new InMemoryWebSessionStore();
 		store.setMaxSessions(Integer.MAX_VALUE);
+		store.setDefaultMaxIdleTime(ttlTomcatSession);
 		return store;
 	}
 
@@ -344,7 +289,7 @@ public class SecurityConfig {
 	 * {@code @ConditionalOnMissingBean(ReactiveOAuth2AuthorizedClientManager.class)}) whose
 	 * provider chain includes the stock {@code RefreshTokenReactiveOAuth2AuthorizedClientProvider}.
 	 * That provider refreshes the access/refresh token pair but never touches the
-	 * {@code SecurityContext} — see {@link IdTokenSyncingRefreshTokenAuthorizedClientProvider}'s
+	 * {@code SecurityContext} — see {@link OidcRefreshSessionRotationSuccessHandler}'s
 	 * class-level Javadoc for the full failure mode this causes at logout. Declaring our
 	 * own bean of this exact type makes the registrar back off entirely (type-based
 	 * conditional, not name-based), handing {@code TokenRelayGatewayFilterFactory} — via
@@ -366,7 +311,7 @@ public class SecurityConfig {
 	 *   bean: the class is stateless, reading/writing the same well-known
 	 *   {@code "SPRING_SECURITY_CONTEXT"} WebSession attribute regardless of which
 	 *   instance touches it — including the one {@code ServerHttpSecurity} builds
-	 *   internally by default when {@link org.springframework.security.config.web.server.ServerHttpSecurity#securityContextRepository}
+	 *   internally by default when {@link org.springframework.security.config.web.server.ServerHttpSecurity}
 	 *   is never explicitly called, which is the case in this app's security config.</li>
 	 *   <li>{@code authorizedClientRepository} is expected to resolve to this app's
 	 *   backed {@code WebSessionServerOAuth2AuthorizedClientRepository} bean (see
@@ -388,33 +333,31 @@ public class SecurityConfig {
 	 */
 	@Bean
 	public ReactiveOAuth2AuthorizedClientManager authorizedClientManager(ReactiveClientRegistrationRepository clientRegistrationRepository,
-			ServerOAuth2AuthorizedClientRepository authorizedClientRepository) {
+																		 ServerOAuth2AuthorizedClientRepository authorizedClientRepository) {
 
-		// Freshly instantiated rather than autowired - see Javadoc above for why that's safe here.
-		ServerSecurityContextRepository securityContextRepository = new WebSessionServerSecurityContextRepository();
+		// Use Spring's standard refresh-token provider.
+		RefreshTokenReactiveOAuth2AuthorizedClientProvider refreshProvider = new RefreshTokenReactiveOAuth2AuthorizedClientProvider();
 
-		// Compose the provider chain: default authorization_code handling, custom refresh handling.
+		// Compose OIDC ID-token synchronization with Nidam's session-ID rotation.
+		refreshProvider.setAuthorizationSuccessHandler(new OidcRefreshSessionRotationSuccessHandler());
+
+		// Keep the authorization-code flow and replace only the refresh-token provider.
 		ReactiveOAuth2AuthorizedClientProvider authorizedClientProvider = ReactiveOAuth2AuthorizedClientProviderBuilder.builder()
 				.authorizationCode()
-				.provider(new IdTokenSyncingRefreshTokenAuthorizedClientProvider(securityContextRepository))
+				.provider(refreshProvider)
 				.build();
 
-		// The concrete manager type TokenRelay/WebClient's OAuth2 support expects; same class the
-		// framework's own auto-configured bean would have used, just with our provider chain instead.
 		DefaultReactiveOAuth2AuthorizedClientManager manager = new DefaultReactiveOAuth2AuthorizedClientManager(
 				clientRegistrationRepository, authorizedClientRepository);
 
-		// Swap in our chain in place of whatever DefaultReactiveOAuth2AuthorizedClientManager's own
-		// constructor would have defaulted to.
 		manager.setAuthorizedClientProvider(authorizedClientProvider);
 		return manager;
-//		return new SessionCoalescingAuthorizedClientManager(manager); this how SessionCoalescingAuthorizedClientManager is set to be used
 	}
 
 	/**
 	 * Publishes the current {@link ServerWebExchange} into Reactor {@code Context} for
 	 * every request, so reactive code with no direct parameter access to the exchange —
-	 * specifically, {@link IdTokenSyncingRefreshTokenAuthorizedClientProvider}, invoked
+	 * specifically, {@link OidcRefreshSessionRotationSuccessHandler}, invoked
 	 * deep inside {@code TokenRelayGatewayFilterFactory}'s reactive call graph — can still
 	 * retrieve it.
 	 *

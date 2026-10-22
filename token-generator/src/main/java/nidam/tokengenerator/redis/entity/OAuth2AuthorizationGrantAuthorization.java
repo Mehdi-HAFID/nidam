@@ -50,7 +50,7 @@ import java.util.logging.Logger;
  * rather than {@link org.springframework.data.redis.core.TimeToLive}, since the
  * latter is not reliably applied by Spring Data Redis on abstract classes.</p>
  */
-@RedisHash("${spring.session.redis.namespace:nidam:token-generator}:oauth2:authorization")
+@RedisHash("${spring.session.data.redis.namespace:nidam:token-generator}:oauth2:authorization")
 public abstract class OAuth2AuthorizationGrantAuthorization {
 	private static final Logger log = Logger.getLogger(OAuth2AuthorizationGrantAuthorization.class.getName());
 

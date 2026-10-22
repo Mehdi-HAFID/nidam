@@ -1,12 +1,12 @@
 package nidam.tokengenerator.redis.entity;
 
-import java.security.Principal;
-import java.time.Instant;
-import java.util.Set;
-
 import nidam.tokengenerator.redis.repository.OAuth2AuthorizationGrantAuthorizationRepository;
 import org.springframework.data.redis.core.index.Indexed;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
+
+import java.security.Principal;
+import java.time.Instant;
+import java.util.Set;
 
 /**
  * Redis entity representing a persisted OAuth2 authorization code grant.
