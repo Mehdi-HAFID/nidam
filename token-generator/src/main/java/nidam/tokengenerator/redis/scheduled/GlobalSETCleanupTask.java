@@ -43,7 +43,7 @@ import java.util.logging.Logger;
 public class GlobalSETCleanupTask {
 	private final Logger log = Logger.getLogger(GlobalSETCleanupTask.class.getName());
 
-	@Value("${spring.session.redis.namespace:nidam:token-generator}:oauth2:authorization")
+	@Value("${spring.session.data.redis.namespace:nidam:token-generator}:oauth2:authorization")
 	private String OAuth2RedisHash;
 
 	private final StringRedisTemplate stringRedisTemplate;

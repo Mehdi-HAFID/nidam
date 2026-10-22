@@ -3,10 +3,11 @@ package nidam.tokengenerator;
 import nidam.tokengenerator.redis.config.RedisOAuth2Config;
 import nidam.tokengenerator.redis.config.RedisSessionConfig;
 import org.springframework.boot.SpringApplication;
-import org.springframework.boot.actuate.autoconfigure.data.redis.RedisHealthContributorAutoConfiguration;
-import org.springframework.boot.actuate.autoconfigure.data.redis.RedisReactiveHealthContributorAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.autoconfigure.session.SessionAutoConfiguration;
+import org.springframework.boot.data.redis.autoconfigure.health.DataRedisHealthContributorAutoConfiguration;
+import org.springframework.boot.data.redis.autoconfigure.health.DataRedisReactiveHealthContributorAutoConfiguration;
+import org.springframework.boot.session.autoconfigure.SessionAutoConfiguration;
+import org.springframework.boot.session.data.redis.autoconfigure.SessionDataRedisAutoConfiguration;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 /**
@@ -26,7 +27,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
  *     with a Spring Session Redis-backed repository.</li>
  * </ul>
  *
- * <h3>Why {@link org.springframework.boot.autoconfigure.session.SessionAutoConfiguration} is excluded</h3>
+ * <h3>Why {@link SessionAutoConfiguration} is excluded</h3>
  * <p>
  * {@code SessionAutoConfiguration} is Spring Session's auto-configuration — it detects
  * session store dependencies on the classpath (such as {@code spring-session-data-redis})
@@ -67,8 +68,8 @@ import org.springframework.scheduling.annotation.EnableScheduling;
  * @see RedisSessionConfig
  * @see RedisOAuth2Config
  */
-@SpringBootApplication(exclude = { SessionAutoConfiguration.class,
-		RedisHealthContributorAutoConfiguration.class, RedisReactiveHealthContributorAutoConfiguration.class})
+@SpringBootApplication(exclude = { SessionAutoConfiguration.class, SessionDataRedisAutoConfiguration.class,
+		DataRedisHealthContributorAutoConfiguration.class, DataRedisReactiveHealthContributorAutoConfiguration.class})
 @EnableScheduling
 public class TokenGeneratorApplication {
 

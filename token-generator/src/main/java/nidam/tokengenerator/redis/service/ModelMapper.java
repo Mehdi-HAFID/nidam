@@ -1,22 +1,8 @@
 package nidam.tokengenerator.redis.service;
 
-import java.security.Principal;
-
-import nidam.tokengenerator.redis.entity.OAuth2AuthorizationCodeGrantAuthorization;
-import nidam.tokengenerator.redis.entity.OAuth2AuthorizationGrantAuthorization;
-import nidam.tokengenerator.redis.entity.OAuth2ClientCredentialsGrantAuthorization;
-import nidam.tokengenerator.redis.entity.OAuth2DeviceCodeGrantAuthorization;
-import nidam.tokengenerator.redis.entity.OAuth2RegisteredClient;
-import nidam.tokengenerator.redis.entity.OAuth2TokenExchangeGrantAuthorization;
-import nidam.tokengenerator.redis.entity.OAuth2UserConsent;
-import nidam.tokengenerator.redis.entity.OidcAuthorizationCodeGrantAuthorization;
-
+import nidam.tokengenerator.redis.entity.*;
 import nidam.tokengenerator.redis.repository.OAuth2UserConsentRepository;
-import org.springframework.security.oauth2.core.AuthorizationGrantType;
-import org.springframework.security.oauth2.core.OAuth2AccessToken;
-import org.springframework.security.oauth2.core.OAuth2DeviceCode;
-import org.springframework.security.oauth2.core.OAuth2RefreshToken;
-import org.springframework.security.oauth2.core.OAuth2UserCode;
+import org.springframework.security.oauth2.core.*;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
@@ -30,6 +16,8 @@ import org.springframework.security.oauth2.server.authorization.settings.OAuth2T
 import org.springframework.security.oauth2.server.authorization.settings.TokenSettings;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
+
+import java.security.Principal;
 
 /**
  * Internal utility class responsible for bidirectional conversion between Spring

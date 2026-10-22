@@ -68,13 +68,13 @@ $JdbcDrivers = @{
     oracle = @{
         GroupId    = "com.oracle.database.jdbc"
         ArtifactId = "ojdbc11"
-        Version    = "23.26.1.0.0"
+        Version    = "23.26.3.0.0"
     }
 
     db2 = @{
         GroupId    = "com.ibm.db2"
         ArtifactId = "jcc"
-        Version    = "12.1.4.0"
+        Version    = "12.1.5.0"
     }
 }
 

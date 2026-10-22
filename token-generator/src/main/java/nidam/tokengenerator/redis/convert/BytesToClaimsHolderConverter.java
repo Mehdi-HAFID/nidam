@@ -1,10 +1,10 @@
 package nidam.tokengenerator.redis.convert;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import nidam.tokengenerator.redis.entity.OAuth2AuthorizationGrantAuthorization;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.ReadingConverter;
-import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.JacksonJsonRedisSerializer;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Spring Data Redis {@link ReadingConverter} that deserializes a {@code byte[]} into an
@@ -22,10 +22,10 @@ import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 @ReadingConverter
 public class BytesToClaimsHolderConverter implements Converter<byte[], OAuth2AuthorizationGrantAuthorization.ClaimsHolder> {
 
-	private final Jackson2JsonRedisSerializer<OAuth2AuthorizationGrantAuthorization.ClaimsHolder> serializer;
+	private final JacksonJsonRedisSerializer<OAuth2AuthorizationGrantAuthorization.ClaimsHolder> serializer;
 
 	public BytesToClaimsHolderConverter(ObjectMapper objectMapper) {
-		this.serializer = new Jackson2JsonRedisSerializer<>(objectMapper, OAuth2AuthorizationGrantAuthorization.ClaimsHolder.class);
+		this.serializer = new JacksonJsonRedisSerializer<>(objectMapper, OAuth2AuthorizationGrantAuthorization.ClaimsHolder.class);
 	}
 
 	@Override
