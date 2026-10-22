@@ -65,7 +65,7 @@ const SignUp = (props) => {
 		if (CONFIG.RECAPTCHA_ENABLED === 'true'){
 			const script = document.createElement('script');
 			script.src = `https://www.google.com/recaptcha/api.js?render=${CONFIG.RECAPTCHA_KEY}`;
-			script.class = "external-script"
+			script.className = "external-script"
 			script.async = true;
 			script.defer = true;
 			script.onerror = () => {
