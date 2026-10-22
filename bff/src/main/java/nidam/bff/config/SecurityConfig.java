@@ -234,60 +234,6 @@ public class SecurityConfig {
 				.then(Mono.defer(() -> chain.filter(exchange)));
 	}
 
-
-
-	/*
-	  This code fixes the issue where session held in memory is evicted after 30 minutes of inactivity:
-	  login, token valid for 12 hours, user does not interact with bff for 30 minutes, the bff remove Token <-> SESSION relation from memory,
-
-	  * User returns, SPA sends SESSION cookie, but it's no longer valid → session is gone
-	  * Spring creates a new session, with no token
-	  * TokenRelay sees no token → skips adding Authorization header
-	  * Resource server sees no bearer token → 401
-
-	  After 30 minutes of inactivity, the session is evicted from memory due to the default maxIdleTime = 30m
-	  WebFilter that sets session max idle time to 7 days.
-	  submitted an issue https://github.com/spring-projects/spring-framework/issues/35240
-	 */
-
-	/**
-	 * Configures a {@link WebFilter} that sets a maximum idle timeout of 7 days on each WebFlux session,
-	 * but only once per session lifecycle and only if the session has already started.
-	 * <p>
-	 * This is necessary to keep the session (and therefore the {@code SESSION} cookie and any stored
-	 * {@link org.springframework.security.oauth2.client.OAuth2AuthorizedClient} including the access token)
-	 * alive for as long as the access token is valid. By default, Spring WebFlux sessions have a
-	 * {@code maxIdleTime} of 30 minutes, which would cause token relay to silently fail after inactivity.
-	 * </p>
-	 *
-	 * <p>
-	 * To prevent creating sessions unnecessarily (e.g., for unauthenticated requests like logout),
-	 * this filter only applies to sessions that have already been started using {@code session.isStarted()}.
-	 * Additionally, the timeout is only set once per session by checking a session-scoped attribute flag.
-	 * </p>
-	 *
-	 * @return a {@link WebFilter} that sets session idle timeout to 12 hours, only once per session
-	 */
-	@ConditionalOnProperty(name = "nidam.session-mode", havingValue = "tomcat", matchIfMissing = true)
-	@Bean
-	public WebFilter sessionTimeoutWebFilter(@Value("${spring.session.timeout}") Duration ttlTomcatSession) {
-		return (exchange, chain) -> {
-			Mono<WebSession> sessionMono = exchange.getSession()
-					.filter(WebSession::isStarted)
-					.doOnNext(session -> {
-						if (session.getAttribute("SESSION_TIMEOUT_SET") == null) {
-							session.setMaxIdleTime(ttlTomcatSession);
-							session.getAttributes().put("SESSION_TIMEOUT_SET", true);
-//							log.info("Session timeout set to 12h for session ID:" + session.getId());
-//							log.info("Max idle time: " + session.getMaxIdleTime());
-//							log.info("Creation time: " + session.getCreationTime());
-						}
-
-					});
-			return sessionMono.then(chain.filter(exchange));
-		};
-	}
-
 	/**
 	 * Default (non-Redis) reactive session store, active when {@code nidam.session-mode} is unset
 	 * or {@code tomcat}. Sessions live in process memory and don't survive a restart or scale past
@@ -301,9 +247,10 @@ public class SecurityConfig {
 	 */
 	@ConditionalOnProperty(name = "nidam.session-mode", havingValue = "tomcat", matchIfMissing = true)
 	@Bean
-	public InMemoryWebSessionStore inMemoryWebSessionStore() {
+	public InMemoryWebSessionStore inMemoryWebSessionStore(@Value("${spring.session.timeout}") Duration ttlTomcatSession) {
 		InMemoryWebSessionStore store = new InMemoryWebSessionStore();
 		store.setMaxSessions(Integer.MAX_VALUE);
+		store.setDefaultMaxIdleTime(ttlTomcatSession);
 		return store;
 	}
 
