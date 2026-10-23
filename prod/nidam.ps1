@@ -151,7 +151,7 @@ function Start-H2Database {
         [int]$Port
     )
 
-    $h2Jar = Join-Path $Root "db\h2-2.4.240.jar"
+    $h2Jar = Join-Path $Root "db\h2-2.5.252.jar"
 
     if (!(Test-Path $h2Jar)) {
         Write-Host "H2 jar not found, skipping DB startup."
@@ -412,8 +412,8 @@ function SetupH2 {
     param(
         [int]$Port
     )
-    #$h2Jar = Join-Path $PSScriptRoot "h2-2.4.240.jar" dev
-    $h2Jar = Join-Path $Root "db\h2-2.4.240.jar"
+    #$h2Jar = Join-Path $PSScriptRoot "h2-2.5.252.jar" dev
+    $h2Jar = Join-Path $Root "db\h2-2.5.252.jar"
     $dbUrl = "jdbc:h2:tcp://localhost:$Port/identity_hub"
 
     $result = & $JavaExe -cp $h2Jar org.h2.tools.Shell -url $dbUrl -user sa -password "" -sql "SELECT COUNT(*) FROM INFORMATION_SCHEMA.USERS WHERE USER_NAME = 'NIDAM';" 2>&1
