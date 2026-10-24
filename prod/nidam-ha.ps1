@@ -66,6 +66,6 @@ if (Test-Path $destinationZip) {
 
 # Create Zip Archive
 Write-Host "Creating $zipName for $Target..." -ForegroundColor Cyan
-Compress-Archive -Path $validPaths -DestinationPath $destinationZip -CompressionLevel Optimal
+Compress-Archive -LiteralPath $validPaths -DestinationPath $destinationZip -CompressionLevel Optimal
 
 Write-Host "Successfully packaged: $destinationZip" -ForegroundColor Green
