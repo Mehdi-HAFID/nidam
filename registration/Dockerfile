@@ -1,12 +1,12 @@
 # ---------- Stage 1: Build ----------
-FROM maven:3.9.11-eclipse-temurin-21 AS builder
+FROM maven:3.10.0-eclipse-temurin-25-noble AS builder
 WORKDIR /app
 COPY pom.xml .
 COPY src ./src
 RUN mvn clean package -DskipTests
 
 # ---------- Stage 2: Run ----------
-FROM eclipse-temurin:21-jre-jammy
+FROM eclipse-temurin:25-jre-noble
 WORKDIR /app
-COPY --from=builder /app/target/*.jar registration.jar
-ENTRYPOINT ["java", "-jar", "registration.jar"]
+COPY --from=builder /app/target/*.jar bff.jar
+ENTRYPOINT ["java", "-jar", "bff.jar"]
