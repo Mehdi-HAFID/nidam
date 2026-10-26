@@ -737,11 +737,11 @@ function Start-Nidam
 
 	if (-not (Test-Excluded "registration"))
 	{
-		$jobRegistration = Start-ServiceAsync $registrationPort "Registration" "registration" "registration-2.0.0.jar" (Join-Path $logs "registration.log") "Started RegistrationApplication" "--spring.profiles.active=prod" $driverPath
+		$jobRegistration = Start-ServiceAsync $registrationPort "Registration" "registration" "registration-3.0.jar" (Join-Path $logs "registration.log") "Started RegistrationApplication" "--spring.profiles.active=prod" $driverPath
 	}
 	if (-not (Test-Excluded "spa"))
 	{
-		$jobSpa = Start-ServiceAsync $spaPort "SPA Server" "spa" "spa-server-1.0.0.jar" (Join-Path $logs "spa.log") "Started SpaServerApplication"
+		$jobSpa = Start-ServiceAsync $spaPort "SPA Server" "spa" "spa-server-3.0.jar" (Join-Path $logs "spa.log") "Started SpaServerApplication"
 	}
 
 	$jobsPhase1 = @($jobRegistration, $jobSpa) | Where-Object { $_ -ne $null }
@@ -762,12 +762,12 @@ function Start-Nidam
 
 	if (-not (Test-Excluded "reverse-proxy"))
 	{
-		$jobProxy = Start-ServiceAsync $reverseProxyPort "Reverse Proxy" "reverse-proxy" "reverse-proxy-2.0.0.jar" (Join-Path $logs "proxy.log") "Started ReverseProxyApplication" "--spring.profiles.active=prod"
+		$jobProxy = Start-ServiceAsync $reverseProxyPort "Reverse Proxy" "reverse-proxy" "reverse-proxy-3.0.jar" (Join-Path $logs "proxy.log") "Started ReverseProxyApplication" "--spring.profiles.active=prod"
 	}
 
 	if (-not (Test-Excluded "token-generator"))
 	{
-		$jobToken = Start-ServiceAsync $tokenGeneratorPort "Token Generator" "token-generator" "token-generator-2.0.0.jar" (Join-Path $logs "token.log") "Started TokenGeneratorApplication" "--spring.profiles.active=prod" $driverPath
+		$jobToken = Start-ServiceAsync $tokenGeneratorPort "Token Generator" "token-generator" "token-generator-3.0.jar" (Join-Path $logs "token.log") "Started TokenGeneratorApplication" "--spring.profiles.active=prod" $driverPath
 	}
 
 	$jobsPhase2 = @($jobProxy, $jobToken) | Where-Object { $_ -ne $null }
@@ -789,12 +789,12 @@ function Start-Nidam
 
 	if (-not (Test-Excluded "nidam"))
 	{
-		$jobNidam = Start-ServiceAsync $nidamPort "Nidam" "nidam" "nidam-2.0.0.jar" (Join-Path $logs "nidam.log") "Started NidamApplication" "--spring.profiles.active=prod"
+		$jobNidam = Start-ServiceAsync $nidamPort "Nidam" "nidam" "nidam-3.0.jar" (Join-Path $logs "nidam.log") "Started NidamApplication" "--spring.profiles.active=prod"
 	}
 
 	if (-not (Test-Excluded "bff"))
 	{
-		$jobBff = Start-ServiceAsync $bffPort "BFF" "bff" "bff-2.0.0.jar" (Join-Path $logs "bff.log") "Started BffApplication" "--spring.profiles.active=prod"
+		$jobBff = Start-ServiceAsync $bffPort "BFF" "bff" "bff-3.0.jar" (Join-Path $logs "bff.log") "Started BffApplication" "--spring.profiles.active=prod"
 	}
 
 	$jobsPhase3 = @($jobNidam, $jobBff) | Where-Object { $_ -ne $null }

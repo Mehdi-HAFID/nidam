@@ -20,7 +20,7 @@ if ($Target -eq 'token-generator') {
         "runtime",
         "token-generator-ui",
         "configuration.yml",
-        "token-generator-2.0.0.jar"
+        "token-generator-3.0.jar"
     )
 }
 if ($Target -eq 'bff') {
@@ -28,7 +28,7 @@ if ($Target -eq 'bff') {
     $itemsToInclude = @(
         "runtime",
         "configuration.yml",
-        "bff-2.0.0.jar"
+        "bff-3.0.jar"
     )
 }
 if ($Target -eq 'registration') {
@@ -37,7 +37,7 @@ if ($Target -eq 'registration') {
         "jdbc",
         "runtime",
         "configuration.yml",
-        "registration-2.0.0.jar"
+        "registration-3.0.jar"
     )
 }
 
